@@ -552,6 +552,18 @@ h6 {
   }
 }
 
+.btn-purple {
+  background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+
+  &:hover {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    transform: translateY(-1px);
+  }
+}
+
 .btn-outline-pink {
   background: transparent;
   color: #ec4899;

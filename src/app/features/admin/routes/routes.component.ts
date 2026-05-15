@@ -1835,7 +1835,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
     this.api.getOrders().subscribe({
       next: (orders) => {
         this.pendingOrders.set(
-          orders.filter(o => o.status !== 'Canceled' && o.status !== 'Delivered' && !o.deliveryRouteId)
+          orders.filter(o => o.status !== 'Canceled' && o.status !== 'Delivered' && o.orderType !== 'PickUp' && !o.deliveryRouteId)
             .sort((a, b) => (a.clientAddress ? 0 : 1) - (b.clientAddress ? 0 : 1))
         );
       }

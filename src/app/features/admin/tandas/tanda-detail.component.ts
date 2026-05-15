@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TandaService } from '../../../core/services/tanda.service';
@@ -6,11 +6,13 @@ import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { TandaDto, TandaParticipantDto, ClientDto, CLIENT_TAG_LABELS, CamiChatResponse } from '../../../core/models';
 import { FormsModule } from '@angular/forms';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-animation.component';
 
 @Component({
   selector: 'app-tanda-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, DragDropModule, RaffleAnimationComponent],
   template: `
     <div class="space-y-6 max-w-7xl mx-auto animate-fade-in pb-20">
       <!-- Breadcrumbs & Navigation -->
@@ -372,6 +374,9 @@ import { FormsModule } from '@angular/forms';
               <button class="btn-coquette btn-pink w-full justify-center text-[10px] py-3 font-black shadow-lg" (click)="onShuffle()">
                 🎲 Sorteo Aleatorio
               </button>
+              <button class="btn-coquette btn-purple w-full justify-center text-[10px] py-3 font-black shadow-lg mt-3" (click)="openReorderModal()">
+                🔄 Reordenar Lista
+              </button>
               <button class="btn-coquette btn-outline-pink w-full justify-center text-[10px] py-3 font-black shadow-sm" (click)="onProcessPenalties()">
                 ⚠️ Procesar Retrasos
               </button>
@@ -568,6 +573,82 @@ import { FormsModule } from '@angular/forms';
         </div>
       }
     </div>
+
+    <!-- Ruleta de Sorteo -->
+    @if (showRoulette()) {
+      <app-raffle-animation
+        [customTitle]="tanda()?.name"
+        [participants]="rouletteParticipants()"
+        [winnerNames]="rouletteWinnerNames()"
+        animationType="roulette"
+        (close)="showRoulette.set(false)"
+        (startRequested)="handleRouletteStart()"
+      ></app-raffle-animation>
+    }
+
+
+    <!-- Modal de Reordenamiento Drag & Drop -->
+    @if (showReorderModal()) {
+      <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+          <!-- Header -->
+          <div class="p-6 border-b flex justify-between items-center bg-gradient-to-r from-purple-50 to-pink-50">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">Reordenar Participantes</h3>
+              <p class="text-xs text-gray-500">Arrastra para cambiar el orden de los turnos</p>
+            </div>
+            <button (click)="showReorderModal.set(false)" class="p-2 hover:bg-white rounded-full transition-colors">
+              <span class="text-2xl text-gray-400">×</span>
+            </button>
+          </div>
+
+          <!-- Draggable List -->
+          <div class="flex-1 overflow-y-auto p-6 bg-gray-50/30">
+            <div cdkDropList 
+                 (cdkDropListDropped)="drop($event)"
+                 class="space-y-3">
+              @for (p of reorderList(); track p.id) {
+                <div cdkDrag 
+                     class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-move hover:border-purple-300 transition-colors group">
+                  <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">
+                    {{ $index + 1 }}
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-semibold text-gray-800">{{ p.customerName }}</p>
+                    <p class="text-xs text-gray-400">{{ p.variant || 'Sin variante' }}</p>
+                  </div>
+                  <div class="text-gray-300 group-hover:text-purple-400">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
+                    </svg>
+                  </div>
+
+                  <!-- Placeholder while dragging -->
+                  <div *cdkDragPlaceholder class="bg-purple-50 border-2 border-dashed border-purple-200 h-16 rounded-2xl"></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="p-6 bg-white border-t flex gap-3">
+            <button (click)="showReorderModal.set(false)" 
+                    class="flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-2xl hover:bg-gray-50 font-semibold transition-all">
+              Cancelar
+            </button>
+            <button (click)="onSaveReorder()" 
+                    [disabled]="isSavingReorder()"
+                    class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl hover:shadow-lg hover:scale-[1.02] active:scale-95 font-semibold transition-all disabled:opacity-50 disabled:scale-100">
+              @if (isSavingReorder()) {
+                <span>Guardando...</span>
+              } @else {
+                <span>Guardar Nuevo Orden</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: []
 })
@@ -612,7 +693,16 @@ export class TandaDetailComponent implements OnInit {
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
-    const date = new Date(year, month, day, 12, 0, 0);
+    
+    // Obtenemos la fecha base (inicio de la tanda)
+    let date = new Date(year, month, day, 12, 0, 0);
+    
+    // Encontramos el domingo de esa misma semana (el primer domingo on or after startDate)
+    // getDay(): 0=Sun, 1=Mon, ..., 6=Sat
+    const daysToSunday = (7 - date.getDay()) % 7;
+    date.setDate(date.getDate() + daysToSunday);
+    
+    // Ahora sumamos las semanas según el turno
     date.setDate(date.getDate() + (turn - 1) * 7);
     return date;
   }
@@ -628,6 +718,17 @@ export class TandaDetailComponent implements OnInit {
   enrollTurn = 1;
   enrollVariant = '';
   isEnrolling = signal(false);
+
+  // Reordenamiento y Sorteo
+  showReorderModal = signal(false);
+  reorderList = signal<TandaParticipantDto[]>([]);
+  isSavingReorder = signal(false);
+
+  showRoulette = signal(false);
+  rouletteParticipants = signal<{ id: string, name: string }[]>([]);
+  rouletteWinnerNames = signal<string[]>([]);
+
+  @ViewChild(RaffleAnimationComponent) raffleComponent?: RaffleAnimationComponent;
 
   // Pago
   showPaymentModal = signal(false);
@@ -739,17 +840,78 @@ export class TandaDetailComponent implements OnInit {
   }
 
   onShuffle() {
+    const participants = this.participants();
+    if (participants.length < 2) {
+      this.toastService.error('Necesitas al menos 2 participantes para sortear 🎀');
+      return;
+    }
+
+    // Preparamos participantes para la ruleta
+    this.rouletteParticipants.set(participants.map(p => ({ id: p.id, name: p.customerName || 'Participante' })));
+    this.rouletteWinnerNames.set([]); // Limpiamos ganador previo
+    
+    this.showRoulette.set(true);
+  }
+
+  handleRouletteStart() {
     const t = this.tanda();
-    if (t) {
-      if (confirm('¿Estás segura de sortear los lugares? Esta acción no se puede deshacer. 🎲')) {
-        this.tandaService.shuffleParticipants(t.id).subscribe({
-          next: (res) => {
-            this.toastService.success(res.message);
-            this.loadTanda(t.id);
-          },
-          error: (err) => this.toastService.error(err.error?.message || 'Error al realizar el sorteo')
-        });
+    const participants = this.participants();
+    if (t && participants.length > 0) {
+      // 1. Generamos el orden "literalmente aleatorio" de todos los participantes
+      const shuffled = [...participants].sort(() => Math.random() - 0.5);
+      const shuffledNames = shuffled.map(p => p.customerName || 'Alguien');
+      
+      this.rouletteWinnerNames.set(shuffledNames);
+      
+      // 2. Iniciamos la animación con toda la secuencia.
+      // El componente de ruleta girará, sacará a la #1, permitirá continuar,
+      // la eliminará de la ruleta y girará por la #2, y así sucesivamente.
+      if (this.raffleComponent) {
+        this.raffleComponent.setWinnerAndStart(shuffledNames);
       }
+
+      // 3. Guardamos silenciosamente este nuevo orden en el backend usando el endpoint de reordenamiento.
+      // Así, si el usuario cierra la ruleta a la mitad o termina de verla, el orden 1 al N ya está guardado.
+      const idsInOrder = shuffled.map(p => p.id);
+      this.tandaService.reorderParticipants(t.id, idsInOrder).subscribe({
+        next: () => {
+          this.loadTanda(t.id);
+        },
+        error: (err) => {
+          this.toastService.error(err.error?.message || 'Error al guardar el sorteo en el servidor');
+        }
+      });
+    }
+  }
+
+  openReorderModal() {
+    this.reorderList.set([...this.participants()].sort((a, b) => a.assignedTurn - b.assignedTurn));
+    this.showReorderModal.set(true);
+  }
+
+  drop(event: CdkDragDrop<TandaParticipantDto[]>) {
+    const list = [...this.reorderList()];
+    moveItemInArray(list, event.previousIndex, event.currentIndex);
+    this.reorderList.set(list);
+  }
+
+  onSaveReorder() {
+    const t = this.tanda();
+    if (t && !this.isSavingReorder()) {
+      this.isSavingReorder.set(true);
+      const ids = this.reorderList().map(p => p.id);
+      this.tandaService.reorderParticipants(t.id, ids).subscribe({
+        next: () => {
+          this.toastService.success('Orden actualizado con éxito ✨');
+          this.showReorderModal.set(false);
+          this.loadTanda(t.id);
+          this.isSavingReorder.set(false);
+        },
+        error: (err) => {
+          this.isSavingReorder.set(false);
+          this.toastService.error(err.error?.message || 'Error al reordenar');
+        }
+      });
     }
   }
 

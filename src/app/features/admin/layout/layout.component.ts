@@ -521,6 +521,7 @@ export class LayoutComponent {
       { label: 'Dashboard', icon: '🏠', route: '/admin' },
       { label: 'Pedidos', icon: '📦', route: '/admin/orders' },
       { label: 'Tandas', icon: '🔄', route: '/admin/tandas' },
+      { label: 'Sorteos', icon: '🎉', route: '/admin/raffles' },
       { label: 'Clientas', icon: '👩‍💼', route: '/admin/clients' },
       { label: 'Rutas', icon: '🚗', route: '/admin/routes' },
       { label: 'Proveedores', icon: '🏭', route: '/admin/suppliers' },

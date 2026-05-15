@@ -70,6 +70,14 @@ export const routes: Routes = [
             {
                 path: 'tandas/:id',
                 loadComponent: () => import('./features/admin/tandas/tanda-detail.component').then(m => m.TandaDetailComponent)
+            },
+            {
+                path: 'raffles',
+                loadComponent: () => import('./features/admin/raffles/raffles.component').then(m => m.RafflesComponent)
+            },
+            {
+                path: 'raffles/:id',
+                loadComponent: () => import('./features/admin/raffles/raffle-detail/raffle-detail.component').then(m => m.RaffleDetailComponent)
             }
         ]
     },
@@ -77,6 +85,10 @@ export const routes: Routes = [
     {
         path: 'pedido/:token',
         loadComponent: () => import('./features/client/order-view/order-view.component').then(m => m.OrderViewComponent)
+    },
+    {
+        path: 'live/:id',
+        loadComponent: () => import('./features/live/live-view/live-view.component').then(m => m.LiveViewComponent)
     },
     {
         path: 'repartidor/:token',

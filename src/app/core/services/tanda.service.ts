@@ -82,11 +82,16 @@ export class TandaService {
     return this.http.patch(`${this.base}/participants/${participantId}/confirm-delivery`, {});
   }
 
-  shuffleParticipants(tandaId: string): Observable<any> {
-    return this.http.post(`${this.base}/${tandaId}/shuffle`, {});
+  shuffleParticipants(tandaId: string, winnerId?: string): Observable<any> {
+    const url = winnerId ? `${this.base}/${tandaId}/shuffle?winnerId=${winnerId}` : `${this.base}/${tandaId}/shuffle`;
+    return this.http.post(url, {});
   }
 
   removeParticipant(participantId: string): Observable<any> {
     return this.http.delete(`${this.base}/participants/${participantId}`);
+  }
+
+  reorderParticipants(tandaId: string, participantIds: string[]): Observable<any> {
+    return this.http.post(`${this.base}/${tandaId}/reorder`, { participantIds });
   }
 }

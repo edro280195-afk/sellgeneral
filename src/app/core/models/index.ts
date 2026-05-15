@@ -37,6 +37,19 @@ export enum DeliveryStatus {
     InTransit = 3
 }
 
+export enum RaffleStatus {
+    Draft = 'Draft',
+    Active = 'Active',
+    Completed = 'Completed',
+    Cancelled = 'Cancelled'
+}
+
+export enum RaffleAnimationType {
+    Roulette = 'roulette',
+    Slot = 'slot',
+    Confetti = 'confetti'
+}
+
 // ── Helpers ──
 
 export const ORDER_STATUS_LABELS: Record<number, string> = {
@@ -654,4 +667,179 @@ export interface RegisterPaymentDto {
     amountPaid: number;
     penaltyPaid?: number;
     notes?: string;
+}
+
+// ── Raffle Models ──
+
+export interface CreateRaffleDto {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    socialShareImageUrl?: string;
+    animationType: string;
+    prizeType?: string;
+    prizeDetails?: string;
+    eligibilityRule?: string;
+    clientSegmentFilter?: string;
+    vipOnly?: boolean;
+    blacklistExcluded?: boolean;
+    preselectedWinnerIds?: string;
+    minOrderTotal?: number;
+    maxEntriesPerClient?: number;
+    dateRangeStart?: string;
+    dateRangeEnd?: string;
+    requiredPurchases: number;
+    newClientsOnly: boolean;
+    frequentClientsOnly: boolean;
+    useWeightedRandom?: boolean;
+    weightedRandomCriteria?: string;
+    winnerCount?: number;
+    raffleDate: string;
+}
+
+export interface UpdateRaffleDto {
+    name?: string;
+    description?: string;
+    imageUrl?: string;
+    socialShareImageUrl?: string;
+    animationType?: string;
+    prizeType?: string;
+    prizeDetails?: string;
+    eligibilityRule?: string;
+    clientSegmentFilter?: string;
+    vipOnly?: boolean;
+    blacklistExcluded?: boolean;
+    preselectedWinnerIds?: string;
+    minOrderTotal?: number;
+    maxEntriesPerClient?: number;
+    dateRangeStart?: string;
+    dateRangeEnd?: string;
+    requiredPurchases?: number;
+    newClientsOnly?: boolean;
+    frequentClientsOnly?: boolean;
+    useWeightedRandom?: boolean;
+    weightedRandomCriteria?: string;
+    winnerCount?: number;
+    raffleDate?: string;
+    status?: string;
+}
+
+export interface RaffleDto {
+    id: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    socialShareImageUrl?: string;
+    animationType: string;
+    prizeType?: string;
+    prizeDetails?: string;
+    eligibilityRule?: string;
+    clientSegmentFilter?: string;
+    vipOnly?: boolean;
+    blacklistExcluded?: boolean;
+    preselectedWinnerIds?: string;
+    minOrderTotal?: number;
+    maxEntriesPerClient?: number;
+    dateRangeStart?: string;
+    dateRangeEnd?: string;
+    requiredPurchases: number;
+    newClientsOnly: boolean;
+    frequentClientsOnly: boolean;
+    useWeightedRandom?: boolean;
+    weightedRandomCriteria?: string;
+    winnerCount: number;
+    raffleDate: string;
+    status: string;
+    shuffleTandaTurns?: boolean;
+    tandaId?: string;
+    winnerId?: number;
+    winner?: ClientDto;
+    announcedAt?: string;
+    createdAt: string;
+    updatedAt: string;
+    participantCount: number;
+    entryCount: number;
+}
+
+export interface RaffleDetailDto extends RaffleDto {
+    participants: RaffleParticipantDto[];
+    entries: RaffleEntryDto[];
+    draws: RaffleDrawDto[];
+}
+
+export interface RaffleParticipantDto {
+    id: string;
+    raffleId: string;
+    clientId: number;
+    client: ClientDto;
+    qualificationDate: string;
+    qualifyingOrders: number;
+    isWinner: boolean;
+    notified: boolean;
+    notifiedAt?: string;
+}
+
+export interface RaffleEntryDto {
+    id: string;
+    raffleId: string;
+    clientId: number;
+    client: ClientDto;
+    orderId: number;
+    order: OrderSummaryDto;
+    enteredAt: string;
+}
+
+export interface RaffleDrawDto {
+    id: string;
+    raffleId: string;
+    drawDate: string;
+    winnerId: number;
+    winner: ClientDto;
+    selectionMethod: string;
+    notes?: string;
+}
+
+export interface SelectWinnerDto {
+    selectionMethod: string;
+    manualWinnerClientId?: number;
+    notes?: string;
+    count?: number;
+}
+
+export interface RaffleEvaluationResultDto {
+    raffleId: string;
+    totalQualified: number;
+    qualifiedParticipants: RaffleParticipantDto[];
+    newEntries: RaffleEntryDto[];
+}
+
+export interface RaffleSummaryDto {
+    id: string;
+    name: string;
+    imageUrl?: string;
+    raffleDate: string;
+    status: string;
+    animationType: string;
+    participantCount: number;
+    winnerCount: number;
+    winnerId?: number;
+    winnerName?: string;
+    winnerNames?: string[];
+    announcedAt?: string;
+}
+
+export interface TandaTurnAssignmentDto {
+    clientId: number;
+    clientName: string;
+    previousTurn: number;
+    newTurn: number;
+}
+
+export interface TandaShuffleResultDto {
+    raffleId: string;
+    tandaId: string;
+    tandaName: string;
+    participantsShuffled: number;
+    turnAssignments: TandaTurnAssignmentDto[];
+    shuffleDate: string;
 }

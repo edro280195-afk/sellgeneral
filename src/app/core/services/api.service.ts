@@ -11,7 +11,8 @@ import {
     CommonProductDto, GlowUpReportDto, OrderPaymentDto, OrderPackageDto, GeneratePackagesRequest,
     AiParsedOrder, AiInsight,
     CamiMessage, CamiChatRequest, CamiChatResponse,
-    AiRouteSelectionRequest, AiRouteSelectionResponse, CamiGreetingResponse
+    AiRouteSelectionRequest, AiRouteSelectionResponse, CamiGreetingResponse,
+    AvailableTandaDto
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -153,8 +154,12 @@ export class ApiService {
         return this.http.get<RouteDto>(`${this.base}/routes/${id}`);
     }
 
-    createRoute(orderIds: number[], force: boolean = false): Observable<RouteDto> {
-        return this.http.post<RouteDto>(`${this.base}/routes`, { orderIds, force });
+    createRoute(orderIds: number[], force: boolean = false, tandaParticipantIds?: string[]): Observable<RouteDto> {
+        return this.http.post<RouteDto>(`${this.base}/routes`, { orderIds, force, tandaParticipantIds });
+    }
+
+    getAvailableTandas(): Observable<AvailableTandaDto[]> {
+        return this.http.get<AvailableTandaDto[]>(`${this.base}/routes/available-tandas`);
     }
 
     deleteRoute(id: number): Observable<any> {
@@ -404,6 +409,20 @@ export class ApiService {
 
     removeOrderFromRoute(routeId: number, orderId: number): Observable<any> {
         return this.http.delete(`${this.base}/routes/${routeId}/remove-order/${orderId}`);
+    }
+
+    addTandaToRoute(routeId: number, tandaParticipantId: string, lat?: number, lng?: number): Observable<any> {
+        let params = new HttpParams();
+        if (lat !== undefined) params = params.set('lat', lat.toString());
+        if (lng !== undefined) params = params.set('lng', lng.toString());
+        return this.http.post(`${this.base}/routes/${routeId}/add-tanda`, JSON.stringify(tandaParticipantId), {
+            params,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    removeTandaFromRoute(routeId: number, tandaParticipantId: string): Observable<any> {
+        return this.http.delete(`${this.base}/routes/${routeId}/remove-tanda/${tandaParticipantId}`);
     }
 
     // ── Route Reorder ──

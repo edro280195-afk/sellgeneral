@@ -298,7 +298,7 @@ export interface ReportDto {
 
 export interface RouteDeliveryDto {
     deliveryId: number;
-    orderId: number;
+    orderId?: number;
     sortOrder: number;
     clientName: string;
     clientAddress?: string;
@@ -319,6 +319,34 @@ export interface RouteDeliveryDto {
     items?: OrderItemDto[];
     arrivedAt?: string;
     alternativeAddress?: string;
+    clientTag?: string;
+    clientType?: string;
+    // ── Tanda ──
+    kind?: 'Order' | 'Tanda';
+    tandaParticipantId?: string;
+    tandaId?: string;
+    tandaName?: string;
+    tandaProductName?: string;
+    tandaWeek?: number;
+    tandaTotalWeeks?: number;
+    tandaVariant?: string;
+}
+
+export interface AvailableTandaDto {
+    tandaParticipantId: string;
+    tandaId: string;
+    tandaName: string;
+    tandaProductName?: string;
+    week: number;
+    totalWeeks: number;
+    variant?: string;
+    clientId: number;
+    clientName: string;
+    clientAddress?: string;
+    clientPhone?: string;
+    clientLatitude?: number;
+    clientLongitude?: number;
+    deliveryInstructions?: string;
 }
 
 export interface DriverExpenseDto {

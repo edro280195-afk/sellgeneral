@@ -1034,7 +1034,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private signalr = inject(SignalRService);
   private push = inject(PushNotificationService);
-  private router = inject(Router);
+  router = inject(Router);
 
   routes = signal<RouteDto[]>([]);
   loading = signal(true);

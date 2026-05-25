@@ -406,9 +406,6 @@ export class RouteBuilderComponent implements OnInit {
     geocodingNow = signal(false);
     pickingAddressFor = signal<CandidateRow | null>(null);
 
-    private readonly DEPOT_LAT = 27.4861;
-    private readonly DEPOT_LNG = -99.5069;
-
     mapsReady = signal(typeof google !== 'undefined' && !!google?.maps);
     mapCenter = signal<google.maps.LatLngLiteral>({ lat: 27.4861, lng: -99.5069 });
     mapZoom = signal(12);
@@ -552,6 +549,21 @@ export class RouteBuilderComponent implements OnInit {
         }
         this.loadCandidates();
         this.waitForMaps();
+        this.requestDeviceLocation();
+    }
+
+    private requestDeviceLocation(): void {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                this.depotPosition.set(loc);
+                this.mapCenter.set(loc);
+                if (this.selected().size > 0) this.previewTrigger$.next();
+            },
+            () => { /* denied or unavailable — keep NLD default */ },
+            { timeout: 8000, maximumAge: 300000 }
+        );
     }
 
     private loadExistingRoute(routeId: number): void {
@@ -755,7 +767,8 @@ export class RouteBuilderComponent implements OnInit {
         }
 
         this.loadingPreview.set(true);
-        this.api.previewRoute(orderIds, tandaIds, this.DEPOT_LAT, this.DEPOT_LNG).subscribe({
+        const depot = this.depotPosition() ?? { lat: 27.4861, lng: -99.5069 };
+        this.api.previewRoute(orderIds, tandaIds, depot.lat, depot.lng).subscribe({
             next: (res) => {
                 this.preview.set(res);
                 this.loadingPreview.set(false);

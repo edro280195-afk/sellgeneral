@@ -383,6 +383,9 @@ export interface PreviewRouteResponse {
     optimizerSource: string;
     skipped: SkippedStopDto[];
     stopsWithoutCoords: number;
+    polylineEncoded?: string;
+    depotLatitude?: number;
+    depotLongitude?: number;
 }
 
 export interface BulkGeocodeResultDto {

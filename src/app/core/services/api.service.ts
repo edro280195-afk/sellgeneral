@@ -12,7 +12,8 @@ import {
     AiParsedOrder, AiInsight,
     CamiMessage, CamiChatRequest, CamiChatResponse,
     AiRouteSelectionRequest, AiRouteSelectionResponse, CamiGreetingResponse,
-    AvailableTandaDto, CreateRouteResponse, PreviewRouteResponse, BulkGeocodeResultDto
+    AvailableTandaDto, CreateRouteResponse, PreviewRouteResponse, BulkGeocodeResultDto,
+    RecomposeRouteResponse
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -437,6 +438,13 @@ export class ApiService {
 
     removeTandaFromRoute(routeId: number, tandaParticipantId: string): Observable<any> {
         return this.http.delete(`${this.base}/routes/${routeId}/remove-tanda/${tandaParticipantId}`);
+    }
+
+    recomposeRoute(routeId: number, orderIds: number[], tandaParticipantIds?: string[]): Observable<RecomposeRouteResponse> {
+        return this.http.put<RecomposeRouteResponse>(`${this.base}/routes/${routeId}/recompose`, {
+            orderIds,
+            tandaParticipantIds: tandaParticipantIds ?? []
+        });
     }
 
     // ── Route Reorder ──

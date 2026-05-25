@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, signal, computed, HostListener, CUSTOM_EL
 import { CommonModule, CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
 import { GoogleMap, MapMarker, MapDirectionsRenderer } from '@angular/google-maps';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ApiService } from '../../../core/services/api.service';
 import { SignalRService } from '../../../core/services/signalr.service';
@@ -352,6 +352,12 @@ interface GeocodedOrder extends OrderSummaryDto {
                         (click)="optimizeRoute(route.id)">
                   🧩 <span class="hidden sm:inline">Optimizar</span>
                 </button>
+                @if (route.status !== 'Completed') {
+                  <button class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all"
+                          (click)="router.navigate(['/admin/routes', route.id, 'edit'])">
+                    🔄 <span class="hidden sm:inline">Rearmar</span>
+                  </button>
+                }
                 <button class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-green-50 text-green-600 text-xs font-bold border border-green-100 hover:bg-green-100 active:scale-95 transition-all"
                         (click)="shareWhatsApp(route)">
                   📱 <span class="hidden sm:inline">WhatsApp</span>
@@ -1028,6 +1034,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private signalr = inject(SignalRService);
   private push = inject(PushNotificationService);
+  private router = inject(Router);
 
   routes = signal<RouteDto[]>([]);
   loading = signal(true);

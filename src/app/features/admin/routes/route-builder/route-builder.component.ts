@@ -1,11 +1,11 @@
 import { Component, OnInit, inject, signal, computed, effect, ViewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { GoogleMap, MapMarker, MapPolyline } from '@angular/google-maps';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { OrderSummaryDto, AvailableTandaDto, PreviewRouteResponse, PreviewStopDto } from '../../../../core/models';
+import { OrderSummaryDto, AvailableTandaDto, PreviewRouteResponse, PreviewStopDto, RouteDto, RouteDeliveryDto } from '../../../../core/models';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -42,13 +42,19 @@ declare const google: any;
                     <button (click)="goBack()" class="text-pink-400 text-xs font-bold uppercase tracking-widest hover:text-pink-600 transition-colors">
                         ← Volver a Rutas
                     </button>
-                    <h1 class="text-2xl sm:text-3xl font-black text-pink-900 font-display">Armado de Ruta ✨</h1>
-                    <p class="text-pink-400 text-xs sm:text-sm">Selecciona y la ruta se calcula sola con Google Routes.</p>
+                    <h1 class="text-2xl sm:text-3xl font-black text-pink-900 font-display">
+                        {{ isEditMode() ? '🔄 Re-armar Ruta' : 'Armado de Ruta ✨' }}
+                    </h1>
+                    <p class="text-pink-400 text-xs sm:text-sm">
+                        {{ isEditMode()
+                            ? 'Modifica las paradas pendientes. Las ya entregadas quedan fijas.'
+                            : 'Selecciona y la ruta se calcula sola con Google Routes.' }}
+                    </p>
                 </div>
                 <button (click)="save()"
                         [disabled]="!canSave()"
                         class="px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black text-sm shadow-lg shadow-pink-200 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none">
-                    {{ saving() ? 'Guardando...' : '✓ Guardar Ruta' }}
+                    {{ saving() ? 'Guardando...' : (isEditMode() ? '🔄 Actualizar Ruta' : '✓ Guardar Ruta') }}
                 </button>
             </div>
 
@@ -56,7 +62,12 @@ declare const google: any;
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
                 <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-pink-100/60">
                     <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Paradas</p>
-                    <p class="text-xl sm:text-2xl font-black text-pink-900">{{ preview()?.stops?.length ?? 0 }}</p>
+                    <p class="text-xl sm:text-2xl font-black text-pink-900">
+                        {{ (lockedStops().length + (preview()?.stops?.length ?? 0)) }}
+                        @if (lockedStops().length > 0) {
+                            <span class="text-xs font-medium text-slate-400"> ({{ lockedStops().length }} 🔒)</span>
+                        }
+                    </p>
                 </div>
                 <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-pink-100/60">
                     <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Distancia</p>
@@ -119,7 +130,7 @@ declare const google: any;
                         [class.bg-pink-500]="mobileView() === 'route'" [class.text-white]="mobileView() === 'route'"
                         [class.text-pink-500]="mobileView() !== 'route'"
                         class="py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all">
-                    ✨ Ruta ({{ preview()?.stops?.length ?? 0 }})
+                    ✨ Ruta ({{ lockedStops().length + (preview()?.stops?.length ?? 0) }})
                 </button>
             </div>
         </div>
@@ -208,13 +219,23 @@ declare const google: any;
                         [zoom]="mapZoom()"
                         [options]="mapOptions">
 
-                        <!-- Depot marker (depot/origen) -->
+                        <!-- Depot marker -->
                         @if (depotPosition(); as dp) {
                             <map-marker [position]="dp" [options]="depotMarkerOptions"></map-marker>
                         }
 
-                        <!-- Markers numerados de cada parada -->
-                        @for (stop of preview()?.stops ?? []; track stop.kind + (stop.orderId ?? stop.tandaParticipantId); let i = $index) {
+                        <!-- Locked stops (grayed pins) -->
+                        @for (d of lockedStops(); track d.deliveryId) {
+                            @if (d.latitude != null && d.longitude != null) {
+                                <map-marker
+                                    [position]="{ lat: d.latitude, lng: d.longitude }"
+                                    [options]="lockedMarkerOptionsFor(d)">
+                                </map-marker>
+                            }
+                        }
+
+                        <!-- Preview stops (numbered pins) -->
+                        @for (stop of preview()?.stops ?? []; track stop.kind + (stop.orderId ?? stop.tandaParticipantId)) {
                             @if (stop.latitude != null && stop.longitude != null) {
                                 <map-marker
                                     [position]="{ lat: stop.latitude, lng: stop.longitude }"
@@ -226,7 +247,7 @@ declare const google: any;
                             }
                         }
 
-                        <!-- Polyline real siguiendo calles -->
+                        <!-- Polyline -->
                         @if (polylinePath().length > 0) {
                             <map-polyline [path]="polylinePath()" [options]="polylineOptions"></map-polyline>
                         }
@@ -246,7 +267,7 @@ declare const google: any;
                         <h2 class="text-base font-black text-pink-900">Ruta óptima</h2>
                         <p class="text-[10px] text-pink-400">
                             @if (loadingPreview()) { Calculando... }
-                            @else if ((preview()?.stops?.length ?? 0) === 0) { Selecciona para previsualizar }
+                            @else if ((preview()?.stops?.length ?? 0) === 0 && lockedStops().length === 0) { Selecciona para previsualizar }
                             @else { Orden calculado automático }
                         </p>
                     </div>
@@ -256,7 +277,36 @@ declare const google: any;
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-2 max-h-[65vh]">
-                    @if ((preview()?.stops?.length ?? 0) === 0 && !loadingPreview()) {
+
+                    <!-- Locked stops (already delivered/failed) -->
+                    @for (d of lockedStops(); track d.deliveryId) {
+                        <div class="flex items-center gap-2 p-2 rounded-2xl mb-1 opacity-50">
+                            <div class="w-8 h-8 rounded-xl bg-slate-300 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                                {{ d.sortOrder }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <p class="text-xs font-bold text-slate-600 truncate">{{ d.clientName }}</p>
+                                    <span class="px-1 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-black rounded uppercase">🔒 {{ d.status }}</span>
+                                </div>
+                                @if (d.clientAddress) {
+                                    <p class="text-[10px] text-slate-400 truncate">📍 {{ d.clientAddress }}</p>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Divider if there are locked stops -->
+                    @if (lockedStops().length > 0 && (preview()?.stops?.length ?? 0) > 0) {
+                        <div class="flex items-center gap-2 my-2 px-2">
+                            <div class="flex-1 h-px bg-pink-100"></div>
+                            <span class="text-[9px] font-black text-pink-300 uppercase tracking-widest">Pendientes</span>
+                            <div class="flex-1 h-px bg-pink-100"></div>
+                        </div>
+                    }
+
+                    <!-- Preview stops -->
+                    @if ((preview()?.stops?.length ?? 0) === 0 && !loadingPreview() && lockedStops().length === 0) {
                         <p class="text-center text-pink-300 italic text-xs py-8 px-4">
                             La ruta aparecerá aquí en vivo. ✨
                         </p>
@@ -270,7 +320,7 @@ declare const google: any;
                             <div class="w-8 h-8 rounded-xl bg-pink-500 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm"
                                  [class.bg-rose-600]="hoveredKey() === keyOf(stop)"
                                  [class.scale-110]="hoveredKey() === keyOf(stop)">
-                                {{ stop.sortOrder }}
+                                {{ lockedStops().length + stop.sortOrder }}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -313,8 +363,15 @@ export class RouteBuilderComponent implements OnInit {
     private api = inject(ApiService);
     private toast = inject(ToastService);
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
 
     @ViewChild(GoogleMap) googleMap?: GoogleMap;
+
+    // ── Edit mode state ──
+    editRouteId = signal<number | null>(null);
+    isEditMode = computed(() => this.editRouteId() !== null);
+    lockedStops = signal<RouteDeliveryDto[]>([]);  // Delivered/Failed deliveries
+    loadingRoute = signal(false);
 
     pendingOrders = signal<OrderSummaryDto[]>([]);
     availableTandas = signal<AvailableTandaDto[]>([]);
@@ -372,6 +429,7 @@ export class RouteBuilderComponent implements OnInit {
     private mapsPollTimer?: any;
 
     candidates = computed<CandidateRow[]>(() => {
+        const routeId = this.editRouteId();
         const orderRows: CandidateRow[] = this.pendingOrders().map(o => ({
             key: `order:${o.id}`,
             kind: 'Order' as const,
@@ -443,7 +501,6 @@ export class RouteBuilderComponent implements OnInit {
 
         this.previewTrigger$.pipe(debounceTime(500)).subscribe(() => this.refreshPreview());
 
-        // Cuando el preview cambia, decodificamos polyline y actualizamos centro/zoom del mapa.
         effect(() => {
             const p = this.preview();
             if (!p) {
@@ -461,7 +518,6 @@ export class RouteBuilderComponent implements OnInit {
                     this.polylinePath.set([]);
                 }
             } else {
-                // Sin polyline real, dibujamos línea recta entre paradas con coords.
                 const pts = p.stops
                     .filter(s => s.latitude != null && s.longitude != null)
                     .map(s => ({ lat: s.latitude!, lng: s.longitude! }));
@@ -475,15 +531,52 @@ export class RouteBuilderComponent implements OnInit {
                     this.polylinePath.set(pts);
                 }
             }
-
-            // Auto-fit del mapa
             this.fitMapBounds();
         }, { allowSignalWrites: true });
     }
 
     ngOnInit(): void {
+        // Detect edit mode from :id route param
+        const idParam = this.route.snapshot.paramMap.get('id');
+        if (idParam) {
+            const routeId = parseInt(idParam, 10);
+            if (!isNaN(routeId)) {
+                this.editRouteId.set(routeId);
+                this.loadExistingRoute(routeId);
+            }
+        }
         this.loadCandidates();
         this.waitForMaps();
+    }
+
+    private loadExistingRoute(routeId: number): void {
+        this.loadingRoute.set(true);
+        this.api.getRoute(routeId).subscribe({
+            next: (route: RouteDto) => {
+                this.loadingRoute.set(false);
+                const locked = route.deliveries.filter(d =>
+                    d.status === 'Delivered' || d.status === 'Failed'
+                ).sort((a, b) => a.sortOrder - b.sortOrder);
+                this.lockedStops.set(locked);
+
+                // Pre-select the pending deliveries from the existing route
+                const preSelected = new Set<StopKey>();
+                for (const d of route.deliveries) {
+                    if (d.status === 'Delivered' || d.status === 'Failed') continue;
+                    if (d.kind === 'Tanda' && d.tandaParticipantId) {
+                        preSelected.add(`tanda:${d.tandaParticipantId}`);
+                    } else if (d.orderId != null) {
+                        preSelected.add(`order:${d.orderId}`);
+                    }
+                }
+                this.selected.set(preSelected);
+            },
+            error: () => {
+                this.loadingRoute.set(false);
+                this.toast.error('No se pudo cargar la ruta para editar');
+                this.router.navigate(['/admin/routes']);
+            }
+        });
     }
 
     private waitForMaps(): void {
@@ -508,6 +601,9 @@ export class RouteBuilderComponent implements OnInit {
         for (const s of stops) {
             if (s.latitude != null && s.longitude != null) points.push({ lat: s.latitude, lng: s.longitude });
         }
+        for (const d of this.lockedStops()) {
+            if (d.latitude != null && d.longitude != null) points.push({ lat: d.latitude, lng: d.longitude });
+        }
         if (points.length === 0) return;
         try {
             const bounds = new google.maps.LatLngBounds();
@@ -524,7 +620,7 @@ export class RouteBuilderComponent implements OnInit {
         const isHovered = this.hoveredKey() === this.keyOf(stop);
         return {
             label: {
-                text: String(stop.sortOrder),
+                text: String(this.lockedStops().length + stop.sortOrder),
                 color: 'white',
                 fontWeight: '900',
                 fontSize: '13px'
@@ -539,6 +635,26 @@ export class RouteBuilderComponent implements OnInit {
             } as any,
             animation: isHovered ? google.maps.Animation.BOUNCE : null,
             zIndex: isHovered ? 9000 : 100 + stop.sortOrder
+        };
+    }
+
+    lockedMarkerOptionsFor(d: RouteDeliveryDto): google.maps.MarkerOptions {
+        return {
+            label: {
+                text: String(d.sortOrder),
+                color: 'white',
+                fontWeight: '900',
+                fontSize: '12px'
+            } as any,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: '#94a3b8',
+                fillOpacity: 0.8,
+                strokeWeight: 2,
+                strokeColor: '#fff'
+            } as any,
+            zIndex: 50
         };
     }
 
@@ -557,12 +673,18 @@ export class RouteBuilderComponent implements OnInit {
         this.loading.set(true);
         let ordersLoaded = false, tandasLoaded = false;
         const done = () => { if (ordersLoaded && tandasLoaded) this.loading.set(false); };
+        const editId = this.route.snapshot.paramMap.get('id');
+        const currentRouteId = editId ? parseInt(editId, 10) : null;
 
         this.api.getOrders().subscribe({
             next: (items: OrderSummaryDto[]) => {
                 const eligible = (items ?? []).filter(o =>
                     o.status !== 'Canceled' && o.status !== 'Delivered'
-                    && o.orderType !== 'PickUp' && !o.deliveryRouteId
+                    && o.orderType !== 'PickUp'
+                    // In edit mode, allow orders that belong to this route (they have deliveryRouteId = currentRouteId)
+                    && (currentRouteId != null
+                        ? (!o.deliveryRouteId || o.deliveryRouteId === currentRouteId)
+                        : !o.deliveryRouteId)
                 );
                 this.pendingOrders.set(eligible);
                 ordersLoaded = true;
@@ -573,7 +695,15 @@ export class RouteBuilderComponent implements OnInit {
 
         this.api.getAvailableTandas().subscribe({
             next: (list) => {
-                this.availableTandas.set(list);
+                // In edit mode, also include tandas already in this route
+                if (currentRouteId != null) {
+                    // We already have lockedStops and will pre-select pending tanda deliveries.
+                    // The available-tandas endpoint excludes assigned tandas, but we still need to
+                    // show tandas from this route. We merge them later when the route loads.
+                    this.availableTandas.set(list);
+                } else {
+                    this.availableTandas.set(list);
+                }
                 tandasLoaded = true;
                 done();
             },
@@ -667,21 +797,43 @@ export class RouteBuilderComponent implements OnInit {
         }
 
         this.saving.set(true);
-        this.api.createRoute(orderIds, false, tandaIds, true).subscribe({
-            next: (res) => {
-                this.saving.set(false);
-                if (res.skipped && res.skipped.length > 0) {
-                    this.toast.error(`Ruta creada: ${res.skipped.length} no entraron`);
-                } else {
-                    this.toast.success('✨ Ruta creada y optimizada');
+        const routeId = this.editRouteId();
+
+        if (routeId != null) {
+            // Edit mode: recompose existing route
+            this.api.recomposeRoute(routeId, orderIds, tandaIds).subscribe({
+                next: (res) => {
+                    this.saving.set(false);
+                    if (res.skipped && res.skipped.length > 0) {
+                        this.toast.error(`Ruta actualizada: ${res.skipped.length} no entraron`);
+                    } else {
+                        this.toast.success('🔄 Ruta recompuesta exitosamente');
+                    }
+                    this.router.navigate(['/admin/routes']);
+                },
+                error: (err) => {
+                    this.saving.set(false);
+                    this.toast.error(err.error?.message || 'Error al actualizar la ruta');
                 }
-                this.router.navigate(['/admin/routes']);
-            },
-            error: (err) => {
-                this.saving.set(false);
-                this.toast.error(err.error?.message || 'Error al guardar la ruta');
-            }
-        });
+            });
+        } else {
+            // New route
+            this.api.createRoute(orderIds, false, tandaIds, true).subscribe({
+                next: (res) => {
+                    this.saving.set(false);
+                    if (res.skipped && res.skipped.length > 0) {
+                        this.toast.error(`Ruta creada: ${res.skipped.length} no entraron`);
+                    } else {
+                        this.toast.success('✨ Ruta creada y optimizada');
+                    }
+                    this.router.navigate(['/admin/routes']);
+                },
+                error: (err) => {
+                    this.saving.set(false);
+                    this.toast.error(err.error?.message || 'Error al guardar la ruta');
+                }
+            });
+        }
     }
 
     goBack(): void {

@@ -388,6 +388,16 @@ export interface PreviewRouteResponse {
     depotLongitude?: number;
 }
 
+export interface RecomposeRouteRequest {
+    orderIds: number[];
+    tandaParticipantIds?: string[];
+}
+
+export interface RecomposeRouteResponse {
+    route: RouteDto;
+    skipped: SkippedStopDto[];
+}
+
 export interface BulkGeocodeResultDto {
     clientId: number;
     success: boolean;

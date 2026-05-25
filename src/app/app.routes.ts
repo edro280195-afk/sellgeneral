@@ -44,6 +44,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/routes/route-builder/route-builder.component').then(m => m.RouteBuilderComponent)
             },
             {
+                path: 'routes/:id/edit',
+                loadComponent: () => import('./features/admin/routes/route-builder/route-builder.component').then(m => m.RouteBuilderComponent)
+            },
+            {
                 path: 'suppliers',
                 loadComponent: () => import('./features/admin/suppliers/suppliers.component').then(m => m.SuppliersComponent)
             },

@@ -186,6 +186,8 @@ export interface ClientDto {
     totalSpent: number;
     type?: string;
     deliveryInstructions?: string;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 export interface MonthlySalesDto {

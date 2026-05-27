@@ -258,6 +258,20 @@ export interface DuplicateSuggestionDto {
     confidence: number;
 }
 
+export interface ClientMergeAuditDto {
+    id: number;
+    sourceClientId: number;
+    sourceName: string;
+    targetClientId: number;
+    targetName: string;
+    mode: 'Manual' | 'Auto';
+    reason?: string;
+    confidence: number;
+    ordersMoved: number;
+    aliasesMoved: number;
+    mergedAt: string;
+}
+
 export interface MonthlySalesDto {
     month: string;
     sales: number;

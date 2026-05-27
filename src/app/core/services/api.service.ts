@@ -10,12 +10,13 @@ import {
     CreateSalesPeriodRequest, UpdateOrderDetailsRequest, CreateAdminExpenseRequest,
     CommonProductDto, GlowUpReportDto, OrderPaymentDto, OrderPackageDto, GeneratePackagesRequest,
     AiParsedOrder, AiInsight,
-    CamiMessage, CamiChatRequest, CamiChatResponse,
+    CamiMessage, CamiChatRequest, CamiChatResponse, CamiProactiveSuggestionDto,
     AiRouteSelectionRequest, AiRouteSelectionResponse, CamiGreetingResponse,
     AvailableTandaDto, CreateRouteResponse, PreviewRouteResponse, BulkGeocodeResultDto,
     RecomposeRouteResponse,
     ResolveClientRequest, ResolveClientResponse,
-    ClientAliasDto, AddAliasRequest, MergeClientsRequest, DuplicateSuggestionDto
+    ClientAliasDto, AddAliasRequest, MergeClientsRequest, DuplicateSuggestionDto,
+    ClientMergeAuditDto
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -172,6 +173,10 @@ export class ApiService {
     getDuplicateSuggestions(limit: number = 50): Observable<DuplicateSuggestionDto[]> {
         const params = new HttpParams().set('limit', limit.toString());
         return this.http.get<DuplicateSuggestionDto[]>(`${this.base}/clients/duplicate-suggestions`, { params });
+    }
+
+    getClientMergeAudits(take: number = 50): Observable<ClientMergeAuditDto[]> {
+        return this.http.get<ClientMergeAuditDto[]>(`${this.base}/clients/merge-audits?take=${take}`);
     }
 
     // ── Routes ──
@@ -375,6 +380,10 @@ export class ApiService {
 
     getCamiAlerts(): Observable<Array<{ type: string; message: string; icon: string; relatedId?: number }>> {
         return this.http.get<Array<{ type: string; message: string; icon: string; relatedId?: number }>>(`${this.base}/cami/alerts`);
+    }
+
+    getCamiProactiveSuggestions(): Observable<CamiProactiveSuggestionDto[]> {
+        return this.http.get<CamiProactiveSuggestionDto[]>(`${this.base}/cami/proactive-suggestions`);
     }
 
     // ── Driver (Repartidor) ──

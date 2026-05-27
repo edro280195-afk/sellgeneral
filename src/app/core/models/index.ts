@@ -258,6 +258,86 @@ export interface DuplicateSuggestionDto {
     confidence: number;
 }
 
+// Captura asistida por video de lives
+export type LiveSessionStatus =
+    | 'Downloading'
+    | 'Transcribing'
+    | 'Parsing'
+    | 'Scanning'
+    | 'Combining'
+    | 'Ready'
+    | 'Failed';
+
+export type LiveCandidateStatus = 'Pending' | 'Confirmed' | 'Ignored';
+export type LiveCandidateSource = 'Spoken' | 'CommentOnly' | 'SpokenAndComment';
+
+export interface ImportLiveRequest {
+    facebookUrl: string;
+    title?: string;
+}
+
+export interface LiveSessionDto {
+    id: number;
+    facebookUrl: string;
+    r2Key?: string | null;
+    title?: string | null;
+    importedAt: string;
+    status: LiveSessionStatus | string;
+    durationSeconds?: number | null;
+    processedAt?: string | null;
+    errorMessage?: string | null;
+    productsCount: number;
+    candidatesCount: number;
+    pendingCount: number;
+    confirmedCount: number;
+    ignoredCount: number;
+}
+
+export interface LiveProductDto {
+    id: number;
+    keyword: string;
+    description: string;
+    price: number;
+    announcedAtSeconds: number;
+    confidence: number;
+    candidatesCount: number;
+}
+
+export interface ProposedAliasPairDto {
+    alias: string;
+    canonicalName: string;
+}
+
+export interface LiveCandidateDto {
+    id: number;
+    liveSessionId: number;
+    liveProductId?: number | null;
+    keyword: string;
+    productDescription?: string | null;
+    productPrice?: number | null;
+    clientNameSpoken?: string | null;
+    commentDisplayName?: string | null;
+    resolvedClientId?: number | null;
+    resolvedClientName?: string | null;
+    proposedAliasPair?: ProposedAliasPairDto | null;
+    source: LiveCandidateSource | string;
+    status: LiveCandidateStatus | string;
+    confidence: number;
+    spokenAtSeconds?: number | null;
+    commentedAtSeconds?: number | null;
+    createdOrderId?: number | null;
+    createdAt: string;
+    reviewedAt?: string | null;
+    resolution?: ResolveClientResponse | null;
+}
+
+export interface ConfirmLiveCandidateRequest {
+    clientId?: number | null;
+    productOverride?: string;
+    priceOverride?: number;
+    acceptProposedAlias?: boolean;
+}
+
 export interface MonthlySalesDto {
     month: string;
     sales: number;

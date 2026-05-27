@@ -32,6 +32,13 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
         </div>
       </header>
 
+      @if (session()?.statusDetail) {
+        <div class="diagnostic-strip" [class.warn]="(session()?.candidateCount || 0) === 0">
+          <strong>{{ statusLabel(session()?.status || '') }}</strong>
+          <span>{{ session()?.statusDetail }}</span>
+        </div>
+      }
+
       <div class="review-toolbar">
         <button type="button" [class.active]="filter() === 'Pending'" (click)="setFilter('Pending')">Sin revisar</button>
         <button type="button" [class.active]="filter() === 'conflict'" (click)="setFilter('conflict')">Con conflicto</button>
@@ -73,7 +80,12 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
             </div>
 
             @if (visibleCandidates().length === 0) {
-              <div class="empty-state">No hay candidates con este filtro.</div>
+              <div class="empty-state">
+                <strong>No hay candidatos con este filtro.</strong>
+                @if ((session()?.candidateCount || 0) === 0) {
+                  <span>{{ session()?.statusDetail || 'El procesamiento termino sin pedidos detectados.' }}</span>
+                }
+              </div>
             }
 
             <div class="candidate-list">
@@ -88,12 +100,12 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
                     <div class="avatar">{{ initials(displayName(candidate)) }}</div>
                     <div>
                       <strong>{{ displayName(candidate) }}</strong>
-                      <span>{{ candidate.productDescription || candidate.keyword }}</span>
+                      <span>{{ productDescription(candidate) }}</span>
                     </div>
                   </div>
                   <div class="row-meta">
                     <span class="source" [class.high]="candidate.source === 'SpokenAndComment'">{{ sourceLabel(candidate.source) }}</span>
-                    <strong>{{ candidate.productPrice || 0 | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
+                    <strong>{{ productPrice(candidate) | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
                   </div>
                 </article>
               }
@@ -125,7 +137,7 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
               <div class="edit-grid">
                 <label>
                   Producto
-                  <input [(ngModel)]="productOverride" [placeholder]="candidate.productDescription || candidate.keyword">
+                  <input [(ngModel)]="productOverride" [placeholder]="productDescription(candidate)">
                 </label>
                 <label>
                   Precio
@@ -147,16 +159,6 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
                   </button>
                 }
 
-                @if (candidate.resolution?.candidates?.length) {
-                  <div class="quick-choices">
-                    @for (option of candidate.resolution!.candidates; track option.clientId) {
-                      <button type="button" class="choice" [class.selected]="selectedClientId() === option.clientId" (click)="chooseClient(option)">
-                        {{ option.name }} <small>{{ percent(option.score) }}%</small>
-                      </button>
-                    }
-                  </div>
-                }
-
                 <app-client-resolver
                   [name]="identityName(candidate)"
                   (resolved)="onResolverResult($event)">
@@ -167,13 +169,13 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
                 </button>
               </section>
 
-              @if (candidate.proposedAliasPair) {
+              @if (proposedAliasPair(candidate); as aliasPair) {
                 <label class="alias-toggle">
                   <input type="checkbox" [(ngModel)]="acceptAlias">
                   <span>
                     Aprender alias:
-                    <strong>{{ candidate.proposedAliasPair.alias }}</strong>
-                    para {{ candidate.proposedAliasPair.canonicalName }}
+                    <strong>{{ aliasPair.comment || aliasPair.alias }}</strong>
+                    para {{ aliasPair.spoken || aliasPair.canonicalName }}
                   </span>
                 </label>
               }
@@ -227,6 +229,27 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
       white-space: nowrap;
     }
     .progress-pill strong { font-size: 1.2rem; }
+    .diagnostic-strip {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      background: #fffbfd;
+      border: 1px solid #fbcfe8;
+      color: #7a3d6a;
+      line-height: 1.35;
+    }
+    .diagnostic-strip strong {
+      color: #831843;
+      white-space: nowrap;
+    }
+    .diagnostic-strip.warn {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #9a3412;
+    }
     .review-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -521,6 +544,16 @@ type CandidateFilter = 'Pending' | 'Confirmed' | 'Ignored' | 'conflict' | 'all';
       text-align: center;
       font-weight: 800;
     }
+    .empty-state strong,
+    .empty-state span {
+      display: block;
+    }
+    .empty-state span {
+      margin-top: 6px;
+      color: #7a3d6a;
+      font-weight: 700;
+      line-height: 1.35;
+    }
     @media (max-width: 1180px) {
       .review-grid { grid-template-columns: 240px 1fr; }
       .detail-panel { grid-column: 1 / -1; max-height: none; }
@@ -560,6 +593,7 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
     priceOverride: number | null = null;
 
     confirmedCount = computed(() => this.candidates().filter(c => c.status === 'Confirmed').length);
+    productById = computed(() => new Map(this.products().map(product => [product.id, product])));
     visibleCandidates = computed(() => {
         const productId = this.selectedProductId();
         const filter = this.filter();
@@ -568,7 +602,7 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
             if (!productOk) return false;
             if (filter === 'all') return true;
             if (filter === 'conflict') {
-                return candidate.status === 'Pending' && (!candidate.resolvedClientId || !!candidate.proposedAliasPair);
+                return candidate.status === 'Pending' && (!candidate.resolvedClientId || !!this.proposedAliasPair(candidate));
             }
             return candidate.status === filter;
         });
@@ -589,25 +623,18 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
 
     load(): void {
         this.loading.set(true);
-        this.liveCapture.getSession(this.liveId).subscribe({
-            next: session => this.session.set(session),
-            error: () => this.toast.error('No se pudo cargar el live')
-        });
-
-        this.liveCapture.getProducts(this.liveId).subscribe({
-            next: products => this.products.set(products),
-            error: () => this.toast.error('No se pudieron cargar productos')
-        });
-
-        this.liveCapture.getCandidates(this.liveId, { pageSize: 1000, includeResolution: true }).subscribe({
-            next: result => {
-                this.candidates.set(result.items);
+        this.liveCapture.getReview(this.liveId).subscribe({
+            next: review => {
+                this.session.set(review.session);
+                this.products.set(review.products);
+                const grouped = Object.values(review.candidatesByProduct || {}).flat();
+                this.candidates.set([...grouped, ...(review.unmatchedCandidates || [])]);
                 this.loading.set(false);
                 this.ensureSelection();
             },
             error: () => {
                 this.loading.set(false);
-                this.toast.error('No se pudieron cargar candidates');
+                this.toast.error('No se pudo cargar la revision del live');
             }
         });
     }
@@ -628,9 +655,9 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
     }
 
     hydrateDetail(candidate: LiveCandidateDto): void {
-        this.productOverride = candidate.productDescription || candidate.keyword;
-        this.priceOverride = candidate.productPrice ?? 0;
-        this.acceptAlias = !!candidate.proposedAliasPair;
+        this.productOverride = this.productDescription(candidate);
+        this.priceOverride = this.productPrice(candidate);
+        this.acceptAlias = !!this.proposedAliasPair(candidate);
 
         const auto = this.autoClient(candidate);
         this.selectedClientId.set(auto?.clientId ?? candidate.resolvedClientId ?? undefined);
@@ -672,19 +699,20 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
     markAsNew(candidate: LiveCandidateDto): void {
         this.selectedClientId.set(null);
         this.selectedClientName.set('Clienta nueva');
-        if (!this.productOverride) this.productOverride = candidate.productDescription || candidate.keyword;
+        if (!this.productOverride) this.productOverride = this.productDescription(candidate);
     }
 
     confirm(candidate: LiveCandidateDto): void {
         this.busy.set(true);
         this.liveCapture.confirmCandidate(candidate.id, {
             clientId: this.selectedClientId() ?? null,
+            clientName: this.selectedClientId() === null ? this.identityName(candidate) : null,
             productOverride: this.productOverride.trim() || undefined,
             priceOverride: this.priceOverride ?? undefined,
-            acceptProposedAlias: this.acceptAlias
+            acceptAlias: this.acceptAlias
         }).pipe(finalize(() => this.busy.set(false))).subscribe({
-            next: updated => {
-                this.replaceCandidate(updated);
+            next: () => {
+                this.updateCandidateStatus(candidate.id, 'Confirmed');
                 this.toast.success('Pedido confirmado');
                 this.moveNext();
             },
@@ -695,8 +723,8 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
     ignore(candidate: LiveCandidateDto): void {
         this.busy.set(true);
         this.liveCapture.ignoreCandidate(candidate.id).pipe(finalize(() => this.busy.set(false))).subscribe({
-            next: updated => {
-                this.replaceCandidate(updated);
+            next: () => {
+                this.updateCandidateStatus(candidate.id, 'Ignored');
                 this.toast.info('Candidate ignorado');
                 this.moveNext();
             },
@@ -704,8 +732,8 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
         });
     }
 
-    replaceCandidate(updated: LiveCandidateDto): void {
-        this.candidates.update(items => items.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+    updateCandidateStatus(id: number, status: 'Confirmed' | 'Ignored'): void {
+        this.candidates.update(items => items.map(item => item.id === id ? { ...item, status } : item));
     }
 
     moveNext(direction = 1): void {
@@ -757,11 +785,10 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
 
     loadClip(candidate: LiveCandidateDto): void {
         this.revokeClip();
-        const at = candidate.spokenAtSeconds ?? candidate.commentedAtSeconds;
-        if (at === null || at === undefined) return;
+        if (candidate.spokenAtSeconds === null || candidate.spokenAtSeconds === undefined) return;
 
         this.clipLoading.set(true);
-        this.liveCapture.getClip(candidate.liveSessionId, Math.max(0, at - 1), 5)
+        this.liveCapture.getCandidateClip(candidate.id)
             .pipe(finalize(() => this.clipLoading.set(false)))
             .subscribe({
                 next: blob => this.clipUrl.set(URL.createObjectURL(blob)),
@@ -776,7 +803,6 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
     }
 
     autoClient(candidate: LiveCandidateDto): ResolveCandidateDto | undefined {
-        if (candidate.resolution?.suggestedAction === 'use') return candidate.resolution.candidates[0];
         return undefined;
     }
 
@@ -788,12 +814,34 @@ export class LiveReviewComponent implements OnInit, OnDestroy {
         return candidate.clientNameSpoken || candidate.commentDisplayName || 'Sin nombre';
     }
 
+    productFor(candidate: LiveCandidateDto): LiveProductDto | undefined {
+        return candidate.liveProductId ? this.productById().get(candidate.liveProductId) : undefined;
+    }
+
+    productDescription(candidate: LiveCandidateDto): string {
+        const product = this.productFor(candidate);
+        return product?.description || product?.keyword || candidate.keyword;
+    }
+
+    productPrice(candidate: LiveCandidateDto): number {
+        return this.productFor(candidate)?.price ?? 0;
+    }
+
+    proposedAliasPair(candidate: LiveCandidateDto): { alias?: string; canonicalName?: string; spoken?: string; comment?: string } | null {
+        if (!candidate.proposedAliasPairJson) return null;
+        try {
+            return JSON.parse(candidate.proposedAliasPairJson) as { alias?: string; canonicalName?: string; spoken?: string; comment?: string };
+        } catch {
+            return null;
+        }
+    }
+
     countForProduct(productId: number | null): number {
         const filter = this.filter();
         return this.candidates().filter(candidate => {
             if (productId !== null && candidate.liveProductId !== productId) return false;
             if (filter === 'all') return true;
-            if (filter === 'conflict') return candidate.status === 'Pending' && (!candidate.resolvedClientId || !!candidate.proposedAliasPair);
+            if (filter === 'conflict') return candidate.status === 'Pending' && (!candidate.resolvedClientId || !!this.proposedAliasPair(candidate));
             return candidate.status === filter;
         }).length;
     }

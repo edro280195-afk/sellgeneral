@@ -7,7 +7,7 @@ import { LiveCaptureService } from '../../../core/services/live-capture.service'
 import { ToastService } from '../../../core/services/toast.service';
 import { LiveSessionDto } from '../../../core/models';
 
-type StepId = 'Downloading' | 'Transcribing' | 'Parsing' | 'Scanning' | 'Combining' | 'Ready';
+type StepId = 'Queued' | 'Downloading' | 'Transcribing' | 'Parsing' | 'Ready';
 
 @Component({
     selector: 'app-live-import',
@@ -81,10 +81,17 @@ type StepId = 'Downloading' | 'Transcribing' | 'Parsing' | 'Scanning' | 'Combini
           </ol>
 
           @if (session()?.status === 'Failed') {
-            <p class="error-box">{{ session()?.errorMessage || 'No se pudo procesar el live.' }}</p>
+            <p class="error-box">{{ session()?.statusDetail || 'No se pudo procesar el live.' }}</p>
+          } @else if (session()?.statusDetail) {
+            <p class="detail-box">{{ session()?.statusDetail }}</p>
           }
 
           @if (session()?.status === 'Ready') {
+            <div class="result-grid">
+              <span><strong>{{ session()?.productCount || 0 }}</strong> productos</span>
+              <span><strong>{{ session()?.candidateCount || 0 }}</strong> candidatos</span>
+              <span><strong>{{ session()?.pendingCount || 0 }}</strong> pendientes</span>
+            </div>
             <button type="button" class="review-button" (click)="goReview()">Revisar pedidos</button>
           }
         </aside>
@@ -272,6 +279,36 @@ type StepId = 'Downloading' | 'Transcribing' | 'Parsing' | 'Scanning' | 'Combini
       padding: 10px 12px;
       border-radius: 12px;
     }
+    .detail-box {
+      margin: 16px 0 0;
+      color: #7a3d6a;
+      background: #fffbfd;
+      border: 1px solid #fbcfe8;
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.35;
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .result-grid span {
+      background: #fdf2f8;
+      border: 1px solid #fbcfe8;
+      border-radius: 12px;
+      padding: 9px;
+      color: #7a3d6a;
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .result-grid strong {
+      display: block;
+      color: #831843;
+      font-size: 1.15rem;
+    }
     .review-button {
       width: 100%;
       margin-top: 16px;
@@ -297,11 +334,10 @@ export class LiveImportComponent implements OnDestroy {
     session = signal<LiveSessionDto | null>(null);
 
     readonly steps: { id: StepId; label: string; help: string }[] = [
+        { id: 'Queued', label: 'En cola', help: 'El servidor preparo el trabajo.' },
         { id: 'Downloading', label: 'Descargando video', help: 'Se guarda el MP4 en R2.' },
         { id: 'Transcribing', label: 'Transcribiendo audio', help: 'Whisper genera segmentos con tiempo.' },
         { id: 'Parsing', label: 'Detectando productos', help: 'Gemini identifica keywords y pedidos leidos.' },
-        { id: 'Scanning', label: 'Leyendo comentarios', help: 'OCR busca keywords en el overlay.' },
-        { id: 'Combining', label: 'Armando candidatos', help: 'Se cruza audio, OCR e identidad.' },
         { id: 'Ready', label: 'Listo para revisar', help: 'Ya puedes confirmar pedidos.' },
     ];
 
@@ -348,7 +384,6 @@ export class LiveImportComponent implements OnDestroy {
                 if (session.status === 'Ready') {
                     this.polling.set(false);
                     this.pollSub?.unsubscribe();
-                    this.router.navigate(['/admin/live', id, 'review']);
                 }
                 if (session.status === 'Failed') {
                     this.polling.set(false);
@@ -381,11 +416,10 @@ export class LiveImportComponent implements OnDestroy {
 
     statusLabel(status: string): string {
         const labels: Record<string, string> = {
+            Queued: 'En cola',
             Downloading: 'Descargando',
             Transcribing: 'Transcribiendo',
             Parsing: 'Analizando productos',
-            Scanning: 'Detectando comentarios',
-            Combining: 'Cruzando senales',
             Ready: 'Listo',
             Failed: 'Error'
         };

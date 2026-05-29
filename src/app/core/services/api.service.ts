@@ -57,6 +57,13 @@ export class ApiService {
     markOrderNotified(id: number, notified: boolean): Observable<OrderSummaryDto> {
         return this.http.patch<OrderSummaryDto>(`${this.base}/orders/${id}/notified`, { notified });
     }
+
+    getUnpaidOrders(salesPeriodId?: number): Observable<OrderSummaryDto[]> {
+        let params = new HttpParams();
+        if (salesPeriodId != null) params = params.set('salesPeriodId', salesPeriodId.toString());
+        return this.http.get<OrderSummaryDto[]>(`${this.base}/orders/unpaid`, { params });
+    }
+
     getOrderStats(): Observable<OrderStatsDto> {
         return this.http.get<OrderStatsDto>(`${this.base}/orders/stats`);
     }

@@ -130,3 +130,16 @@ export function buildOrderMessage(data: OrderMessageData): string {
 
     return lineas.join('\n');
 }
+
+/** Mensaje amable de recordatorio de cobro para una clienta con saldo pendiente. */
+export function buildPaymentReminderMessage(clientName: string, balanceDue: number, publicLink: string): string {
+    const nombre = (clientName || '').trim() || 'bonita';
+    const saldo = balanceDue.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+    return [
+        `Hola ${nombre} 💕`,
+        `Te recuerdo que tu pedido tiene un saldo pendiente de ${saldo}.`,
+        publicLink,
+        '',
+        '¿Cómo te gustaría pagarlo? Quedo al pendiente ✨🛍️'
+    ].join('\n');
+}

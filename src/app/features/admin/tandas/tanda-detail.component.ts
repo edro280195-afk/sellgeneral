@@ -168,7 +168,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                             } @else {
                               <button (click)="openPaymentModal(p, w)" 
                                       class="w-full py-1.5 rounded-lg border border-pink-50 text-[11px] font-black text-pink-300 hover:border-pink-300 hover:text-pink-600 hover:bg-white transition-all">
-                                {{ t.weeklyAmount }}
+                                {{ getParticipantWeeklyAmount(p) }}
                               </button>
                             }
                           </td>
@@ -368,6 +368,10 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                           <input type="number" [(ngModel)]="enrollTurn" class="input-coquette py-1.5 text-xs text-center font-black" min="1" [max]="t.totalWeeks" />
                         </div>
                       </div>
+                      <div>
+                        <label class="text-[9px] font-black text-pink-400 uppercase mb-1 block">Abono Semanal (vacío = usar {{ t.weeklyAmount | currency:'MXN':'symbol-narrow':'1.0-0' }})</label>
+                        <input type="number" [(ngModel)]="enrollWeeklyAmount" class="input-coquette py-1.5 text-xs font-bold" placeholder="Ej. 350" />
+                      </div>
                       <button (click)="onAddParticipant()" [disabled]="isEnrolling()" class="btn-coquette btn-pink w-full py-3 text-[10px] font-black shadow-md">
                         @if (isEnrolling()) { <span class="animate-spin italic">⌛</span> } @else { Inscribir en Tanda 🎀 }
                       </button>
@@ -410,7 +414,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                 
                 <div class="flex items-end justify-center gap-1">
                   <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 font-display">
-                    {{ tanda()?.weeklyAmount | currency:'MXN':'symbol-narrow':'1.0-0' }}
+                    {{ getParticipantWeeklyAmount(activePayment()!.participant) | currency:'MXN':'symbol-narrow':'1.0-0' }}
                   </p>
                   <span class="text-pink-400 text-[10px] font-medium uppercase mb-2">/ Sem {{ activePayment()?.week }}</span>
                 </div>
@@ -725,6 +729,7 @@ export class TandaDetailComponent implements OnInit {
   selectedClient = signal<ClientDto | null>(null);
   enrollTurn = 1;
   enrollVariant = '';
+  enrollWeeklyAmount?: number;
   isEnrolling = signal(false);
 
   // Reordenamiento y Sorteo
@@ -815,6 +820,10 @@ export class TandaDetailComponent implements OnInit {
 
   hasPaid(participant: TandaParticipantDto, week: number): boolean {
     return participant.payments?.some(p => p.weekNumber === week) || false;
+  }
+
+  getParticipantWeeklyAmount(p: TandaParticipantDto): number {
+    return p.weeklyAmount ?? this.tanda()?.weeklyAmount ?? 0;
   }
 
   onClientSearch(term: string) {
@@ -930,6 +939,7 @@ export class TandaDetailComponent implements OnInit {
     this.selectedSuggestionIdx.set(-1);
     this.enrollTurn = this.participants().length + 1;
     this.enrollVariant = '';
+    this.enrollWeeklyAmount = undefined;
   }
 
   onAddParticipant() {
@@ -941,13 +951,15 @@ export class TandaDetailComponent implements OnInit {
         tandaId: t.id,
         customerId: sc.id.toString(),
         assignedTurn: this.enrollTurn,
-        variant: this.enrollVariant
+        variant: this.enrollVariant,
+        weeklyAmount: this.enrollWeeklyAmount || undefined
       }).subscribe({
         next: () => {
           this.toastService.success(`${sc.name} inscrita con éxito ✨`);
           this.loadTanda(t.id);
           this.selectedClient.set(null);
           this.enrollVariant = '';
+          this.enrollWeeklyAmount = undefined;
           this.isEnrolling.set(false);
         },
         error: (err) => {
@@ -993,7 +1005,7 @@ export class TandaDetailComponent implements OnInit {
       this.tandaService.registerPayment({
         participantId: pay.participant.id,
         weekNumber: pay.week,
-        amountPaid: t.weeklyAmount
+        amountPaid: this.getParticipantWeeklyAmount(pay.participant)
       }).subscribe({
         next: () => {
           this.toastService.success('Abono registrado correctamente 💅');

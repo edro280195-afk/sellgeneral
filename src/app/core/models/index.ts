@@ -917,6 +917,7 @@ export interface TandaParticipantDto {
     customerId: string;
     customerName?: string;
     assignedTurn: number;
+    weeklyAmount?: number;
     isDelivered: boolean;
     deliveryDate?: string;
     status: string; // Active, Delinquent, Completed
@@ -947,8 +948,10 @@ export interface TandaViewDto {
 }
 
 export interface TandaParticipantViewDto {
+    id: string;
     name: string;
     assignedTurn: number;
+    weeklyAmount?: number;
     hasPaidCurrentWeek: boolean;
     paidWeeks: number[];
     isWinnerThisWeek: boolean;
@@ -970,6 +973,7 @@ export interface AddParticipantDto {
     customerId: string;
     assignedTurn: number;
     variant?: string;
+    weeklyAmount?: number;
 }
 
 export interface RegisterPaymentDto {

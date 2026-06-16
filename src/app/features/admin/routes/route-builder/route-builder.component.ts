@@ -97,6 +97,26 @@ declare const google: any;
             </div>
         </div>
 
+        <!-- ALERT: optimización aproximada (sin distancias reales de calle) -->
+        @if (isApproxOptimizer()) {
+            <div class="max-w-[1600px] mx-auto mb-4">
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 sm:p-5 shadow-sm">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <span class="text-2xl sm:text-3xl">📐</span>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-black text-amber-900 mb-1 text-sm sm:text-base">Ruta calculada en modo aproximado</h3>
+                            <p class="text-xs sm:text-sm text-amber-700">
+                                El orden se calculó con distancias en <strong>línea recta</strong>, no por calles reales,
+                                por lo que puede no ser el más eficiente (en una ciudad con sentidos y puentes el orden se ve raro).
+                                Revisa el orden antes de guardar. Si ya activaste las distancias reales de Google y sigues viendo
+                                esto, hay que revisar la configuración del servidor.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- ALERT: clientas sin coords -->
         @if (selectedWithoutCoords().length > 0) {
             <div class="max-w-[1600px] mx-auto mb-4">

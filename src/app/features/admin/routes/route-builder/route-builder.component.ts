@@ -83,9 +83,16 @@ declare const google: any;
                     <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Duración</p>
                     <p class="text-xl sm:text-2xl font-black text-pink-900">{{ formatDuration(preview()?.totalDurationSeconds ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-pink-100/60">
-                    <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Motor</p>
-                    <p class="text-xs sm:text-sm font-bold text-pink-700 truncate">{{ optimizerLabel() }}</p>
+                <div class="rounded-2xl p-3 sm:p-4 shadow-sm border"
+                     [class.bg-white]="!isApproxOptimizer()" [class.border-pink-100/60]="!isApproxOptimizer()"
+                     [class.bg-amber-50]="isApproxOptimizer()" [class.border-amber-300]="isApproxOptimizer()">
+                    <p class="text-[10px] font-black uppercase tracking-widest"
+                       [class.text-pink-400]="!isApproxOptimizer()" [class.text-amber-500]="isApproxOptimizer()">Motor</p>
+                    <p class="text-xs sm:text-sm font-bold truncate"
+                       [class.text-pink-700]="!isApproxOptimizer()" [class.text-amber-700]="isApproxOptimizer()">{{ optimizerLabel() }}</p>
+                    @if (isApproxOptimizer()) {
+                        <p class="text-[10px] text-amber-600 font-semibold mt-0.5 leading-tight">Sin distancias reales — revisa el orden</p>
+                    }
                 </div>
             </div>
         </div>
@@ -225,12 +232,40 @@ declare const google: any;
             <div class="lg:col-span-6 bg-white rounded-3xl shadow-sm border border-pink-100/60 overflow-hidden flex flex-col"
                  [class.hidden]="mobileView() !== 'map'" [class.lg:flex]="true">
                 @if (mapsReady()) {
+                    <!-- Barra: selección por zona -->
+                    <div class="flex items-center gap-2 p-2 border-b border-pink-100/60 bg-pink-50/40">
+                        <button (click)="toggleZoneSelect()"
+                                [class.bg-pink-500]="zoneSelectMode()" [class.text-white]="zoneSelectMode()"
+                                [class.bg-white]="!zoneSelectMode()" [class.text-pink-600]="!zoneSelectMode()"
+                                class="px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider border border-pink-200 shadow-sm active:scale-95 transition-all">
+                            {{ zoneSelectMode() ? '✏️ Dibujando…' : '✏️ Seleccionar zona' }}
+                        </button>
+                        @if (ghostCandidates().length > 0) {
+                            <span class="text-[11px] font-bold text-pink-400">{{ ghostCandidates().length }} sin elegir en el mapa</span>
+                        }
+                        @if (hasZones()) {
+                            <button (click)="clearZones()"
+                                    class="ml-auto px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider bg-white text-pink-600 border border-pink-200 shadow-sm active:scale-95 transition-all">
+                                🧹 Limpiar zona
+                            </button>
+                        }
+                    </div>
                     <google-map
                         height="70vh"
                         width="100%"
                         [center]="mapCenter()"
                         [zoom]="mapZoom()"
-                        [options]="mapOptions">
+                        [options]="mapOptions"
+                        (mapInitialized)="onMapReady($event)">
+
+                        <!-- Candidatas SIN elegir (pines fantasma para encerrar) -->
+                        @for (c of ghostCandidates(); track c.key) {
+                            <map-marker
+                                [position]="{ lat: c.latitude!, lng: c.longitude! }"
+                                [options]="ghostMarkerOptions"
+                                (mapClick)="toggle(c.key)">
+                            </map-marker>
+                        }
 
                         <!-- Depot marker -->
                         @if (depotPosition(); as dp) {
@@ -451,6 +486,31 @@ export class RouteBuilderComponent implements OnInit {
     polylinePath = signal<google.maps.LatLngLiteral[]>([]);
     depotPosition = signal<google.maps.LatLngLiteral | null>({ lat: 27.4861, lng: -99.5069 });
 
+    // ── Selección por zona (dibujar polígono/círculo/rectángulo en el mapa) ──
+    zoneSelectMode = signal(false);
+    hasZones = signal(false);
+    private mapInstance?: google.maps.Map;
+    private drawingManager?: google.maps.drawing.DrawingManager;
+    private zoneOverlays: google.maps.MVCObject[] = [];
+
+    // Pin fantasma para candidatas con coords aún no seleccionadas (para poder encerrarlas).
+    // Getter lazy: se evalúa al renderizar (google ya cargado), no en el constructor.
+    private _ghostMarkerOptions?: google.maps.MarkerOptions;
+    get ghostMarkerOptions(): google.maps.MarkerOptions {
+        return this._ghostMarkerOptions ??= {
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: '#c084fc',
+                fillOpacity: 0.55,
+                strokeWeight: 1.5,
+                strokeColor: '#a855f7'
+            } as any,
+            zIndex: 50,
+            clickable: true
+        };
+    }
+
     private previewTrigger$ = new Subject<void>();
     private mapsPollTimer?: any;
 
@@ -509,6 +569,13 @@ export class RouteBuilderComponent implements OnInit {
 
     selectedWithoutCoords = computed(() => this.selectedRows().filter(r => !r.hasCoords));
 
+    /** Candidatas con coords que aún NO están seleccionadas (se muestran como pines fantasma). */
+    ghostCandidates = computed(() => {
+        const sel = this.selected();
+        return this.candidates().filter(c =>
+            !sel.has(c.key) && c.latitude != null && c.longitude != null);
+    });
+
     canSave = computed(() =>
         this.selected().size > 0
         && this.selectedWithoutCoords().length === 0
@@ -520,10 +587,18 @@ export class RouteBuilderComponent implements OnInit {
     optimizerLabel = computed(() => {
         const src = this.preview()?.optimizerSource;
         if (!src) return '—';
+        if (src === 'distance-matrix+2opt') return '🎯 Distancias reales';
+        if (src === 'haversine+2opt') return '↪️ Aproximado';
         if (src === 'google-routes-v2') return '🎯 Google Routes';
-        if (src === 'haversine-fallback') return '↪️ Haversine';
+        if (src === 'haversine-fallback') return '↪️ Aproximado';
         if (src === 'no-coords') return '⚠️ Sin coords';
         return src;
+    });
+
+    /** True cuando la optimización usó estimación en línea recta (no distancias reales de calle). */
+    isApproxOptimizer = computed(() => {
+        const src = this.preview()?.optimizerSource;
+        return src === 'haversine+2opt' || src === 'haversine-fallback';
     });
 
     constructor() {
@@ -749,6 +824,120 @@ export class RouteBuilderComponent implements OnInit {
         const next = new Set(this.selected());
         for (const c of this.visibleCandidates()) next.add(c.key);
         this.selected.set(next);
+    }
+
+    // ── Selección por zona en el mapa ──
+
+    /** Captura la instancia nativa del mapa cuando Google la inicializa. */
+    onMapReady(map: google.maps.Map): void {
+        this.mapInstance = map;
+    }
+
+    /** Activa/desactiva el modo de dibujo de zona (polígono / círculo / rectángulo). */
+    toggleZoneSelect(): void {
+        if (this.zoneSelectMode()) {
+            this.stopDrawing();
+            return;
+        }
+        if (!this.mapInstance || !google?.maps?.drawing) {
+            this.toast.show('El mapa aún no está listo', 'error');
+            return;
+        }
+        if (!this.drawingManager) this.initDrawingManager();
+
+        this.drawingManager!.setMap(this.mapInstance);
+        this.drawingManager!.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+        this.zoneSelectMode.set(true);
+    }
+
+    private initDrawingManager(): void {
+        const dm = new google.maps.drawing.DrawingManager({
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [
+                    google.maps.drawing.OverlayType.POLYGON,
+                    google.maps.drawing.OverlayType.CIRCLE,
+                    google.maps.drawing.OverlayType.RECTANGLE
+                ]
+            },
+            polygonOptions: this.zoneShapeStyle(),
+            circleOptions: this.zoneShapeStyle(),
+            rectangleOptions: this.zoneShapeStyle()
+        });
+
+        dm.addListener('overlaycomplete', (e: google.maps.drawing.OverlayCompleteEvent) => {
+            this.zoneOverlays.push(e.overlay as google.maps.MVCObject);
+            this.hasZones.set(true);
+            this.selectInsideShape(e.type, e.overlay);
+            // Tras dibujar, salir del modo dibujo (la zona queda pintada como referencia).
+            dm.setDrawingMode(null);
+            this.zoneSelectMode.set(false);
+        });
+
+        this.drawingManager = dm;
+    }
+
+    private zoneShapeStyle(): google.maps.PolygonOptions {
+        return {
+            fillColor: '#ec4899',
+            fillOpacity: 0.12,
+            strokeColor: '#ec4899',
+            strokeWeight: 2,
+            clickable: false,
+            editable: false,
+            zIndex: 10
+        };
+    }
+
+    /** Selecciona (suma) todas las candidatas con coords que caigan dentro de la figura dibujada. */
+    private selectInsideShape(type: google.maps.drawing.OverlayType, overlay: any): void {
+        const inside = (lat: number, lng: number): boolean => {
+            const point = new google.maps.LatLng(lat, lng);
+            if (type === google.maps.drawing.OverlayType.POLYGON) {
+                return google.maps.geometry.poly.containsLocation(point, overlay);
+            }
+            if (type === google.maps.drawing.OverlayType.RECTANGLE) {
+                return (overlay.getBounds() as google.maps.LatLngBounds)?.contains(point) ?? false;
+            }
+            if (type === google.maps.drawing.OverlayType.CIRCLE) {
+                const center = overlay.getCenter() as google.maps.LatLng;
+                const radius = overlay.getRadius() as number;
+                return google.maps.geometry.spherical.computeDistanceBetween(center, point) <= radius;
+            }
+            return false;
+        };
+
+        const next = new Set(this.selected());
+        let added = 0;
+        for (const c of this.candidates()) {
+            if (c.latitude == null || c.longitude == null) continue;
+            if (next.has(c.key)) continue;
+            if (inside(c.latitude, c.longitude)) {
+                next.add(c.key);
+                added++;
+            }
+        }
+
+        if (added > 0) {
+            this.selected.set(next);
+            this.toast.show(`+${added} ${added === 1 ? 'clienta agregada' : 'clientas agregadas'} de la zona`, 'success');
+        } else {
+            this.toast.show('No hay clientas sin elegir dentro de la zona', 'info');
+        }
+    }
+
+    private stopDrawing(): void {
+        this.drawingManager?.setDrawingMode(null);
+        this.zoneSelectMode.set(false);
+    }
+
+    /** Borra las figuras dibujadas (no des-selecciona; solo limpia el dibujo del mapa). */
+    clearZones(): void {
+        for (const ov of this.zoneOverlays) (ov as any).setMap?.(null);
+        this.zoneOverlays = [];
+        this.hasZones.set(false);
+        this.stopDrawing();
     }
 
     clearSelection(): void {

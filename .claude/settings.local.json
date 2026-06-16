@@ -53,7 +53,9 @@
       "Bash(Select-Object FullName)",
       "Bash(dotnet ef *)",
       "Bash(npm run *)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs cat)",
+      "PowerShell(head -30)"
     ]
   }
 }

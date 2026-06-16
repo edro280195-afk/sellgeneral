@@ -518,6 +518,7 @@ export class RouteBuilderComponent implements OnInit {
     private mapInstance?: google.maps.Map;
     private drawingManager?: google.maps.drawing.DrawingManager;
     private zoneOverlays: google.maps.MVCObject[] = [];
+    private zoneSelectedKeys = new Set<StopKey>(); // claves agregadas por zonas (para poder limpiarlas)
 
     // ── Lazo a mano alzada (touch) ──
     lassoPathD = signal('');                 // path SVG del trazo en curso
@@ -848,7 +849,8 @@ export class RouteBuilderComponent implements OnInit {
 
     toggle(key: StopKey): void {
         const next = new Set(this.selected());
-        if (next.has(key)) next.delete(key); else next.add(key);
+        if (next.has(key)) { next.delete(key); this.zoneSelectedKeys.delete(key); }
+        else next.add(key);
         this.selected.set(next);
     }
 
@@ -1031,6 +1033,7 @@ export class RouteBuilderComponent implements OnInit {
             if (next.has(c.key)) continue;
             if (inside(c.latitude, c.longitude)) {
                 next.add(c.key);
+                this.zoneSelectedKeys.add(c.key);
                 added++;
             }
         }
@@ -1051,11 +1054,19 @@ export class RouteBuilderComponent implements OnInit {
         this.lassoPathD.set('');
     }
 
-    /** Borra las figuras dibujadas (no des-selecciona; solo limpia el dibujo del mapa). */
+    /** Borra las figuras dibujadas y des-selecciona SOLO las clientas que agregaron esas zonas
+     *  (las elegidas a mano se conservan). */
     clearZones(): void {
         for (const ov of this.zoneOverlays) (ov as any).setMap?.(null);
         this.zoneOverlays = [];
         this.hasZones.set(false);
+
+        if (this.zoneSelectedKeys.size > 0) {
+            const next = new Set(this.selected());
+            for (const k of this.zoneSelectedKeys) next.delete(k);
+            this.selected.set(next);
+            this.zoneSelectedKeys.clear();
+        }
         this.stopDrawing();
     }
 

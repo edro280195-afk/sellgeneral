@@ -1036,10 +1036,10 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     const h = this.tourHole();
     const wW = window.innerWidth;
     const wH = window.innerHeight;
-    
+
     // Outer Rectangle (Screen)
     const d0 = `M 0 0 H ${wW} V ${wH} H 0 Z`;
-    
+
     // Inner Rounded Rectangle (Hole with padding and radius)
     const padding = 10;
     const x = h.left - padding;
@@ -1049,18 +1049,18 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     const r = h.radius || 24;
 
     const d1 = `M ${x} ${y + r} ` +
-               `A ${r} ${r} 0 0 1 ${x + r} ${y} ` +
-               `H ${x + w - r} ` +
-               `A ${r} ${r} 0 0 1 ${x + w} ${y + r} ` +
-               `V ${y + height - r} ` +
-               `A ${r} ${r} 0 0 1 ${x + w - r} ${y + height} ` +
-               `H ${x + r} ` +
-               `A ${r} ${r} 0 0 1 ${x} ${y + height - r} ` +
-               `Z`;
-               
+      `A ${r} ${r} 0 0 1 ${x + r} ${y} ` +
+      `H ${x + w - r} ` +
+      `A ${r} ${r} 0 0 1 ${x + w} ${y + r} ` +
+      `V ${y + height - r} ` +
+      `A ${r} ${r} 0 0 1 ${x + w - r} ${y + height} ` +
+      `H ${x + r} ` +
+      `A ${r} ${r} 0 0 1 ${x} ${y + height - r} ` +
+      `Z`;
+
     return `${d0} ${d1}`;
   });
-  
+
   dynamicTourSteps = computed(() => {
     const o = this.order();
     if (!o) return [];
@@ -1083,7 +1083,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Status Tab Specifics
     if (o.status === 'InRoute' || o.status === 'InTransit') {
-       steps.push({ target: '#nav-tabs', msg: 'En "Estado" podrás seguir al repartidor en tiempo real y ver cuántas entregas faltan. 🚗💨', tab: 'status' });
+      steps.push({ target: '#nav-tabs', msg: 'En "Estado" podrás seguir al repartidor en tiempo real y ver cuántas entregas faltan. 🚗💨', tab: 'status' });
     }
 
     // Chat Step (New FAB)
@@ -1131,7 +1131,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
         if (!this.tourActive()) {
           this.startTour();
         }
-      }, 800); 
+      }, 800);
     }
   }
 
@@ -1148,24 +1148,24 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       if (forceTabSwitch && step.tab && this.activeTab() !== step.tab) {
         this.activeTab.set(step.tab);
         // Wait for Angular change detection and DOM update
-        setTimeout(() => this.updateHole(false), 300); 
+        setTimeout(() => this.updateHole(false), 300);
         return;
       }
 
       // Root Fix: Exhaustive Element Search
       const el = document.querySelector(step.target) as HTMLElement;
-      
+
       if (el) {
         const calculateCoordinates = () => {
           const rect = el.getBoundingClientRect();
-          
+
           // Debugging logging if needed (internal)
           // console.log(`[Tour] Highlight target ${step.target}:`, rect);
 
           // If element is not actually visible or in layout (dimensions 0), retry
           if (rect.width === 0 && rect.height === 0) {
-             setTimeout(() => this.updateHole(false), 200);
-             return;
+            setTimeout(() => this.updateHole(false), 200);
+            return;
           }
 
           this.tourPlacement.set(rect.top > window.innerHeight / 2 ? 'top' : 'bottom');
@@ -1190,7 +1190,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       } else {
         // Fallback: If element not found, retry once or highlight safe area
         if (forceTabSwitch) {
-           setTimeout(() => this.updateHole(false), 500);
+          setTimeout(() => this.updateHole(false), 500);
         }
       }
     });
@@ -1214,7 +1214,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     // Saldo real acumulado de la clienta (viene del backend). Respaldo: estimación por el total.
     return o.clientPoints ?? Math.floor((o.total || 0) / 10);
   });
-  
+
 
 
 
@@ -1393,12 +1393,12 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.signalr.clientChatUpdate$.subscribe((msg) => {
       this.chatMessages.update(msgs => {
-         if (msgs.find(m => m.id === msg.id)) return msgs;
-         return [...msgs, msg];
+        if (msgs.find(m => m.id === msg.id)) return msgs;
+        return [...msgs, msg];
       });
       if (!this.isChatOpen()) {
-         this.unreadMessages.set(true);
-         this.showToast('¡Escribieron en tu chat! 💬💌');
+        this.unreadMessages.set(true);
+        this.showToast('¡Escribieron en tu chat! 💬💌');
       }
       this.scrollToBottomChat();
     });
@@ -1530,7 +1530,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       this.api.publicGetCamiGreeting(this.accessToken).subscribe({
         next: (res) => {
           this.displayCamiMessage(res.message, res.audioBase64);
-          try { localStorage.setItem(this.camiGreetedKey, new Date().toISOString()); } catch {}
+          try { localStorage.setItem(this.camiGreetedKey, new Date().toISOString()); } catch { }
         },
         error: () => this.isLoadingCami.set(false)
       });
@@ -1538,39 +1538,39 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   loadChat() {
-     this.api.publicGetChat(this.accessToken).subscribe(msgs => {
-        this.chatMessages.set(msgs);
-        this.scrollToBottomChat();
-     });
+    this.api.publicGetChat(this.accessToken).subscribe(msgs => {
+      this.chatMessages.set(msgs);
+      this.scrollToBottomChat();
+    });
   }
 
   sendChatMessage() {
-     if (!this.newChatMessage.trim() || this.sendingChat()) return;
-     this.sendingChat.set(true);
-     this.api.publicSendChatMessage(this.accessToken, this.newChatMessage).subscribe({
-        next: (msg) => {
-           this.chatMessages.update(msgs => {
-              if (msgs.find(m => m.id === msg.id)) return msgs;
-              return [...msgs, msg];
-           });
-           this.newChatMessage = '';
-           this.sendingChat.set(false);
-           this.scrollToBottomChat();
-        },
-        error: () => {
-           this.sendingChat.set(false);
-           this.showToast('No se pudo enviar el mensaje. 😿');
-        }
-     });
+    if (!this.newChatMessage.trim() || this.sendingChat()) return;
+    this.sendingChat.set(true);
+    this.api.publicSendChatMessage(this.accessToken, this.newChatMessage).subscribe({
+      next: (msg) => {
+        this.chatMessages.update(msgs => {
+          if (msgs.find(m => m.id === msg.id)) return msgs;
+          return [...msgs, msg];
+        });
+        this.newChatMessage = '';
+        this.sendingChat.set(false);
+        this.scrollToBottomChat();
+      },
+      error: () => {
+        this.sendingChat.set(false);
+        this.showToast('No se pudo enviar el mensaje. 😿');
+      }
+    });
   }
 
   scrollToBottomChat() {
-     setTimeout(() => {
-        const box = document.getElementById('modal-chat-box');
-        if (box) {
-           box.scrollTop = box.scrollHeight;
-        }
-     }, 100);
+    setTimeout(() => {
+      const box = document.getElementById('modal-chat-box');
+      if (box) {
+        box.scrollTop = box.scrollHeight;
+      }
+    }, 100);
   }
 
   confirmOrder(event?: MouseEvent | TouchEvent) {
@@ -2015,9 +2015,9 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
       const script = document.createElement('script');
-      script.id  = 'mp-sdk-script';
+      script.id = 'mp-sdk-script';
       script.src = 'https://sdk.mercadopago.com/js/v2';
-      script.onload  = () => resolve();
+      script.onload = () => resolve();
       script.onerror = () => reject(new Error('No se pudo cargar el SDK de Mercado Pago'));
       document.body.appendChild(script);
     });
@@ -2047,13 +2047,13 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       iframe: true,
       form: {
         id: 'mp-card-form',
-        cardNumber:     { id: 'mp-cardNumber',     placeholder: 'Número de tarjeta' },
+        cardNumber: { id: 'mp-cardNumber', placeholder: 'Número de tarjeta' },
         expirationDate: { id: 'mp-expirationDate', placeholder: 'MM/AA' },
-        securityCode:   { id: 'mp-securityCode',   placeholder: 'CVV' },
+        securityCode: { id: 'mp-securityCode', placeholder: 'CVV' },
         cardholderName: { id: 'mp-cardholderName', placeholder: 'Nombre en la tarjeta' },
-        issuer:         { id: 'mp-issuer',         placeholder: 'Banco emisor' },
-        installments:   { id: 'mp-installments',   placeholder: 'Cuotas' },
-        cardholderEmail:{ id: 'mp-cardholderEmail',placeholder: 'Email (para tu comprobante)' },
+        issuer: { id: 'mp-issuer', placeholder: 'Banco emisor' },
+        installments: { id: 'mp-installments', placeholder: 'Cuotas' },
+        cardholderEmail: { id: 'mp-cardholderEmail', placeholder: 'Email (para tu comprobante)' },
       },
       callbacks: {
         onFormMounted: (error: any) => {
@@ -2090,10 +2090,10 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     this.mpProcessing.set(true);
 
     this.api.publicCardPayment(this.accessToken, {
-      cardToken:       data.token,
+      cardToken: data.token,
       paymentMethodId: data.paymentMethodId,
-      issuerId:        data.issuerId ?? null,
-      installments:    Number(data.installments) || 1
+      issuerId: data.issuerId ?? null,
+      installments: Number(data.installments) || 1
     }).subscribe({
       next: (result) => {
         this.mpProcessing.set(false);
@@ -2102,8 +2102,8 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
         if (result.status === 'approved') {
           this.mpReceipt.set({
             amount: result.amount,
-            date:   new Date(),
-            ref:    result.paymentId ? `MP-${result.paymentId}` : '—'
+            date: new Date(),
+            ref: result.paymentId ? `MP-${result.paymentId}` : '—'
           });
           this.fireConfetti('celebration');
           this.order.update(o => o
@@ -2366,31 +2366,31 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private startCountdown(expiresAt: string) {
     if (this.countdownInterval) clearInterval(this.countdownInterval);
-    
+
     const targetDate = new Date(expiresAt).getTime();
-    
+
     const update = () => {
       const now = new Date().getTime();
       const distance = targetDate - now;
-      
+
       if (distance < 0) {
         this.countdownText.set('¡Llegó el gran día! 🎀');
         clearInterval(this.countdownInterval);
         return;
       }
-      
+
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      
+
       let text = '';
       if (days > 0) text += `${days}d `;
       text += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      
+
       this.countdownText.set(text);
     };
-    
+
     update();
     this.countdownInterval = setInterval(update, 1000);
   }

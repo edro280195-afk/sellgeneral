@@ -750,11 +750,144 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface RegisterRequest {
+    name: string;
+    email: string;
+    password: string;
+}
+
+export interface PhoneOtpRequest {
+    phone: string;
+}
+
+export interface PhoneOtpVerifyRequest {
+    phone: string;
+    code: string;
+}
+
+export interface FacebookLoginRequest {
+    accessToken: string;
+}
+
+export interface AuthMembershipDto {
+    businessId: number;
+    businessName: string;
+    role: string;
+}
+
 export interface LoginResponse {
     token: string;
     name: string;
     role: string;
     expiresAt: string;
+    accountId: number;
+    memberships: AuthMembershipDto[];
+}
+
+export interface PhoneOtpResponse {
+    phone: string;
+    otpRequired: boolean;
+    providerConfigured: boolean;
+    message: string;
+}
+
+// ── Bootstrap del panel (negocio + suscripcion + features) ──
+
+export interface BrandDto {
+    logoUrl: string | null;
+    bannerUrl: string | null;
+    brandPrimaryColor: string;
+    brandAccentColor: string | null;
+}
+
+export interface SubscriptionSummaryDto {
+    effectivePlan: string;
+    subscriptionStatus: string;
+    trialEndsAt: string | null;
+    currentPeriodEndsAt: string | null;
+    isLocked: boolean;
+    daysLeft: number;
+    pastDueGraceDays: number;
+}
+
+export interface BusinessMeDto {
+    id: number;
+    name: string;
+    slug: string;
+    city: string | null;
+    brand: BrandDto;
+    subscription: SubscriptionSummaryDto;
+    features: string[];
+}
+
+// ── Suscripción de plataforma (FE-3) ──
+
+export type SubscriptionStatusName =
+    | 'Active'
+    | 'Trialing'
+    | 'PastDue'
+    | 'Expired'
+    | 'Canceled';
+
+export type PlanTierName = 'Entrada' | 'Pro' | 'Elite' | 'Bloqueado';
+
+export type PeriodicityName = 'monthly' | 'quarterly' | 'annual';
+
+export interface SubscriptionAccountStateDto {
+    effectivePlan: PlanTierName;
+    planTier: PlanTierName;
+    subscriptionStatus: SubscriptionStatusName;
+    trialEndsAt: string | null;
+    currentPeriodEndsAt: string | null;
+    pendingPlanTier: PlanTierName | null;
+    pendingPlanEffectiveAt: string | null;
+    isLocked: boolean;
+    daysLeft: number;
+    pastDueGraceDays: number;
+}
+
+export interface SubscriptionPlanPriceDto {
+    planTier: PlanTierName;
+    monthlyPrice: number;
+    quarterlyPrice: number;
+    annualPrice: number;
+    quarterlyDiscountPct: number;
+    annualDiscountPct: number;
+    currency: string;
+}
+
+export interface SubscriptionPricingDto {
+    plans: SubscriptionPlanPriceDto[];
+    currency: string;
+}
+
+export interface CreatePreapprovalRequest {
+    planTier: PlanTierName;
+    periodicity: PeriodicityName;
+    payerEmail: string;
+    cardTokenId?: string | null;
+}
+
+export interface UpdatePreapprovalRequest {
+    planTier: PlanTierName;
+    periodicity: PeriodicityName;
+}
+
+export interface PreapprovalSummaryDto {
+    preapprovalId: string;
+    planTier: PlanTierName;
+    periodicity: PeriodicityName;
+    amount: number;
+    currency: string;
+    status: string;
+    nextPaymentDate: string | null;
+    currentPeriodEndsAt: string | null;
+    cancellationEffectiveAt: string | null;
+    initPoint: string | null;
+}
+
+export interface PlatformMpPublicKeyDto {
+    publicKey: string;
 }
 
 export interface CommonProductDto {

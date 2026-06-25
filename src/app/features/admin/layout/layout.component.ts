@@ -1,16 +1,36 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { BusinessBootstrapService } from '../../../core/services/business-bootstrap.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { UpsellService } from '../../../core/services/upsell.service';
+import { PlanTierName } from '../../../core/models';
+import { SubscriptionBannersComponent } from '../../../shared/components/subscription-banners/subscription-banners.component';
+import { SubscriptionPaywallComponent } from '../../../shared/components/subscription-paywall/subscription-paywall.component';
+import { UpsellModalComponent } from '../../../shared/components/upsell-modal/upsell-modal.component';
+import { BusinessSwitcherComponent } from '../../../shared/components/business-switcher/business-switcher.component';
 
 interface NavItem {
   label: string;
   icon: string;
   route: string;
+  /** Feature que debe estar activa para mostrar esta entrada. null = siempre. */
+  featureKey?: string;
+  /** Si true, la entrada aparece con candado en vez de ocultarse cuando la feature no esta. */
+  showLocked?: boolean;
 }
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    SubscriptionBannersComponent,
+    SubscriptionPaywallComponent,
+    UpsellModalComponent,
+    BusinessSwitcherComponent,
+  ],
   template: `
     <!-- Mobile overlay -->
     @if (isMobile() && sidebarOpen()) {
@@ -25,12 +45,16 @@ interface NavItem {
 
         <!-- Brand -->
         <div class="sidebar-brand">
-          <div class="brand-logo overflow-hidden border border-pink-200/50">
-            <img src="pwa-icon.png" alt="Logo" class="w-full h-full object-cover">
+          <div class="brand-logo">
+            @if (theme.logoUrl()) {
+              <img [src]="theme.logoUrl()" alt="Logo" class="w-full h-full object-cover">
+            } @else {
+              <span class="brand-logo-fallback">{{ brandInitial() }}</span>
+            }
           </div>
           @if (sidebarOpen()) {
             <div class="brand-text">
-              <span class="brand-name">Regi Bazar</span>
+              <span class="brand-name">{{ theme.name() || 'Mi negocio' }}</span>
               <span class="brand-sub">Admin Panel</span>
             </div>
           }
@@ -39,21 +63,29 @@ interface NavItem {
         <!-- Navigation -->
         <nav class="sidebar-nav">
           @for (item of navItems(); track item.route) {
-            <a [routerLink]="item.route"
-               routerLinkActive="nav-active"
-               [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
-               class="nav-link"
-               [class.nav-collapsed]="!sidebarOpen()"
-               (click)="onNavClick()">
-              <span class="nav-icon">{{ item.icon }}</span>
-              @if (sidebarOpen()) {
-                <span class="nav-label">{{ item.label }}</span>
-              }
-              <!-- Tooltip when collapsed -->
-              @if (!sidebarOpen()) {
-                <div class="nav-tooltip">{{ item.label }}</div>
-              }
-            </a>
+            @if (canShow(item)) {
+              <a [routerLink]="item.route"
+                 routerLinkActive="nav-active"
+                 [routerLinkActiveOptions]="{ exact: item.route === '/admin' }"
+                 class="nav-link"
+                 [class.nav-locked]="isLocked(item)"
+                 [class.nav-collapsed]="!sidebarOpen()"
+                 (click)="onNavClick(item, $event)">
+                <span class="nav-icon">{{ item.icon }}</span>
+                @if (sidebarOpen()) {
+                  <span class="nav-label">{{ item.label }}</span>
+                  @if (isLocked(item)) {
+                    <span class="nav-lock" aria-label="Requiere plan superior">🔒</span>
+                  }
+                }
+                @if (!sidebarOpen()) {
+                  <div class="nav-tooltip">
+                    {{ item.label }}
+                    @if (isLocked(item)) { (requiere {{ requiredPlan(item) }}) }
+                  </div>
+                }
+              </a>
+            }
           }
         </nav>
 
@@ -91,14 +123,25 @@ interface NavItem {
               <h1 class="date-title">{{ todayDate() }}</h1>
             </div>
           </div>
-          <div class="user-chip">
-            <div class="user-avatar">{{ userInitial() }}</div>
-            <div class="user-info">
-              <span class="user-role">Administradora</span>
-              <span class="user-name">Regi Bazar</span>
+          <div class="top-right">
+            <app-business-switcher />
+            <a routerLink="/admin/brand" class="brand-shortcut" title="Mi marca">
+              🎨
+            </a>
+            <div class="user-chip">
+              <div class="user-avatar">{{ userInitial() }}</div>
+              <div class="user-info">
+                <span class="user-role">Administradora</span>
+                <span class="user-name">{{ theme.name() || 'Mi negocio' }}</span>
+              </div>
             </div>
           </div>
         </header>
+
+        <!-- Subscription Banners (trial / past-due / pending plan) -->
+        @if (!bootstrap.isLocked()) {
+          <app-subscription-banners />
+        }
 
         <!-- Page Content -->
         <main class="page-content">
@@ -106,6 +149,14 @@ interface NavItem {
         </main>
       </div>
     </div>
+
+    <!-- Paywall global cuando la suscripcion esta bloqueada -->
+    @if (showPaywall()) {
+      <app-subscription-paywall />
+    }
+
+    <!-- Modal de upsell cuando se intenta usar una feature Pro/Elite -->
+    <app-upsell-modal />
   `,
   styles: [`
     :host { display: block; }
@@ -113,7 +164,14 @@ interface NavItem {
     /* ═══ APP SHELL ═══ */
     .app-shell {
       min-height: 100vh;
-      background: linear-gradient(160deg, #fff5f7 0%, #fdf2f8 30%, #fce7f3 60%, #fdf2f8 100%);
+      background:
+        linear-gradient(
+          160deg,
+          var(--brand-primary-50, #fff5f7) 0%,
+          var(--brand-primary-100, #fdf2f8) 30%,
+          var(--brand-primary-200, #fce7f3) 60%,
+          var(--brand-primary-100, #fdf2f8) 100%
+        );
       position: relative;
     }
 
@@ -128,7 +186,7 @@ interface NavItem {
       display: flex;
       flex-direction: column;
       border-radius: 1.5rem;
-      background: linear-gradient(180deg, #9d174d 0%, #be185d 40%, #db2777 100%);
+      background: linear-gradient(180deg, var(--brand-primary-800, #9d174d) 0%, var(--brand-primary-700, #be185d) 40%, var(--brand-primary-600, #db2777) 100%);
       border: 1px solid rgba(255, 255, 255, 0.15);
       box-shadow:
         0 25px 60px rgba(157, 23, 77, 0.35),
@@ -156,13 +214,19 @@ interface NavItem {
       width: 42px;
       height: 42px;
       border-radius: 14px;
-      background: linear-gradient(135deg, #fbcfe8, #f9a8d4);
+      background: linear-gradient(135deg, var(--brand-primary-200, #fbcfe8), var(--brand-primary-300, #f9a8d4));
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       box-shadow: 0 8px 24px rgba(251, 207, 232, 0.5);
       animation: float 4s ease-in-out infinite;
+      overflow: hidden;
+    }
+    .brand-logo-fallback {
+      color: white;
+      font-weight: 900;
+      font-size: 1.2rem;
     }
 
     .logo-emoji { font-size: 1.25rem; }
@@ -258,9 +322,21 @@ interface NavItem {
       transform: translateY(-50%);
       width: 4px;
       height: 1.25rem;
-      background: linear-gradient(180deg, #fbcfe8, #f9a8d4);
+      background: linear-gradient(180deg, var(--brand-primary-200, #fbcfe8), var(--brand-primary-300, #f9a8d4));
       border-radius: 0 4px 4px 0;
       box-shadow: 0 0 16px rgba(251, 207, 232, 0.6);
+    }
+
+    .nav-locked {
+      opacity: 0.7;
+    }
+    .nav-locked .nav-label { color: rgba(255, 255, 255, 0.75); }
+    .nav-lock {
+      margin-left: auto;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 0.1rem 0.4rem;
     }
 
     .nav-icon {
@@ -363,7 +439,7 @@ interface NavItem {
 
     .greeting {
       font-family: var(--font-accent);
-      color: #ec4899;
+      color: var(--brand-primary-500, #ec4899);
       font-size: 1.5rem;
       line-height: 1;
       margin-bottom: 0.25rem;
@@ -373,9 +449,34 @@ interface NavItem {
       font-family: var(--font-headings);
       font-size: 2rem;
       font-weight: 900;
-      color: #831843;
+      color: var(--brand-primary-900, #831843);
       letter-spacing: -0.03em;
       line-height: 1.1;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .brand-shortcut {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 999px;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    .brand-shortcut:hover {
+      border-color: rgba(236, 72, 153, 0.3);
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.12);
     }
 
     .mobile-toggle {
@@ -420,7 +521,7 @@ interface NavItem {
       width: 2.5rem;
       height: 2.5rem;
       border-radius: 50%;
-      background: linear-gradient(135deg, #f472b6, #ec4899);
+      background: linear-gradient(135deg, var(--brand-primary-400, #f472b6), var(--brand-primary-500, #ec4899));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -501,11 +602,26 @@ interface NavItem {
     }
   `]
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   private auth = inject(AuthService);
+  protected bootstrap = inject(BusinessBootstrapService);
+  protected theme = inject(ThemeService);
+  private upsell = inject(UpsellService);
 
   sidebarOpen = signal(window.innerWidth > 1024);
   isMobile = signal(window.innerWidth <= 1024);
+
+  /**
+   * El paywall global solo se monta cuando el Account activo es Owner/Admin.
+   * Los Driver y Scaner siguen viendo el panel de Rutas aunque la suscripcion
+   * este bloqueada: su trabajo diario no debe quedar atrapado por el muro.
+   */
+  protected showPaywall = computed(() => {
+    if (!this.bootstrap.isLocked()) return false;
+    if (!this.bootstrap.loaded() && this.bootstrap.loading()) return false;
+    const role = this.auth.currentRole();
+    return role === 'Owner' || role === 'Admin';
+  });
 
   @HostListener('window:resize')
   onResize() {
@@ -515,22 +631,62 @@ export class LayoutComponent {
     }
   }
 
+  ngOnInit(): void {
+    this.bootstrap.load();
+  }
+
+  protected brandInitial(): string {
+    const name = this.theme.name() || this.auth.displayName();
+    return name ? name.charAt(0).toUpperCase() : '?';
+  }
+
+  protected canShow(item: NavItem): boolean {
+    if (!item.featureKey) return true;
+    if (this.bootstrap.hasFeature(item.featureKey)) return true;
+    return !!item.showLocked;
+  }
+
+  protected isLocked(item: NavItem): boolean {
+    if (!item.featureKey) return false;
+    return !this.bootstrap.hasFeature(item.featureKey);
+  }
+
+  protected requiredPlan(item: NavItem): PlanTierName {
+    if (!item.featureKey) return 'Entrada';
+    const feat = this.bootstrap.featureCatalog().find(f => f.key === item.featureKey);
+    return (feat?.requiredPlan as PlanTierName) ?? 'Pro';
+  }
+
+  protected onNavClick(item: NavItem, event: MouseEvent): void {
+    if (this.isLocked(item)) {
+      event.preventDefault();
+      const label = item.featureKey ?? '';
+      this.upsell.open(label, item.label, this.requiredPlan(item));
+      return;
+    }
+    if (this.isMobile()) {
+      this.sidebarOpen.set(false);
+    }
+  }
+
   navItems = computed<NavItem[]>(() => {
-    const role = this.auth.userRole();
+    const role = this.auth.currentRole();
     const allItems: NavItem[] = [
       { label: 'Dashboard', icon: '🏠', route: '/admin' },
       { label: 'Pedidos', icon: '📦', route: '/admin/orders' },
       { label: 'Enviar Enlaces', icon: '💌', route: '/admin/send-links' },
       { label: 'Clientas', icon: '👩‍💼', route: '/admin/clients' },
       { label: 'Rutas', icon: '🚗', route: '/admin/routes' },
-      { label: 'Tandas', icon: '🔄', route: '/admin/tandas' },
-      { label: 'Sorteos', icon: '🎉', route: '/admin/raffles' },
+      { label: 'Tandas', icon: '🔄', route: '/admin/tandas', featureKey: 'TandasRaffles', showLocked: true },
+      { label: 'Sorteos', icon: '🎉', route: '/admin/raffles', featureKey: 'TandasRaffles', showLocked: true },
       { label: 'Proveedores', icon: '🏭', route: '/admin/suppliers' },
-      { label: 'Finanzas', icon: '💰', route: '/admin/financials' },
-      { label: 'Reportes', icon: '📊', route: '/admin/reports' },
+      { label: 'Finanzas', icon: '💰', route: '/admin/financials', featureKey: 'Financials', showLocked: true },
+      { label: 'Reportes', icon: '📊', route: '/admin/reports', featureKey: 'Exports', showLocked: true },
       { label: 'Cortes de Venta', icon: '📋', route: '/admin/sales-periods' },
-      { label: 'C.A.M.I.', icon: '✦', route: '/admin/cami' },
-      { label: 'Glow Up', icon: '✨', route: '/admin/glow-up' }
+      { label: 'C.A.M.I.', icon: '✦', route: '/admin/cami', featureKey: 'CamiAssistant', showLocked: true },
+      { label: 'Glow Up', icon: '✨', route: '/admin/glow-up' },
+      { label: 'Mi Marca', icon: '🎨', route: '/admin/brand' },
+      { label: 'Mi Plan', icon: '💎', route: '/admin/subscription' }
     ];
 
     if (role === 'Driver') {
@@ -542,7 +698,7 @@ export class LayoutComponent {
 
   greeting(): string {
     const hour = new Date().getHours();
-    const name = this.auth.userName() || 'Hermosa';
+    const name = this.auth.displayName() || 'Hermosa';
     if (hour < 12) return `Buenos días, ${name}`;
     if (hour < 18) return `Buenas tardes, ${name}`;
     return `Buenas noches, ${name}`;
@@ -556,14 +712,8 @@ export class LayoutComponent {
   }
 
   userInitial(): string {
-    const name = this.auth.userName();
+    const name = this.auth.displayName();
     return name ? name.charAt(0).toUpperCase() : '?';
-  }
-
-  onNavClick(): void {
-    if (this.isMobile()) {
-      this.sidebarOpen.set(false);
-    }
   }
 
   logout(): void {

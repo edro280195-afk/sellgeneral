@@ -1,7 +1,7 @@
 {
-    "name": "Regi Bazar - Todo para tu hogar ✨",
-    "short_name": "Regi Bazar",
-    "description": "Regi Bazar - Todo para tu hogar ✨",
+    "name": "Neni's App - La plataforma de tu tienda ✨",
+    "short_name": "Neni's App",
+    "description": "Neni's App - La plataforma de tu tienda ✨",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#fff1f2",

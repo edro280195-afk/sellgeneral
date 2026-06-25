@@ -3,6 +3,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { DashboardDto } from '../../../core/models';
+import { ThemeService } from '../../../core/services/theme.service';
 import { Chart, registerables } from 'chart.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -16,11 +17,31 @@ Chart.register(...registerables);
   imports: [CurrencyPipe, RouterLink, DatePipe],
   template: `
     <div class="dashboard-container space-y-6 lg:space-y-8 pb-10">
+      <!-- Hero del tenant con banner + nombre -->
+      @if (theme.bannerUrl() || theme.name()) {
+        <section class="tenant-hero card-coquette overflow-hidden opacity-0 translate-y-[-20px]">
+          @if (theme.bannerUrl()) {
+            <img [src]="theme.bannerUrl()" alt="Banner" class="tenant-banner">
+          } @else {
+            <div class="tenant-banner tenant-banner-fallback"></div>
+          }
+          <div class="tenant-hero-text">
+            @if (theme.logoUrl()) {
+              <img [src]="theme.logoUrl()" alt="Logo" class="tenant-logo">
+            }
+            <div>
+              <p class="tenant-eyebrow">Tu negocio</p>
+              <h2 class="tenant-name">{{ theme.name() || 'Mi negocio' }}</h2>
+            </div>
+          </div>
+        </section>
+      }
+
       <!-- Title -->
       <div class="dashboard-header opacity-0 translate-y-[-20px]">
-        <h1 class="text-2xl lg:text-3xl font-bold text-pink-900">
+        <h1 class="text-2xl lg:text-3xl font-bold" style="color: var(--brand-primary-900, #831843);">
           Dashboard
-          <span class="text-2xl lg:text-3xl" style="font-family: 'Dancing Script', cursive; color: #ec4899;"> ✨ Resumen General</span>
+          <span class="text-2xl lg:text-3xl font-accent" style="color: var(--brand-primary-500, #ec4899);"> ✨ Resumen General</span>
         </h1>
       </div>
 
@@ -301,10 +322,70 @@ Chart.register(...registerables);
         </div>
       }
     </div>
-  `
+  `,
+  styles: [`
+    .tenant-hero {
+        position: relative;
+        padding: 0;
+        border-radius: 1.75rem;
+        overflow: hidden;
+        min-height: 160px;
+        display: flex;
+        align-items: flex-end;
+        background: linear-gradient(135deg, var(--brand-primary-100, #fdf2f8), var(--brand-primary-200, #fce7f3));
+        border: 1px solid rgba(236, 72, 153, 0.2);
+    }
+    .tenant-banner {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .tenant-banner-fallback {
+        background:
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.4), transparent 50%),
+            linear-gradient(135deg, var(--brand-primary-300, #f9a8d4), var(--brand-primary-500, #ec4899));
+    }
+    .tenant-hero-text {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 1.25rem 1.5rem;
+        width: 100%;
+        background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.35) 100%);
+        color: white;
+    }
+    .tenant-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 1rem;
+        object-fit: cover;
+        background: white;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+    .tenant-eyebrow {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        opacity: 0.85;
+        margin: 0;
+    }
+    .tenant-name {
+        font-family: var(--font-headings);
+        font-size: 1.6rem;
+        font-weight: 900;
+        margin: 0.1rem 0 0;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+  `]
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
+  protected theme = inject(ThemeService);
 
   @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
 

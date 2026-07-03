@@ -788,6 +788,7 @@ export interface PhoneOtpResponse {
     phone: string;
     otpRequired: boolean;
     providerConfigured: boolean;
+    devMode: boolean;
     message: string;
 }
 

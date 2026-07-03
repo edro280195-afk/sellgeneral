@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,8 +20,11 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
             <div class="relative z-10 w-full max-w-md mx-4 animate-scale-in">
                 <div class="glass-strong rounded-3xl p-8 shadow-2xl" style="box-shadow: 0 25px 60px rgba(236, 72, 153, 0.15)">
                     <div class="text-center mb-8 animate-slide-down">
-                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white mb-4 shadow-lg overflow-hidden border-2 border-pink-200">
-                            <img src="pwa-icon.png" alt="Regi Bazar" class="w-full h-full object-cover">
+                        <div class="inline-flex items-center justify-center w-32 h-32 mb-2">
+                            <img
+                                src="assets/brand/nenis-mark.png"
+                                alt="Neni's"
+                                class="w-full h-full object-contain">
                         </div>
                         <h1 class="text-3xl font-bold gradient-text" style="font-family: 'Dancing Script', cursive; font-size: 2.5rem;">
                             Neni's App
@@ -111,12 +114,11 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                                         required
                                         autocomplete="one-time-code" />
                                 </div>
-                                <!-- DEV: mientras el proveedor SMS no esta, el backend
-                                     acepta cualquier codigo y crea/autentica un Account
-                                     con ese telefono. Lo dejamos visible para pruebas. -->
-                                <p class="text-xs text-pink-400 text-center">
-                                    // DEV: enviaremos un SMS cuando esté el proveedor listo.
-                                </p>
+                                @if (otpDevMode()) {
+                                    <p class="text-xs text-pink-500 text-center">
+                                        Modo prueba: usa el código 000000.
+                                    </p>
+                                }
 
                                 @if (errorMsg()) {
                                     <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm text-center">
@@ -263,6 +265,7 @@ export class LoginComponent {
     method = signal<LoginMethod>('phone');
     phoneStep = signal<'enter' | 'verify'>('enter');
     emailMode = signal<'login' | 'register'>('login');
+    otpDevMode = signal(false);
 
     name = '';
     email = '';
@@ -348,6 +351,7 @@ export class LoginComponent {
             next: (res) => {
                 this.loading.set(false);
                 if (res.otpRequired) {
+                    this.otpDevMode.set(res.devMode);
                     this.phoneStep.set('verify');
                 } else {
                     this.errorMsg.set('No se pudo enviar el código. Intenta con correo.');
@@ -409,6 +413,7 @@ export class LoginComponent {
 
     resetPhoneFlow(): void {
         this.phoneStep.set('enter');
+        this.otpDevMode.set(false);
         this.otpCode = '';
         this.errorMsg.set('');
     }

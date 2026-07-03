@@ -2,7 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { BrandDto, BusinessMeDto } from '../models';
+import {
+    BrandDto,
+    BusinessMeDto,
+    MercadoPagoPaymentSettingsDto,
+    UpdateMercadoPagoPaymentSettingsRequest,
+} from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class BrandService {
@@ -48,6 +53,21 @@ export class BrandService {
         return this.http.post<{ kind: string; url: string }>(
             `${this.base}/business/brand/banner`,
             form,
+        );
+    }
+
+    getPaymentSettings(): Observable<MercadoPagoPaymentSettingsDto> {
+        return this.http.get<MercadoPagoPaymentSettingsDto>(
+            `${this.base}/business/payment-settings`,
+        );
+    }
+
+    updatePaymentSettings(
+        req: UpdateMercadoPagoPaymentSettingsRequest,
+    ): Observable<MercadoPagoPaymentSettingsDto> {
+        return this.http.put<MercadoPagoPaymentSettingsDto>(
+            `${this.base}/business/payment-settings`,
+            req,
         );
     }
 }

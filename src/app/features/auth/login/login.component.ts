@@ -168,7 +168,20 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                             }
                         </div>
                     } @else {
-                        <form (ngSubmit)="onEmailLogin()" class="space-y-4">
+                        <form (ngSubmit)="submitEmail()" class="space-y-4">
+                            @if (emailMode() === 'register') {
+                                <div>
+                                    <label class="label-coquette">Nombre</label>
+                                    <input
+                                        type="text"
+                                        class="input-coquette"
+                                        placeholder="Tu nombre"
+                                        [(ngModel)]="name"
+                                        name="name"
+                                        required
+                                        autocomplete="name" />
+                                </div>
+                            }
                             <div>
                                 <label class="label-coquette">💌 Correo</label>
                                 <input
@@ -190,7 +203,9 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                                         [(ngModel)]="password"
                                         name="password"
                                         required
-                                        autocomplete="current-password" />
+                                        [autocomplete]="emailMode() === 'register'
+                                            ? 'new-password'
+                                            : 'current-password'" />
                                     <button
                                         type="button"
                                         class="absolute right-3 top-1/2 -translate-y-1/2 text-pink-400 hover:text-pink-600 transition-colors"
@@ -210,16 +225,30 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                                 [disabled]="loading()">
                                 @if (loading()) {
                                     <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    <span>Entrando…</span>
+                                    <span>{{ emailMode() === 'register' ? 'Creando…' : 'Entrando…' }}</span>
                                 } @else {
-                                    <span>Entrar</span>
+                                    <span>{{ emailMode() === 'register' ? 'Crear cuenta' : 'Entrar' }}</span>
                                     <span>💖</span>
                                 }
                             </button>
-                            <p class="text-xs text-pink-400 text-center">
-                                Acceso de equipo. Pronto te llevaremos al panel con teléfono.
-                            </p>
+                            <button
+                                type="button"
+                                class="w-full text-sm font-semibold text-pink-500 hover:text-pink-700"
+                                (click)="setEmailMode(emailMode() === 'register' ? 'login' : 'register')">
+                                {{ emailMode() === 'register'
+                                    ? 'Ya tengo cuenta'
+                                    : 'Crear una cuenta y registrar mi tienda' }}
+                            </button>
                         </form>
+                    }
+
+                    @if (method() !== 'email') {
+                        <button
+                            type="button"
+                            class="w-full mt-6 text-sm font-semibold text-pink-500 hover:text-pink-700"
+                            (click)="openRegistration()">
+                            ¿Vas a registrar una tienda? Crear cuenta
+                        </button>
                     }
                 </div>
             </div>
@@ -233,7 +262,9 @@ export class LoginComponent {
 
     method = signal<LoginMethod>('phone');
     phoneStep = signal<'enter' | 'verify'>('enter');
+    emailMode = signal<'login' | 'register'>('login');
 
+    name = '';
     email = '';
     password = '';
     phone = '';
@@ -248,19 +279,59 @@ export class LoginComponent {
         this.errorMsg.set('');
     }
 
-    onEmailLogin(): void {
+    setEmailMode(mode: 'login' | 'register'): void {
+        this.emailMode.set(mode);
+        this.errorMsg.set('');
+    }
+
+    openRegistration(): void {
+        this.method.set('email');
+        this.setEmailMode('register');
+    }
+
+    submitEmail(): void {
         if (!this.email || !this.password) {
             this.errorMsg.set('Por favor llena todos los campos 🌸');
             return;
         }
+
+        if (this.emailMode() === 'register' && !this.name.trim()) {
+            this.errorMsg.set('Captura tu nombre.');
+            return;
+        }
+
+        if (this.emailMode() === 'register' && this.password.length < 8) {
+            this.errorMsg.set('La contraseña debe tener al menos 8 caracteres.');
+            return;
+        }
+
         this.loading.set(true);
         this.errorMsg.set('');
 
-        this.auth.login({ email: this.email, password: this.password }).subscribe({
-            next: () => this.afterAuth(),
+        const request = this.emailMode() === 'register'
+            ? this.auth.register({
+                name: this.name.trim(),
+                email: this.email,
+                password: this.password,
+            })
+            : this.auth.login({ email: this.email, password: this.password });
+
+        request.subscribe({
+            next: () => {
+                if (this.emailMode() === 'register') {
+                    this.toast.success('Cuenta creada. Ahora registra tu tienda.');
+                }
+                this.afterAuth();
+            },
             error: (err) => {
                 this.loading.set(false);
-                this.errorMsg.set(err?.error?.message || err?.error || 'Correo o contraseña incorrectos');
+                this.errorMsg.set(
+                    err?.error?.message ||
+                    err?.error ||
+                    (this.emailMode() === 'register'
+                        ? 'No se pudo crear la cuenta'
+                        : 'Correo o contraseña incorrectos'),
+                );
             }
         });
     }
@@ -346,7 +417,7 @@ export class LoginComponent {
         // Si el Account autenticado NO tiene memberships (caso FE-2
         // onboarding), lo mandamos al wizard. Si ya es Owner/Admin/Driver,
         // al panel.
-        if (!this.auth.hasOwnerMembership()) {
+        if (this.auth.memberships().length === 0) {
             this.router.navigate(['/onboarding']);
             return;
         }

@@ -385,9 +385,11 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                   <button class="py-2 text-xs font-bold rounded-xl transition-all"
                           [ngClass]="paymentTab() === 'oxxo' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400 hover:text-pink-500'"
                           (click)="setPaymentTab('oxxo')">🏪 OXXO</button>
-                  <button class="py-2 text-xs font-bold rounded-xl transition-all"
-                          [ngClass]="paymentTab() === 'card' ? 'bg-white text-violet-600 shadow-sm' : 'text-violet-400 hover:text-violet-500'"
-                          (click)="setPaymentTab('card')">💳 Tarjeta</button>
+                  @if (o.mercadoPagoPublicKey) {
+                    <button class="py-2 text-xs font-bold rounded-xl transition-all"
+                            [ngClass]="paymentTab() === 'card' ? 'bg-white text-violet-600 shadow-sm' : 'text-violet-400 hover:text-violet-500'"
+                            (click)="setPaymentTab('card')">💳 Tarjeta</button>
+                  }
                 </div>
 
                 <!-- Tab Content -->
@@ -2004,10 +2006,17 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async onCardTabSelected() {
+    const publicKey = this.order()?.mercadoPagoPublicKey;
+    if (!publicKey) {
+      this.paymentTab.set('transfer');
+      this.showToast('Esta tienda no tiene pagos con tarjeta configurados.');
+      return;
+    }
+
     if (!this.mpSdkLoaded()) {
       try {
         await this.loadMpScript();
-        this.mp = new (window as any).MercadoPago(environment.mpPublicKey, { locale: 'es-MX' });
+        this.mp = new (window as any).MercadoPago(publicKey, { locale: 'es-MX' });
         this.mpSdkLoaded.set(true);
       } catch (err) {
         console.error('[MP] Error al cargar SDK:', err);

@@ -5,7 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { TandaService } from '../../../core/services/tanda.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ApiService } from '../../../core/services/api.service';
-import { environment } from '../../../../environments/environment';
 import { gsap } from 'gsap';
 
 const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
@@ -127,9 +126,11 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
 
                 <!-- Payment Tabs -->
                 <div class="flex p-1 bg-white/50 backdrop-blur-md rounded-2xl mb-4 border border-white/50">
-                  <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
-                          [ngClass]="paymentTab() === 'card' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
-                          (click)="setPaymentTab('card')">💳 Tarjeta</button>
+                  @if (t.mercadoPagoPublicKey) {
+                    <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+                            [ngClass]="paymentTab() === 'card' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
+                            (click)="setPaymentTab('card')">💳 Tarjeta</button>
+                  }
                   <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
                           [ngClass]="paymentTab() === 'transfer' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
                           (click)="setPaymentTab('transfer')">🏦 Transfer</button>
@@ -536,13 +537,19 @@ export class TandaViewComponent implements OnInit {
   }
 
   private async onCardTabSelected() {
+    const publicKey = this.tanda()?.mercadoPagoPublicKey;
+    if (!publicKey) {
+      this.paymentTab.set('transfer');
+      this.showToast('Esta tienda no tiene pagos con tarjeta configurados.');
+      return;
+    }
+
     console.log('💳 Card Tab Selected');
     if (!this.mpSdkLoaded()) {
       try {
         await this.loadMpScript();
         if ((window as any).MercadoPago) {
-          console.log('Initializing MP with Key:', environment.mpPublicKey);
-          this.mp = new (window as any).MercadoPago(environment.mpPublicKey, { locale: 'es-MX' });
+          this.mp = new (window as any).MercadoPago(publicKey, { locale: 'es-MX' });
           this.mpSdkLoaded.set(true);
         } else {
           throw new Error('MercadoPago object not found after script load');

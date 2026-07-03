@@ -1093,7 +1093,20 @@ export interface TandaViewDto {
     weeklyAmount: number;
     startDate: string;
     currentWeek: number;
+    mercadoPagoPublicKey?: string | null;
     participants: TandaParticipantViewDto[];
+}
+
+export interface MercadoPagoPaymentSettingsDto {
+    publicKey?: string | null;
+    hasAccessToken: boolean;
+    isConfigured: boolean;
+}
+
+export interface UpdateMercadoPagoPaymentSettingsRequest {
+    publicKey?: string | null;
+    accessToken?: string | null;
+    clearAccessToken?: boolean;
 }
 
 export interface TandaParticipantViewDto {

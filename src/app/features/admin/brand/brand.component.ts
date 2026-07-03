@@ -205,6 +205,90 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
                     </div>
                 </aside>
             </div>
+
+            <section class="payment-settings card-coquette p-6">
+                <div class="payment-header">
+                    <div>
+                        <p class="text-pink-500 font-semibold uppercase tracking-widest text-xs">
+                            Cobros del negocio
+                        </p>
+                        <h2 class="font-headings text-2xl text-pink-900 mt-1">
+                            Mercado Pago
+                        </h2>
+                        <p class="text-pink-700/80 mt-1 text-sm">
+                            Estas credenciales pertenecen solo a este negocio. Los pagos de
+                            pedidos y tandas se depositan en esta cuenta.
+                        </p>
+                    </div>
+                    <span
+                        class="payment-status"
+                        [class.payment-status-ready]="paymentConfigured()">
+                        {{ paymentConfigured() ? 'Configurado' : 'Pendiente' }}
+                    </span>
+                </div>
+
+                <div class="payment-fields">
+                    <div class="field">
+                        <label for="mp-public-key">Public Key</label>
+                        <input
+                            id="mp-public-key"
+                            class="text-input"
+                            type="text"
+                            autocomplete="off"
+                            [ngModel]="paymentPublicKeyDraft()"
+                            (ngModelChange)="paymentPublicKeyDraft.set($event)"
+                            placeholder="APP_USR-... o TEST-..." />
+                    </div>
+
+                    <div class="field">
+                        <label for="mp-access-token">Access Token</label>
+                        <div class="secret-row">
+                            <input
+                                id="mp-access-token"
+                                class="text-input"
+                                [type]="showPaymentAccessToken() ? 'text' : 'password'"
+                                autocomplete="new-password"
+                                [ngModel]="paymentAccessTokenDraft()"
+                                (ngModelChange)="paymentAccessTokenDraft.set($event)"
+                                [placeholder]="paymentHasAccessToken()
+                                    ? 'Ya configurado. Deja vacío para conservarlo.'
+                                    : 'APP_USR-... o TEST-...'" />
+                            <button
+                                type="button"
+                                class="secret-toggle"
+                                (click)="showPaymentAccessToken.set(!showPaymentAccessToken())">
+                                {{ showPaymentAccessToken() ? 'Ocultar' : 'Mostrar' }}
+                            </button>
+                        </div>
+                        <p class="field-hint">
+                            El Access Token se cifra en el API y nunca vuelve a mostrarse.
+                        </p>
+                    </div>
+                </div>
+
+                @if (paymentError(); as error) {
+                    <p class="form-error">{{ error }}</p>
+                }
+
+                <div class="form-actions">
+                    <button
+                        type="button"
+                        class="btn-coquette save-btn"
+                        [disabled]="paymentSaving()"
+                        (click)="savePaymentSettings()">
+                        {{ paymentSaving() ? 'Guardando...' : 'Guardar Mercado Pago' }}
+                    </button>
+                    @if (paymentHasAccessToken() || paymentPublicKeyDraft()) {
+                        <button
+                            type="button"
+                            class="reset-btn"
+                            [disabled]="paymentSaving()"
+                            (click)="clearPaymentSettings()">
+                            Desconectar
+                        </button>
+                    }
+                </div>
+            </section>
         </div>
     `,
     styles: [`
@@ -446,6 +530,57 @@ const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
             font-size: 0.8rem;
             cursor: pointer;
         }
+        .payment-settings {
+            margin-top: 1.5rem;
+        }
+        .payment-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+        }
+        .payment-status {
+            flex: 0 0 auto;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: #fff1f2;
+            color: #be123c;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .payment-status-ready {
+            background: #ecfdf5;
+            color: #047857;
+        }
+        .payment-fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .secret-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.5rem;
+        }
+        .secret-toggle {
+            border: 1px solid #f9a8d4;
+            border-radius: 0.7rem;
+            padding: 0 0.85rem;
+            background: white;
+            color: #9d174d;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        @media (max-width: 700px) {
+            .payment-header {
+                flex-direction: column;
+            }
+            .payment-fields {
+                grid-template-columns: 1fr;
+            }
+        }
     `],
 })
 export class BrandComponent implements OnInit {
@@ -465,6 +600,13 @@ export class BrandComponent implements OnInit {
 
     protected saving = signal(false);
     protected formError = signal<string | null>(null);
+    protected paymentPublicKeyDraft = signal('');
+    protected paymentAccessTokenDraft = signal('');
+    protected paymentHasAccessToken = signal(false);
+    protected paymentConfigured = signal(false);
+    protected paymentSaving = signal(false);
+    protected paymentError = signal<string | null>(null);
+    protected showPaymentAccessToken = signal(false);
 
     private newLogoFile: File | null = null;
     private newBannerFile: File | null = null;
@@ -501,6 +643,7 @@ export class BrandComponent implements OnInit {
 
     ngOnInit(): void {
         this.bootstrap.load();
+        this.loadPaymentSettings();
         const me = this.bootstrap.me();
         if (me) {
             this.nameDraft.set(me.name);
@@ -509,6 +652,84 @@ export class BrandComponent implements OnInit {
             this.logoPreview.set(me.brand.logoUrl);
             this.bannerPreview.set(me.brand.bannerUrl);
         }
+    }
+
+    protected savePaymentSettings(): void {
+        const publicKey = this.paymentPublicKeyDraft().trim();
+        const accessToken = this.paymentAccessTokenDraft().trim();
+
+        if (!publicKey) {
+            this.paymentError.set('Captura la Public Key de Mercado Pago.');
+            return;
+        }
+
+        if (!this.paymentHasAccessToken() && !accessToken) {
+            this.paymentError.set('Captura el Access Token de Mercado Pago.');
+            return;
+        }
+
+        this.paymentSaving.set(true);
+        this.paymentError.set(null);
+        this.brand.updatePaymentSettings({
+            publicKey,
+            accessToken: accessToken || null,
+        }).subscribe({
+            next: settings => {
+                this.paymentSaving.set(false);
+                this.paymentAccessTokenDraft.set('');
+                this.paymentHasAccessToken.set(settings.hasAccessToken);
+                this.paymentConfigured.set(settings.isConfigured);
+                this.paymentPublicKeyDraft.set(settings.publicKey ?? '');
+                this.toast.success('Mercado Pago quedó configurado para este negocio.');
+            },
+            error: (err: { error?: { message?: string } }) => {
+                this.paymentSaving.set(false);
+                this.paymentError.set(
+                    err?.error?.message || 'No se pudo guardar la configuración de Mercado Pago.',
+                );
+            },
+        });
+    }
+
+    protected clearPaymentSettings(): void {
+        if (!window.confirm('¿Desconectar Mercado Pago de este negocio?')) return;
+
+        this.paymentSaving.set(true);
+        this.paymentError.set(null);
+        this.brand.updatePaymentSettings({
+            publicKey: null,
+            clearAccessToken: true,
+        }).subscribe({
+            next: settings => {
+                this.paymentSaving.set(false);
+                this.paymentPublicKeyDraft.set('');
+                this.paymentAccessTokenDraft.set('');
+                this.paymentHasAccessToken.set(settings.hasAccessToken);
+                this.paymentConfigured.set(settings.isConfigured);
+                this.toast.info('Mercado Pago fue desconectado de este negocio.');
+            },
+            error: (err: { error?: { message?: string } }) => {
+                this.paymentSaving.set(false);
+                this.paymentError.set(
+                    err?.error?.message || 'No se pudo desconectar Mercado Pago.',
+                );
+            },
+        });
+    }
+
+    private loadPaymentSettings(): void {
+        this.brand.getPaymentSettings().subscribe({
+            next: settings => {
+                this.paymentPublicKeyDraft.set(settings.publicKey ?? '');
+                this.paymentHasAccessToken.set(settings.hasAccessToken);
+                this.paymentConfigured.set(settings.isConfigured);
+            },
+            error: (err: { error?: { message?: string } }) => {
+                this.paymentError.set(
+                    err?.error?.message || 'No se pudo cargar la configuración de Mercado Pago.',
+                );
+            },
+        });
     }
 
     protected onLogoSelected(event: Event): void {

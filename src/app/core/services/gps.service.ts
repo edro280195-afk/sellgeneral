@@ -4,6 +4,7 @@ import { BackgroundGeolocationPlugin } from '@capacitor-community/background-geo
 import { App } from '@capacitor/app';
 import { ApiService } from './api.service';
 import { SignalRService } from './signalr.service';
+import { ThemeService } from './theme.service';
 
 const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
 const GPS_KEY = 'regi_gps_granted';
@@ -15,6 +16,7 @@ const TOKEN_KEY = 'regi_driver_token';
 export class GpsService {
   private api = inject(ApiService);
   private signalr = inject(SignalRService);
+  private theme = inject(ThemeService);
 
   active = signal(false);
   lastPosition = signal<{ lat: number, lng: number } | null>(null);
@@ -128,7 +130,7 @@ export class GpsService {
     BackgroundGeolocation.addWatcher(
       {
         backgroundMessage: 'Tu ubicación se comparte para optimizar la ruta de entrega.',
-        backgroundTitle: 'Regi Bazar • En Ruta 🚚',
+        backgroundTitle: `${this.theme.name() || 'Regi Bazar'} • En Ruta 🚚`,
         requestPermissions: true,
         stale: false,
         distanceFilter: 10

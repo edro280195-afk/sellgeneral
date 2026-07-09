@@ -27,7 +27,7 @@ export class App implements OnInit {
 
   ngOnInit() {
     CapacitorApp.addListener('appUrlOpen', data => {
-      if (data.url.includes('regibazar.com')) {
+      try {
         const urlObj = new URL(data.url);
         const path = urlObj.pathname;
         if (path.startsWith('/repartidor/')) {
@@ -35,7 +35,7 @@ export class App implements OnInit {
             this.router.navigateByUrl(path);
           });
         }
-      }
+      } catch (_) {}
     });
   }
 

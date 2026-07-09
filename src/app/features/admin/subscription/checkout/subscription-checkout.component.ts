@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ThemeService } from '../../../../core/services/theme.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -429,6 +430,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
     private mp = inject(MercadoPagoBrickService);
     private toast = inject(ToastService);
     private bootstrap = inject(BusinessBootstrapService);
+    private theme = inject(ThemeService);
 
     protected readonly periodicities: { key: PeriodicityKey; label: string }[] = [
         { key: 'monthly', label: 'Mensual' },
@@ -502,7 +504,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
     protected planTagline(): string {
         switch (this.plan()) {
             case 'Entrada': return 'Para empezar a vender y entregar.';
-            case 'Pro': return 'El plan que usa Regi Bazar. Todo lo importante.';
+            case 'Pro': return `El plan que usa ${this.theme.name() || 'Regi Bazar'}. Todo lo importante.`;
             case 'Elite': return 'C.A.M.I. y rutas con tráfico en vivo.';
             default: return '';
         }

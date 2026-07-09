@@ -1,9 +1,10 @@
-import { Component, inject, signal, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { RaffleService } from '../../../core/services/raffle.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { RaffleDetailDto, RaffleParticipantDto } from '../../../core/models';
 import { RaffleAnimationComponent } from '../../admin/raffles/raffle-animation/raffle-animation.component';
 import { gsap } from 'gsap';
@@ -20,7 +21,7 @@ import confetti from 'canvas-confetti';
             <!-- Header con branding -->
             <header class="live-header">
                 <div class="brand-mark">
-                    <span class="brand-text">REGI BAZAR</span>
+                    <span class="brand-text">{{ businessName() }}</span>
                     <span class="brand-sparkle">✨</span>
                 </div>
                 @if (raffle()) {
@@ -545,6 +546,9 @@ export class LiveViewComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly raffleService = inject(RaffleService);
     private readonly toast = inject(ToastService);
     private readonly authService = inject(AuthService);
+    private readonly theme = inject(ThemeService);
+
+    businessName = computed(() => this.theme.name() || 'REGI BAZAR');
 
     raffle = signal<RaffleDetailDto | null>(null);
     participants = signal<RaffleParticipantDto[]>([]);
@@ -786,7 +790,7 @@ export class LiveViewComponent implements OnInit, AfterViewInit, OnDestroy {
         ctx.fillStyle = '#fff';
         ctx.font = '900 48px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('REGI BAZAR', W / 2, 150);
+        ctx.fillText(this.businessName(), W / 2, 150);
 
         ctx.fillStyle = '#fbbf24';
         ctx.font = '900 36px sans-serif';
@@ -805,9 +809,10 @@ export class LiveViewComponent implements OnInit, AfterViewInit, OnDestroy {
         ctx.font = '500 32px sans-serif';
         ctx.fillText(this.raffle()!.name, W / 2, 550);
 
+        const nameTag = this.businessName().replace(/\s/g, '');
         ctx.fillStyle = '#666';
         ctx.font = '500 24px sans-serif';
-        ctx.fillText('#RegiBazar • Nuevo Laredo, NL', W / 2, 900);
+        ctx.fillText(`#${nameTag} • Nuevo Laredo, NL`, W / 2, 900);
 
         const link = document.createElement('a');
         link.download = `ganadora-${this.raffle()!.name}-${Date.now()}.png`;

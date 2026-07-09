@@ -22,9 +22,6 @@ export const authGuard: CanActivateFn = (route, state) => {
     if (role === 'Driver' && !url.startsWith('/admin/routes')) {
         return router.parseUrl('/admin/routes');
     }
-    if (role === 'Scaner' && !url.startsWith('/pos-mobile')) {
-        return router.parseUrl('/pos-mobile/home');
-    }
 
     return true;
 };

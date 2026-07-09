@@ -13,6 +13,7 @@ import * as QRCode from 'qrcode';
 import { BirthdayCouponComponent } from '../../../shared/components/birthday-coupon/birthday-coupon.component';
 import { CouponService } from '../../../core/services/coupon.service';
 import { SignalRService } from '../../../core/services/signalr.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { GoogleAutocompleteDirective } from '../../../shared/directives/google-autocomplete.directive';
 import { buildMessengerLink, buildOrderMessage } from '../../../core/utils/messenger.util';
 
@@ -654,6 +655,7 @@ export class OrdersComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
   private couponService = inject(CouponService);
   private signalr = inject(SignalRService);
+  theme = inject(ThemeService);
 
   orders = signal<OrderSummaryDto[]>([]);
   loading = signal(true);
@@ -1294,8 +1296,7 @@ export class OrdersComponent implements OnInit {
       <div class="label-wrapper ${isBulk ? 'page-break' : ''}">
         
         <div class="header">
-          <h2>REGI BAZAR</h2>
-          <h3>Lo mejor para tu hogar</h3>
+          <h2>{{ theme.name() }}</h2>
         </div>
 
         <div class="info-box">
@@ -1314,7 +1315,7 @@ export class OrdersComponent implements OnInit {
         <div class="footer">
           <p class="gracias">¡Gracias por tu compra! 🌸</p>
           <p class="social">👍 Síguenos en nuestra página de Facebook:</p>
-          <p class="social-bold">Regi Bazar</p>
+          <p class="social-bold">${this.theme.name() || 'Regi Bazar'}</p>
         </div>
 
       </div>

@@ -7,8 +7,6 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ApiService } from '../../../core/services/api.service';
 import { gsap } from 'gsap';
 
-const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
-
 @Component({
   selector: 'app-tanda-view',
   standalone: true,
@@ -175,7 +173,10 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                               
                               <select id="mp-issuer" class="hidden"></select>
                               <select id="mp-installments" class="hidden"></select>
-                              <input type="email" id="mp-cardholderEmail" class="hidden" value="cliente@regibazar.com">
+                              <input type="email" id="mp-cardholderEmail"
+                                     placeholder="Correo electrónico"
+                                     autocomplete="email"
+                                     class="h-12 w-full bg-pink-50/30 border border-pink-100 rounded-xl px-4 text-sm font-bold text-pink-900 placeholder:text-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all">
 
                               @if (mpFetching()) {
                                 <div class="flex items-center justify-center gap-2 py-1">
@@ -449,7 +450,9 @@ export class TandaViewComponent implements OnInit {
 
   get messengerUrl() {
     const t = this.tanda();
-    if (!t) return BASE_MESSENGER_URL;
+    if (!t) return '';
+
+    const baseUrl = t.businessMessengerUrl || 'https://m.me/';
     let ref = `tanda_${t.id}`;
 
     // Si ya seleccionó quién es, lo incluimos en el ref para que sepas quién te escribe
@@ -459,7 +462,7 @@ export class TandaViewComponent implements OnInit {
       if (p) ref += `_cli_${p.name.replace(/\s/g, '_')}`;
     }
 
-    return `${BASE_MESSENGER_URL}?ref=${ref}`;
+    return `${baseUrl}?ref=${ref}`;
   }
 
   toastVisible = signal(false);

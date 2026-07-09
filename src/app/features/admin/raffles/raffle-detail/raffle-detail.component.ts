@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RaffleService } from '../../../../core/services/raffle.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ThemeService } from '../../../../core/services/theme.service';
 import {
     RaffleDetailDto,
     CreateRaffleDto,
@@ -557,6 +558,9 @@ export class RaffleDetailComponent implements OnInit, AfterViewInit {
     private readonly toast = inject(ToastService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
+    private readonly theme = inject(ThemeService);
+
+    businessName = computed(() => this.theme.name() || 'REGI BAZAR');
 
     raffle = signal<RaffleDetailDto | null>(null);
     participants = signal<RaffleParticipantDto[]>([]);
@@ -1077,7 +1081,7 @@ export class RaffleDetailComponent implements OnInit, AfterViewInit {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // REGI BAZAR header
+        // Business name header
         const pinkGrad = ctx.createLinearGradient(W/2 - 200, 0, W/2 + 200, 0);
         pinkGrad.addColorStop(0, '#db2777');
         pinkGrad.addColorStop(0.5, '#ec4899');
@@ -1086,7 +1090,7 @@ export class RaffleDetailComponent implements OnInit, AfterViewInit {
         ctx.fillStyle = pinkGrad;
         ctx.font = 'bold 28px "Poppins", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('✨ REGI BAZAR ✨', W / 2, 200);
+        ctx.fillText(`✨ ${this.businessName()} ✨`, W / 2, 200);
 
         // WINNER title
         ctx.fillStyle = '#be185d';

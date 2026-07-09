@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-birthday-coupon',
@@ -11,6 +12,8 @@ import { CommonModule } from '@angular/common';
 export class BirthdayCouponComponent {
   @Input() clientName: string = 'Clienta';
   @Input() couponValue: number = 200;
+  private theme = inject(ThemeService);
+  themeName = computed(() => this.theme.name() || 'REGI BAZAR');
   
   get today(): string {
     const date = new Date();

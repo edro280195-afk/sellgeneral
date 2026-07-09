@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit, HostListener, computed, effect } from '@angular/core';
+import { ThemeService } from '../../../core/services/theme.service';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -45,7 +46,7 @@ import { gsap } from 'gsap';
               <span class="animate-wiggle inline-block drop-shadow-md">💎</span> 
               Directorio de Clientas
             </h1>
-            <p class="text-sm text-pink-500 font-medium ml-1 mt-1">El corazón de Regi Bazar 💕</p>
+            <p class="text-sm text-pink-500 font-medium ml-1 mt-1">El corazón de {{ theme.name() || 'Regi Bazar' }} 💕</p>
           </div>
           <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-2">
             <span class="text-2xl animate-pulse">🌸</span>
@@ -180,6 +181,7 @@ export class ClientsComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  protected theme = inject(ThemeService);
 
   clients = signal<ClientDto[]>([]);
   loading = signal(true);

@@ -15,7 +15,6 @@ import gsap from 'gsap';
 
 
 const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
-const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
 
 
 @Component({
@@ -65,7 +64,7 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
               <div id="gift-emoji" class="text-9xl relative z-10 drop-shadow-[0_20px_40px_rgba(236,72,153,0.4)] mb-8">🎁</div>
               
               <div id="gift-text-container">
-                <h2 class="text-3xl font-black text-pink-600 font-display px-6 mb-3">¡Tienes un envío de Regi Bazar!</h2>
+                <h2 class="text-3xl font-black text-pink-600 font-display px-6 mb-3">¡Tienes un envío de {{ order()?.businessName || 'Regi Bazar' }}!</h2>
                 <p class="text-pink-500 font-medium bg-white/50 inline-block px-5 py-2 rounded-full shadow-sm border border-pink-200">Toca el regalito para abrir 🎀</p>
               </div>
             </div>
@@ -346,7 +345,7 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                     <a [href]="messengerUrl" target="_blank" rel="noopener"
                        class="flex items-center justify-center gap-3 bg-[#0099FF] text-white font-black text-sm py-4 px-5 rounded-2xl active:scale-95 transition-all shadow-xl">
                       <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                      💬 ESCRIBIRLE A REGI BAZAR
+                      💬 ESCRIBIRLE A {{ order()?.businessName || 'REGI BAZAR' }}
                     </a>
                     <p class="text-center text-xs text-rose-500/80 font-medium px-2">
                       Te ayudamos a reagendar la entrega lo antes posible 🎀
@@ -508,7 +507,7 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                               <a [href]="messengerUrl" target="_blank" rel="noopener"
                                  class="flex items-center justify-center gap-2 bg-[#0099FF] text-white font-black text-sm py-3 px-5 rounded-xl active:scale-95 transition-all shadow-md w-full">
                                 <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                                Escribir a Regi Bazar
+                                Escribir a {{ order()?.businessName || 'Regi Bazar' }}
                               </a>
                             </div>
                           </div>
@@ -542,7 +541,10 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                                      placeholder="Nombre en la tarjeta"
                                      autocomplete="cc-name"
                                      class="w-full text-sm border border-violet-200 rounded-xl px-4 py-3 bg-white/80 text-violet-900 placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-300">
-                              <input type="email" id="mp-cardholderEmail" class="hidden" value="pagos@regibazar.com">
+                              <input type="email" id="mp-cardholderEmail"
+                                     placeholder="Correo electrónico"
+                                     autocomplete="email"
+                                     class="w-full text-sm border border-violet-200 rounded-xl px-4 py-3 bg-white/80 text-violet-900 placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-300">
                               <select id="mp-issuer" class="hidden"></select>
                               <select id="mp-installments" class="hidden"></select>
                               @if (mpFetching()) {
@@ -652,7 +654,7 @@ const BASE_MESSENGER_URL = 'https://m.me/regi.bazar.852309';
                 <h3 class="text-xl font-black font-display mb-2 drop-shadow-md">¡Presume tu estilo! 📸</h3>
                 <p class="text-[10px] font-bold opacity-80 mb-6 tracking-wide">Etiquétanos en tus historias de Facebook o IG al recibir tu pedido y gana <strong>RegiPuntos extra</strong> ✨</p>
                 <div class="flex justify-center gap-4 relative z-10">
-                  <a href="https://www.facebook.com/regi.bazar.852309" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">f</a>
+                  <a [href]="order()?.businessFacebookUrl || 'https://www.facebook.com/regi.bazar.852309'" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">f</a>
                   <a href="https://www.instagram.com/" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">IG</a>
                 </div>
               </div>
@@ -1223,8 +1225,9 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   get messengerUrl() {
     const o = this.order();
-    if (!o) return BASE_MESSENGER_URL;
-    return `${BASE_MESSENGER_URL}?ref=order_${o.id}`;
+    if (!o) return '';
+    if (o.businessMessengerUrl) return o.businessMessengerUrl;
+    return `https://m.me/?ref=order_${o.id}`;
   }
 
   // Countdown State

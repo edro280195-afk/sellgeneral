@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import html2canvas from 'html2canvas';
+import { ThemeService } from './theme.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CouponService {
-
-  constructor() { }
+  private theme = inject(ThemeService);
 
   async downloadCoupon(elementId: string, clientName: string): Promise<void> {
     const element = document.getElementById(elementId);
@@ -33,7 +33,7 @@ export class CouponService {
         try {
           await navigator.share({
             files: [file],
-            title: 'Cupón de Cumpleaños Regi Bazar',
+            title: `Cupón de Cumpleaños ${this.theme.name() || 'Regi Bazar'}`,
             text: `¡Felicidades ${clientName}! Aquí tienes tu regalo.`
           });
           return;

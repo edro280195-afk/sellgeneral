@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ThemeService } from '../../../core/services/theme.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -744,6 +745,7 @@ export class SubscriptionComponent implements OnInit {
     private subs = inject(SubscriptionService);
     private toast = inject(ToastService);
     private router = inject(Router);
+    private theme = inject(ThemeService);
 
     protected readonly periodicities = PERIODICITIES;
     protected readonly recommendedPlan: PlanTierName = 'Pro';
@@ -828,7 +830,7 @@ export class SubscriptionComponent implements OnInit {
         const target = plan ?? this.bootstrap.effectivePlan();
         switch (target) {
             case 'Entrada': return 'Para empezar a vender y entregar.';
-            case 'Pro': return 'El plan que usa Regi Bazar. Todo lo importante.';
+            case 'Pro': return `El plan que usa ${this.theme.name() || 'Regi Bazar'}. Todo lo importante.`;
             case 'Elite': return 'C.A.M.I. y rutas con tráfico en vivo.';
             default: return 'Cuenta bloqueada por falta de pago.';
         }

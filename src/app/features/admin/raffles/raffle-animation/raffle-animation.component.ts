@@ -1,5 +1,6 @@
-import { Component, inject, signal, input, output, effect, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, input, output, effect, ElementRef, ViewChild, AfterViewInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../../../core/services/theme.service';
 import { gsap } from 'gsap';
 import confetti from 'canvas-confetti';
 
@@ -24,7 +25,7 @@ interface Participant {
             <div class="arena-content">
                 @if (!isPreview()) {
                     <div class="header-section">
-                        <span class="presents">Regi Bazar Presents</span>
+                        <span class="presents">{{ businessName() }} Presents</span>
                         <h2 class="main-title">
                             @if (customTitle()) {
                                 {{ customTitle() }}
@@ -572,6 +573,9 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
     isPreview = input<boolean>(false);
     customTitle = input<string | undefined>();
     
+    private theme = inject(ThemeService);
+    businessName = computed(() => this.theme.name() || 'REGI BAZAR');
+    
     close = output<void>();
     startRequested = output<void>();
 
@@ -787,14 +791,19 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // REGI BAZAR text
+        // Business name text
+        const name = this.businessName();
+        const parts = name.split(' ');
         ctx.fillStyle = '#ec4899';
         ctx.font = '900 8px "Poppins", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('REGI', center, center - 6);
-        ctx.font = '900 8px "Poppins", sans-serif';
-        ctx.fillText('BAZAR', center, center + 6);
+        if (parts.length >= 2) {
+            ctx.fillText(parts[0], center, center - 6);
+            ctx.fillText(parts.slice(1).join(' '), center, center + 6);
+        } else {
+            ctx.fillText(name, center, center);
+        }
     }
 
     private getFontSizePx(total: number): number {

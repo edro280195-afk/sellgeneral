@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, HostListener, computed, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, HostListener, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -507,6 +507,18 @@ import { gsap } from 'gsap';
     ═══════════════════════════════════════════════ */
 
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+    /* ── Body override when tanda-view is active ── */
+    body.tv-dark-mode {
+      background: #0a0812 !important;
+      color: #f0edf8 !important;
+      cursor: auto !important;
+    }
+    body.tv-dark-mode a,
+    body.tv-dark-mode button,
+    body.tv-dark-mode [role="button"] {
+      cursor: pointer !important;
+    }
 
     /* ── Root ── */
     .tv-root {
@@ -1166,7 +1178,7 @@ import { gsap } from 'gsap';
     .space-y-3 > * + * { margin-top: 0.75rem; }
   `]
 })
-export class TandaViewComponent implements OnInit {
+export class TandaViewComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private tandaService = inject(TandaService);
   private api = inject(ApiService);
@@ -1236,6 +1248,9 @@ export class TandaViewComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Apply dark mode override to body
+    document.body.classList.add('tv-dark-mode');
+
     this.route.params.subscribe(params => {
       this.accessToken = params['token'];
       if (this.accessToken) this.loadTanda(this.accessToken);
@@ -1245,6 +1260,13 @@ export class TandaViewComponent implements OnInit {
     this.bubbleTimeout = setTimeout(() => {
       this.showAssistantBubble.set(false);
     }, 10000);
+  }
+
+  ngOnDestroy() {
+    // Remove dark mode override when leaving this page
+    document.body.classList.remove('tv-dark-mode');
+    if (this.bubbleTimeout) clearTimeout(this.bubbleTimeout);
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
   }
 
   setPaymentTab(tab: 'transfer' | 'cash' | 'oxxo' | 'card') {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, HostListener, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { gsap } from 'gsap';
 @Component({
   selector: 'app-tanda-view',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="tv-root" (scroll)="onScroll($event)">

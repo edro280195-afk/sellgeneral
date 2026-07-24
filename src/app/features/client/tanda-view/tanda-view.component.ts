@@ -12,442 +12,1157 @@ import { gsap } from 'gsap';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="relative min-h-screen overflow-hidden bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50 pb-24 font-sans text-stone-800"
-         (scroll)="onScroll($event)">
-      
-      <!-- Parallax Background Layers -->
-      <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute inset-0 opacity-40 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.1 + 'px)'">
-          <div class="absolute top-[10%] left-[5%] text-4xl animate-pulse-slow">✨</div>
-          <div class="absolute top-[40%] right-[10%] text-5xl opacity-50">🌸</div>
-          <div class="absolute top-[75%] left-[15%] text-4xl animate-float">🎀</div>
-        </div>
-        <div class="absolute inset-0 opacity-60 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.25 + 'px)'">
-          <div class="absolute top-[20%] right-[15%] text-3xl animate-float-delayed">💖</div>
-          <div class="absolute top-[60%] left-[8%] text-5xl">✨</div>
-          <div class="absolute top-[85%] right-[20%] text-3xl animate-bounce-slow">🌷</div>
-        </div>
+    <div class="tv-root" (scroll)="onScroll($event)">
+
+      <!-- ░░ ORBS DE FONDO ░░ -->
+      <div class="tv-bg-orbs" aria-hidden="true">
+        <div class="tv-orb tv-orb--1"></div>
+        <div class="tv-orb tv-orb--2"></div>
+        <div class="tv-orb tv-orb--3"></div>
       </div>
 
-      <div class="relative z-10 max-w-md mx-auto p-4 sm:p-6 pt-10 space-y-8">
-        
-        @if (loading()) {
-          <div class="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-            <div class="w-12 h-12 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-pink-600 font-medium animate-pulse Irish Grover">Cargando tu tanda... 🎀</p>
-          </div>
-        } @else if (error()) {
-          <div class="flex flex-col items-center justify-center min-h-[60vh] text-center animate-fade-in">
-            <span class="text-6xl mb-4 drop-shadow-md">🔍</span>
-            <h2 class="text-2xl font-black text-pink-900 mb-2 font-display">Tanda no encontrada</h2>
-            <p class="text-pink-600 px-4">Verifica que el enlace sea correcto, hermosa 💖</p>
-          </div>
-        } @else if (tanda(); as t) {
-          
-          <!-- Header Hero -->
-          <div class="text-center animate-slide-down relative mb-6">
-             <div class="text-5xl mb-2 animate-wiggle inline-block drop-shadow-sm">🎀</div>
-             <h1 class="text-3xl font-black text-pink-600 tracking-tight font-display mb-1">
-               {{ t.name }}
-             </h1>
-             <p class="text-rose-500 font-medium text-sm">
-                ¡Creciendo juntas en grupo! ✨
-             </p>
-          </div>
+      <!-- ░░ CONTENEDOR PRINCIPAL ░░ -->
+      <div class="tv-container">
 
-          <!-- Banner Invitación Descarga App Neni Clientas -->
-          <div class="card-coquette bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-6 text-white shadow-2xl rounded-[2.5rem] relative overflow-hidden my-6 border-2 border-white/40">
-            <div class="absolute -right-6 -bottom-6 text-9xl opacity-15 pointer-events-none select-none">📱</div>
-            <div class="relative z-10 space-y-3">
-              <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-pink-100">
-                <span>✨ Neni's App Clientas</span>
+        <!-- ── LOADING ── -->
+        @if (loading()) {
+          <div class="tv-loader">
+            <div class="tv-spinner"></div>
+            <p class="tv-loader__text">Cargando tu tanda...</p>
+          </div>
+        }
+
+        <!-- ── ERROR ── -->
+        @else if (error()) {
+          <div class="tv-error">
+            <div class="tv-error__icon">🔍</div>
+            <h2 class="tv-error__title">Tanda no encontrada</h2>
+            <p class="tv-error__desc">Verifica que el enlace sea correcto.</p>
+          </div>
+        }
+
+        <!-- ── CONTENIDO PRINCIPAL ── -->
+        @else if (tanda(); as t) {
+
+          <!-- ══ HERO SECTION ══ -->
+          <header class="tv-hero">
+            <div class="tv-hero__badge">TANDA ACTIVA</div>
+            <h1 class="tv-hero__name">{{ t.name }}</h1>
+            <p class="tv-hero__tagline">Ahorrando juntas, creciendo juntas</p>
+
+            <!-- KPI Strip -->
+            <div class="tv-kpi-strip">
+              <div class="tv-kpi">
+                <span class="tv-kpi__val">{{ t.currentWeek }}</span>
+                <span class="tv-kpi__label">Semana actual</span>
               </div>
-              <h3 class="text-xl font-black leading-tight font-display">
-                ¡Lleva tus Tandas y Compras en tu celular! 📲
-              </h3>
-              <p class="text-xs text-pink-100 font-medium leading-relaxed">
-                Descarga la app oficial para recibir notificaciones de tu turno en tiempo real, confirmar abonos en 1 toque y ver ofertas exclusivas de tu tienda.
-              </p>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <a href="https://nenisapp.com/download" target="_blank" 
-                   class="flex items-center gap-2 bg-white text-pink-900 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg hover:scale-105 transition-all">
-                  <span>🍎 App Store</span>
-                </a>
-                <a href="https://nenisapp.com/download" target="_blank" 
-                   class="flex items-center gap-2 bg-white/20 border border-white/40 text-white font-black text-xs px-4 py-2.5 rounded-2xl backdrop-blur-md hover:bg-white/30 transition-all">
-                  <span>🤖 Google Play</span>
-                </a>
+              <div class="tv-kpi-divider"></div>
+              <div class="tv-kpi">
+                <span class="tv-kpi__val">{{ t.totalWeeks }}</span>
+                <span class="tv-kpi__label">Total semanas</span>
               </div>
+              <div class="tv-kpi-divider"></div>
+              <div class="tv-kpi">
+                <span class="tv-kpi__val">{{ t.weeklyAmount | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                <span class="tv-kpi__label">Abono semanal</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="tv-progress-wrap">
+              <div class="tv-progress-bar">
+                <div class="tv-progress-fill"
+                     [style.width]="(t.currentWeek / t.totalWeeks * 100) + '%'">
+                  <div class="tv-progress-glow"></div>
+                </div>
+              </div>
+              <div class="tv-progress-labels">
+                <span>Inicio</span>
+                <span>{{ (t.currentWeek / t.totalWeeks * 100) | number:'1.0-0' }}% completado</span>
+                <span>Final</span>
+              </div>
+            </div>
+
+            <!-- Semana dots -->
+            <div class="tv-weeks-dots">
+              @for (w of weeksArray(); track w) {
+                <div class="tv-week-dot"
+                     [class.tv-week-dot--done]="w < t.currentWeek"
+                     [class.tv-week-dot--current]="w === t.currentWeek"
+                     [title]="'Semana ' + w">
+                </div>
+              }
+            </div>
+          </header>
+
+          <!-- ══ BANNER APP (compacto) ══ -->
+          <div class="tv-app-banner">
+            <div class="tv-app-banner__left">
+              <span class="tv-app-banner__icon">📲</span>
+              <div>
+                <p class="tv-app-banner__title">Neni's App Clientas</p>
+                <p class="tv-app-banner__sub">Notificaciones y pagos en 1 toque</p>
+              </div>
+            </div>
+            <div class="tv-app-banner__btns">
+              <a href="https://nenisapp.com/download" target="_blank" class="tv-app-btn tv-app-btn--solid">iOS</a>
+              <a href="https://nenisapp.com/download" target="_blank" class="tv-app-btn tv-app-btn--outline">Android</a>
             </div>
           </div>
 
-          <!-- Sticky Nav Tabs -->
-
-          <div id="nav-tabs" class="flex p-1.5 bg-white/60 backdrop-blur-xl rounded-[2rem] mb-8 border border-white sticky top-4 z-30 shadow-sm">
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-300" 
-                    [ngClass]="activeTab() === 'summary' ? 'bg-white text-pink-600 shadow-sm scale-105' : 'text-pink-300'" 
+          <!-- ══ TABS ══ -->
+          <div class="tv-tabs sticky-tabs" id="nav-tabs">
+            <button class="tv-tab" id="tab-summary"
+                    [class.tv-tab--active]="activeTab() === 'summary'"
                     (click)="activeTab.set('summary')">
-              <span class="text-lg">🌸</span>
-              <span class="text-[10px] font-black uppercase tracking-widest">Mi Tanda</span>
+              <svg class="tv-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              Mi Tanda
             </button>
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-300" 
-                    [ngClass]="activeTab() === 'transparency' ? 'bg-white text-pink-600 shadow-sm scale-105' : 'text-pink-300'" 
+            <button class="tv-tab" id="tab-transparency"
+                    [class.tv-tab--active]="activeTab() === 'transparency'"
                     (click)="activeTab.set('transparency')">
-              <span class="text-lg">💎</span>
-              <span class="text-[10px] font-black uppercase tracking-widest">Grupo</span>
+              <svg class="tv-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Grupo
             </button>
           </div>
 
+          <!-- ══════════════════════════════════════════ -->
+          <!-- TAB: MI TANDA                             -->
+          <!-- ══════════════════════════════════════════ -->
           @if (activeTab() === 'summary') {
-            <!-- ════════════ TAB: MI TANDA (RESUMEN) ════════════ -->
-            <div class="animate-fade-in-up space-y-8">
-              
-              <!-- Weekly Progress Card -->
-              <div class="card-coquette bg-white/90 p-6 shadow-xl border-pink-100 flex flex-col items-center text-center">
-                <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest mb-4">Estado de la Tanda</p>
-                
-                <div class="relative w-32 h-32 flex items-center justify-center mb-4">
-                  <svg class="w-full h-full -rotate-90">
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" class="text-pink-50" />
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" 
-                            class="text-pink-500 transition-all duration-1000"
-                            [attr.stroke-dasharray]="364.4"
-                            [attr.stroke-dashoffset]="364.4 - (364.4 * (t.currentWeek / t.totalWeeks))" />
-                  </svg>
-                  <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-3xl font-black text-pink-950 leading-none">{{ t.currentWeek }}</span>
-                    <span class="text-[9px] font-bold text-pink-400 uppercase tracking-tighter">Semana</span>
-                  </div>
-                </div>
+            <div class="tv-tab-content tv-anim-in">
 
-                <div class="space-y-1">
-                  <p class="text-sm font-bold text-pink-900">
-                    Semana <span class="text-pink-600">{{ t.currentWeek }}</span> de <span class="text-pink-600">{{ t.totalWeeks }}</span>
-                  </p>
-                  <div class="bg-pink-100/50 px-4 py-2 rounded-2xl flex items-center gap-2">
-                    <span class="text-lg">💰</span>
-                    <span class="text-xs font-black text-pink-700">Abono Semanal: {{ t.weeklyAmount | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Delivery Turn Hero -->
+              <!-- Tu turno (ganadora) -->
               @if (isWinnerThisWeek()) {
-                <div class="bg-gradient-to-br from-pink-500 to-rose-500 rounded-[2.5rem] p-8 text-white text-center shadow-xl animate-bounce-in relative overflow-hidden">
-                   <div class="absolute -right-6 -top-6 text-7xl opacity-20 rotate-12">🎁</div>
-                   <h3 class="text-xl font-bold uppercase tracking-widest mb-2 font-display">¡ES TU TURNO! ✨</h3>
-                   <p class="text-xs font-medium opacity-90">Esta semana el producto es para ti. ¡Abre tu regalo de tanda! 💖</p>
+                <div class="tv-winner-card">
+                  <div class="tv-winner-card__glow"></div>
+                  <span class="tv-winner-card__crown">👑</span>
+                  <h3 class="tv-winner-card__title">¡Es tu semana!</h3>
+                  <p class="tv-winner-card__desc">El producto de esta semana es para ti. ¡Felicidades!</p>
                 </div>
               }
 
-              <!-- Payment Methods Section -->
-              <div id="payment-methods" class="relative z-10">
-                <h3 class="text-center text-pink-950 font-black text-lg font-display mb-1 flex items-center justify-center gap-2">
-                  <span>💸</span> Formas de Pago
-                </h3>
-                <p class="text-center text-[10px] text-pink-700/70 font-bold uppercase tracking-widest mb-4">Toca para copiar los datos</p>
-
-                <!-- Payment Tabs -->
-                <div class="flex p-1 bg-white/50 backdrop-blur-md rounded-2xl mb-4 border border-white/50">
-                  @if (t.mercadoPagoPublicKey) {
-                    <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
-                            [ngClass]="paymentTab() === 'card' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
-                            (click)="setPaymentTab('card')">💳 Tarjeta</button>
-                  }
-                  <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
-                          [ngClass]="paymentTab() === 'transfer' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
-                          (click)="setPaymentTab('transfer')">🏦 Transfer</button>
-                  <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
-                          [ngClass]="paymentTab() === 'oxxo' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
-                          (click)="setPaymentTab('oxxo')">🏪 OXXO</button>
-                  <button class="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
-                          [ngClass]="paymentTab() === 'cash' ? 'bg-white text-pink-600 shadow-sm' : 'text-pink-400'"
-                          (click)="setPaymentTab('cash')">💵 Cash</button>
+              <!-- ── MÉTODOS DE PAGO ── -->
+              <section class="tv-section">
+                <div class="tv-section__header">
+                  <h2 class="tv-section__title">Formas de pago</h2>
+                  <span class="tv-section__hint">Toca los datos para copiar</span>
                 </div>
 
-                <!-- Tab Content -->
-                <div class="min-h-[160px]">
+                <!-- Payment tabs -->
+                <div class="tv-pay-tabs">
+                  @if (tanda()?.mercadoPagoPublicKey) {
+                    <button class="tv-pay-tab" id="pay-tab-card"
+                            [class.tv-pay-tab--active]="paymentTab() === 'card'"
+                            (click)="setPaymentTab('card')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tv-pay-tab__icon">
+                        <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                      </svg>
+                      Tarjeta
+                    </button>
+                  }
+                  <button class="tv-pay-tab" id="pay-tab-transfer"
+                          [class.tv-pay-tab--active]="paymentTab() === 'transfer'"
+                          (click)="setPaymentTab('transfer')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tv-pay-tab__icon">
+                      <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                      <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                    </svg>
+                    Transfer
+                  </button>
+                  <button class="tv-pay-tab" id="pay-tab-oxxo"
+                          [class.tv-pay-tab--active]="paymentTab() === 'oxxo'"
+                          (click)="setPaymentTab('oxxo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tv-pay-tab__icon">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    OXXO
+                  </button>
+                  <button class="tv-pay-tab" id="pay-tab-cash"
+                          [class.tv-pay-tab--active]="paymentTab() === 'cash'"
+                          (click)="setPaymentTab('cash')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tv-pay-tab__icon">
+                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Efectivo
+                  </button>
+                </div>
+
+                <!-- Payment content -->
+                <div class="tv-pay-content">
                   @switch (paymentTab()) {
+
                     @case ('card') {
-                      <div class="bg-white/90 backdrop-blur-sm rounded-[2rem] p-6 border border-pink-100 shadow-xl animate-fade-in space-y-4">
-                        
+                      <div class="tv-pay-card tv-anim-in">
+                        <div class="tv-pay-card__header">
+                          <div class="tv-pay-card__logo tv-pay-card__logo--mp"></div>
+                          <span class="tv-pay-card__provider">MercadoPago</span>
+                        </div>
                         @if (!mpResult()) {
                           <div class="space-y-4">
-                            <!-- Participant Selector -->
-                            <div class="space-y-2">
-                              <label class="text-[10px] font-black text-pink-400 uppercase tracking-widest ml-2">¿Quién eres? ✨</label>
-                              <select class="w-full bg-pink-50/50 border-2 border-pink-100 rounded-2xl px-4 py-3 text-sm font-bold text-pink-900 focus:outline-none focus:border-pink-300 transition-all"
-                                      [(ngModel)]="selectedParticipantId">
+                            <div class="tv-field-wrap">
+                              <label class="tv-field-label">¿Quién eres?</label>
+                              <select class="tv-field-select" [(ngModel)]="selectedParticipantId">
                                 <option [value]="null" disabled>Selecciona tu nombre...</option>
                                 @for (p of t.participants; track p.id) {
-                                  <option [value]="p.id">{{ p.name }} (Semana {{ p.assignedTurn }})</option>
+                                  <option [value]="p.id">{{ p.name }} — Semana {{ p.assignedTurn }}</option>
                                 }
                               </select>
                             </div>
-
-                            <!-- MP Form -->
                             <form id="mp-card-form" class="space-y-3">
-                              <div id="mp-cardNumber" class="h-12 bg-pink-50/30 border border-pink-100 rounded-xl px-4 flex items-center"></div>
-                              <div class="grid grid-cols-2 gap-3">
-                                <div id="mp-expirationDate" class="h-12 bg-pink-50/30 border border-pink-100 rounded-xl px-4 flex items-center"></div>
-                                <div id="mp-securityCode" class="h-12 bg-pink-50/30 border border-pink-100 rounded-xl px-4 flex items-center"></div>
+                              <div id="mp-cardNumber" class="tv-mp-field"></div>
+                              <div class="tv-mp-row">
+                                <div id="mp-expirationDate" class="tv-mp-field"></div>
+                                <div id="mp-securityCode" class="tv-mp-field"></div>
                               </div>
-                               <input type="text" id="mp-cardholderName" 
-                                      class="h-12 w-full bg-pink-50/30 border border-pink-100 rounded-xl px-4 text-sm font-bold text-pink-900 placeholder:text-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all"
-                                      placeholder="Nombre en la tarjeta">
-                              
+                              <input type="text" id="mp-cardholderName" class="tv-field-input" placeholder="Nombre en la tarjeta">
                               <select id="mp-issuer" class="hidden"></select>
                               <select id="mp-installments" class="hidden"></select>
-                              <input type="email" id="mp-cardholderEmail"
-                                     placeholder="Correo electrónico"
-                                     autocomplete="email"
-                                     class="h-12 w-full bg-pink-50/30 border border-pink-100 rounded-xl px-4 text-sm font-bold text-pink-900 placeholder:text-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-200 transition-all">
-
+                              <input type="email" id="mp-cardholderEmail" class="tv-field-input" placeholder="Correo electrónico" autocomplete="email">
                               @if (mpFetching()) {
-                                <div class="flex items-center justify-center gap-2 py-1">
-                                  <div class="w-3 h-3 border-2 border-pink-300 border-t-pink-500 rounded-full animate-spin"></div>
-                                  <span class="text-[11px] text-pink-500 font-bold">Identificando tarjeta...</span>
+                                <div class="tv-mp-fetching">
+                                  <div class="tv-spinner tv-spinner--sm"></div>
+                                  <span>Identificando tarjeta...</span>
                                 </div>
                               }
-
-                              <button type="submit" 
-                                      class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-pink-200 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                              <button type="submit" class="tv-btn tv-btn--primary tv-btn--full"
                                       [disabled]="mpProcessing() || !selectedParticipantId()">
-                                {{ mpProcessing() ? 'PROCESANDO... ✨' : 'PAGAR MI SEMANA 💖' }}
+                                {{ mpProcessing() ? 'Procesando...' : 'Pagar mi semana' }}
                               </button>
                             </form>
+                            <p class="tv-pay-card__shield">🛡️ Protegido por MercadoPago</p>
                           </div>
                         } @else {
-                          <!-- Result View -->
-                          <div class="text-center py-6 animate-bounce-in">
+                          <div class="tv-pay-result tv-anim-in">
                             @if (mpResult()?.status === 'approved') {
-                              <div class="text-5xl mb-4">🎉</div>
-                              <h4 class="text-xl font-black text-pink-900 mb-1">¡Abono Realizado!</h4>
-                              <p class="text-pink-600 text-xs font-medium px-4 mb-6">Tu pago de la semana {{ t.currentWeek }} ha sido registrado con éxito. ✨</p>
-                              
-                              <a [href]="messengerUrl" target="_blank" rel="noopener"
-                                 class="flex items-center justify-center gap-3 bg-[#0099FF] text-white font-black text-xs py-4 px-5 rounded-2xl active:scale-95 transition-all shadow-xl w-full">
-                                <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                                AVISAR POR MESSENGER 🎀
+                              <div class="tv-pay-result__icon tv-pay-result__icon--ok">✓</div>
+                              <h4 class="tv-pay-result__title">¡Abono realizado!</h4>
+                              <p class="tv-pay-result__desc">Tu pago de la semana {{ t.currentWeek }} fue registrado con éxito.</p>
+                              <a [href]="messengerUrl" target="_blank" rel="noopener" class="tv-btn tv-btn--messenger tv-btn--full">
+                                <svg class="tv-btn__icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
+                                Avisar por Messenger
                               </a>
                             } @else {
-                              <div class="text-5xl mb-4">❌</div>
-                              <h4 class="text-xl font-black text-rose-900 mb-1">Pago no procesado</h4>
-                              <p class="text-rose-600 text-xs font-medium px-4 mb-6">{{ mpResult()?.message || 'Hubo un problema. Intenta de nuevo, hermosa.' }}</p>
-                              <button (click)="retryCardPayment()" class="text-xs font-black text-pink-600 underline uppercase tracking-widest">Reintentar Pago</button>
+                              <div class="tv-pay-result__icon tv-pay-result__icon--err">✕</div>
+                              <h4 class="tv-pay-result__title">Pago no procesado</h4>
+                              <p class="tv-pay-result__desc">{{ mpResult()?.message || 'Hubo un problema. Intenta de nuevo.' }}</p>
+                              <button (click)="retryCardPayment()" class="tv-btn tv-btn--ghost">Reintentar</button>
                             }
                           </div>
                         }
-
-                        <p class="text-[9px] text-pink-400 text-center font-bold uppercase tracking-tighter opacity-50">
-                          Protegido por Mercado Pago 🛡️
-                        </p>
                       </div>
                     }
+
                     @case ('transfer') {
-                      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[2rem] p-6 border border-blue-100 shadow-sm animate-fade-in relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 text-7xl opacity-10 rotate-12">🏦</div>
-                        <div class="flex items-center gap-3 mb-4 relative z-10">
-                          <div class="text-3xl">🏦</div>
+                      <div class="tv-pay-card tv-pay-card--transfer tv-anim-in">
+                        <div class="tv-pay-card__header">
+                          <div class="tv-pay-card__icon-wrap tv-pay-card__icon-wrap--blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                          </div>
                           <div>
-                            <h4 class="font-black text-blue-900 text-xs leading-tight uppercase tracking-widest">Transferencia</h4>
-                            <span class="text-[10px] font-bold text-blue-600 uppercase">MercadoPago</span>
+                            <span class="tv-pay-card__provider">Transferencia</span>
+                            <span class="tv-pay-card__sub">MercadoPago</span>
                           </div>
                         </div>
-                        <div class="bg-white/60 rounded-2xl p-4 border border-blue-200/50 mb-3 relative z-10 cursor-pointer active:scale-95 transition-all" (click)="copyText('722969017661718376')">
-                          <p class="text-[9px] text-blue-700/70 font-black uppercase mb-1">Cuenta CLABE</p>
-                          <p class="font-mono font-black text-blue-900 text-sm tracking-widest">722969017661718376</p>
+
+                        <div class="tv-copy-field" (click)="copyText('722969017661718376')" role="button" tabindex="0">
+                          <div class="tv-copy-field__body">
+                            <span class="tv-copy-field__label">Cuenta CLABE</span>
+                            <span class="tv-copy-field__value">7229 6901 7661 7183 76</span>
+                          </div>
+                          <div class="tv-copy-field__action">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            Copiar
+                          </div>
                         </div>
-                        <p class="text-[9px] text-blue-700/80 text-center font-black uppercase">A nombre de: Yazmin Vara ✨</p>
+
+                        <div class="tv-pay-card__owner">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          A nombre de: <strong>Yazmin Vara</strong>
+                        </div>
                       </div>
                     }
+
                     @case ('oxxo') {
-                      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-[2rem] p-6 border border-red-100 shadow-sm animate-fade-in relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 text-6xl opacity-10 rotate-12">🏪</div>
-                        <h4 class="font-black text-red-900 text-xs mb-3 uppercase tracking-widest">BBVA (OXXO)</h4>
-                        <div class="bg-white/60 rounded-2xl p-4 border border-red-200/50 mb-3 cursor-pointer active:scale-95 transition-all" (click)="copyText('4152314496671333')">
-                          <p class="text-[9px] text-red-700/70 font-black uppercase mb-1">Número de Tarjeta</p>
-                          <p class="font-mono font-black text-red-900 text-sm tracking-widest">4152 3144 9667 1333</p>
+                      <div class="tv-pay-card tv-pay-card--oxxo tv-anim-in">
+                        <div class="tv-pay-card__header">
+                          <div class="tv-pay-card__icon-wrap tv-pay-card__icon-wrap--orange">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                          </div>
+                          <div>
+                            <span class="tv-pay-card__provider">OXXO / BBVA</span>
+                            <span class="tv-pay-card__sub">Depósito en efectivo</span>
+                          </div>
                         </div>
-                        <p class="text-[9px] text-red-700/80 font-black uppercase">Envía foto de tu ticket 📸</p>
+
+                        <div class="tv-copy-field" (click)="copyText('4152314496671333')" role="button" tabindex="0">
+                          <div class="tv-copy-field__body">
+                            <span class="tv-copy-field__label">Número de tarjeta</span>
+                            <span class="tv-copy-field__value">4152 3144 9667 1333</span>
+                          </div>
+                          <div class="tv-copy-field__action">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            Copiar
+                          </div>
+                        </div>
+
+                        <div class="tv-info-note">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                          Envía foto de tu ticket por Messenger después de pagar
+                        </div>
                       </div>
                     }
+
                     @case ('cash') {
-                      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[2rem] p-6 border border-emerald-100 shadow-sm animate-fade-in flex flex-col items-center justify-center text-center">
-                        <div class="text-4xl mb-2">💵</div>
-                        <h4 class="font-black text-emerald-900 text-xs uppercase tracking-widest">Pago en Efectivo</h4>
-                        <p class="text-[10px] text-emerald-700 mt-2 font-medium leading-relaxed px-4">Recibimos tus abonos directamente en el bazar los viernes y sábados. 💕</p>
+                      <div class="tv-pay-card tv-pay-card--cash tv-anim-in">
+                        <div class="tv-pay-card__header">
+                          <div class="tv-pay-card__icon-wrap tv-pay-card__icon-wrap--green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                          </div>
+                          <div>
+                            <span class="tv-pay-card__provider">Pago en efectivo</span>
+                            <span class="tv-pay-card__sub">Presencial</span>
+                          </div>
+                        </div>
+                        <div class="tv-cash-info">
+                          <div class="tv-cash-info__item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span>Viernes y sábados</span>
+                          </div>
+                          <div class="tv-cash-info__item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <span>Directamente en el bazar</span>
+                          </div>
+                        </div>
                       </div>
                     }
+
                   }
                 </div>
 
-                <!-- General Contact -->
-                <div class="mt-6 pt-6 border-t border-pink-100/50">
-                  <p class="text-center text-[10px] text-pink-400 font-black uppercase tracking-[0.2em] mb-4">¿Dudas o Comprobantes? ✨</p>
-                  <a [href]="messengerUrl" target="_blank" rel="noopener"
-                     class="flex items-center justify-center gap-3 bg-[#0099FF] text-white font-black text-xs py-4 px-5 rounded-2xl active:scale-95 transition-all shadow-xl w-full">
-                    <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                    CONTACTAR POR MESSENGER 🎀
-                  </a>
+                <!-- Contact CTA -->
+                <a [href]="messengerUrl" target="_blank" rel="noopener" class="tv-btn tv-btn--messenger tv-btn--full tv-contact-cta">
+                  <svg class="tv-btn__icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
+                  ¿Dudas o comprobantes? Escríbenos
+                </a>
+              </section>
+
+              <!-- ── POLÍTICAS ── -->
+              <section class="tv-section">
+                <div class="tv-policy-card">
+                  <div class="tv-policy-card__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="tv-policy-card__title">Políticas de la tanda</h4>
+                    <p class="tv-policy-card__text">Entregas los <strong>Domingos</strong> a la ganadora de la semana.</p>
+                  </div>
                 </div>
-              </div>
-
-              <!-- Rules Section -->
-              <div class="bg-pink-950/5 text-pink-900 border border-pink-200/50 rounded-[2rem] p-6 text-center">
-                 <h4 class="text-xs font-black uppercase tracking-widest mb-3">🌸 Políticas de Tanda</h4>
-                 <p class="text-[11px] leading-relaxed font-medium">
-                   Entregas los <strong class="text-pink-600">Domingos</strong> a la ganadora de la semana. <br>
-                   ¡Ahorrar juntas es más divertido! ✨
-                 </p>
-              </div>
+              </section>
 
             </div>
           }
 
+          <!-- ══════════════════════════════════════════ -->
+          <!-- TAB: GRUPO (TRANSPARENCIA)                -->
+          <!-- ══════════════════════════════════════════ -->
           @if (activeTab() === 'transparency') {
-            <!-- ════════════ TAB: GRUPO (TRANSPARENCIA) ════════════ -->
-            <div class="animate-fade-in-up space-y-4">
-              <h3 class="text-center text-pink-950 font-black text-lg font-display flex items-center justify-center gap-2">
-                <span>💎</span> Transparencia de Pagos
-              </h3>
-              
-              <div id="transparency-timeline" class="bg-white/90 rounded-[2.5rem] p-8 shadow-sm border border-white relative overflow-hidden">
-                 <div class="absolute top-0 right-0 w-32 h-32 bg-pink-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
-                 
-                 <div class="space-y-8 relative z-10">
-                   @for (p of t.participants; track p.assignedTurn) {
-                     <div class="flex gap-6 group">
-                       <!-- Left Indicator Column -->
-                       <div class="flex flex-col items-center w-10">
-                          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black shadow-sm transition-all duration-500"
-                               [ngClass]="{
-                                 'bg-pink-600 text-white scale-110 shadow-lg shadow-pink-100': p.assignedTurn === t.currentWeek,
-                                 'bg-white text-pink-400 border border-pink-100': p.assignedTurn !== t.currentWeek
-                               }">
-                             {{ p.assignedTurn }}
+            <div class="tv-tab-content tv-anim-in">
+
+              <section class="tv-section">
+                <div class="tv-section__header">
+                  <h2 class="tv-section__title">Transparencia del grupo</h2>
+                  <span class="tv-section__hint">{{ t.participants.length }} participantes</span>
+                </div>
+
+                <div class="tv-timeline" id="transparency-timeline">
+                  @for (p of t.participants; track p.assignedTurn) {
+                    <div class="tv-tl-item" [class.tv-tl-item--current]="p.assignedTurn === t.currentWeek">
+
+                      <!-- Número de turno -->
+                      <div class="tv-tl-turn"
+                           [class.tv-tl-turn--done]="p.assignedTurn < t.currentWeek"
+                           [class.tv-tl-turn--current]="p.assignedTurn === t.currentWeek"
+                           [class.tv-tl-turn--pending]="p.assignedTurn > t.currentWeek">
+                        @if (p.assignedTurn < t.currentWeek && p.isDelivered) {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        } @else {
+                          {{ p.assignedTurn }}
+                        }
+                      </div>
+
+                      <!-- Línea conectora (no en el último) -->
+                      @if (!$last) {
+                        <div class="tv-tl-line"></div>
+                      }
+
+                      <!-- Card del participante -->
+                      <div class="tv-tl-card">
+                        <div class="tv-tl-card__top">
+                          <div class="tv-tl-card__info">
+                            <p class="tv-tl-card__name">{{ p.name }}</p>
+                            <div class="tv-tl-card__meta">
+                              @if (p.variant) {
+                                <span class="tv-tl-badge tv-tl-badge--variant">{{ p.variant }}</span>
+                              }
+                              <span class="tv-tl-badge">📅 {{ getDeliveryDate(t.startDate, p.assignedTurn) | date:'EEE d MMM' : '' : 'es-MX' | uppercase }}</span>
+                            </div>
                           </div>
-                          @if (!$last) {
-                            <div class="w-0.5 flex-grow bg-pink-50 my-2 rounded-full"></div>
+
+                          <!-- Delivery badge -->
+                          @if (p.assignedTurn <= t.currentWeek) {
+                            <div class="tv-tl-delivery"
+                                 [class.tv-tl-delivery--done]="p.isDelivered"
+                                 [class.tv-tl-delivery--pending]="!p.isDelivered">
+                              @if (p.isDelivered) {
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Entregado</span>
+                              } @else {
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>En ruta</span>
+                              }
+                            </div>
                           }
-                       </div>
-  
-                       <!-- Content Column -->
-                       <div class="flex-1 pt-1">
-                          <div class="flex justify-between items-start mb-1">
-                             <div>
-                               <p class="text-sm font-black text-pink-900 leading-tight">{{ p.name }}</p>
-                               <div class="flex items-center gap-1.5 mt-0.5">
-                                 @if (p.variant) {
-                                    <span class="text-[9px] font-black text-pink-400 uppercase tracking-widest">{{ p.variant }}</span>
-                                    <span class="text-pink-200 text-[8px]">•</span>
-                                 }
-                                 <span class="text-[9px] font-bold text-pink-500 uppercase tracking-tight">
-                                    📅 {{ getDeliveryDate(t.startDate, p.assignedTurn) | date:'EEE d MMM' : '' : 'es-MX' | uppercase }}
-                                 </span>
-                               </div>
-                             </div>
-                             <div class="flex gap-2 items-center">
-                                <!-- Payment Track (Hearts) -->
-                                <div class="flex flex-col items-end gap-1">
-                                   <div class="flex flex-wrap justify-end gap-0.5 max-w-[120px]">
-                                      @for (week of weeksArray(); track week) {
-                                        <span class="text-[10px] transition-all duration-300"
-                                              [class.grayscale]="!p.paidWeeks.includes(week)"
-                                              [class.opacity-30]="!p.paidWeeks.includes(week)"
-                                              [title]="'Semana ' + week">
-                                          💖
-                                        </span>
-                                      }
-                                   </div>
-                                   <span class="text-[8px] font-black text-pink-400 uppercase tracking-tighter">
-                                     {{ p.paidWeeks.length }} de {{ t.totalWeeks }} abonos ✨
-                                   </span>
-                                </div>
-  
-                                <!-- Delivery Status Badge -->
-                                @if (p.assignedTurn <= t.currentWeek) {
-                                  <div class="w-10 h-10 rounded-2xl flex flex-col items-center justify-center transition-all bg-gradient-to-br"
-                                       [ngClass]="p.isDelivered ? 'from-emerald-400 to-teal-500 shadow-emerald-100 shadow-lg' : 'from-pink-100 to-rose-200 opacity-50'">
-                                     <span class="text-lg">{{ p.isDelivered ? '🎁' : '📍' }}</span>
-                                     <span class="text-[6px] font-black text-white uppercase tracking-tighter">{{ p.isDelivered ? 'LISTO' : 'RUTA' }}</span>
-                                  </div>
-                                }
-                             </div>
+                        </div>
+
+                        <!-- Barra de abonos -->
+                        <div class="tv-tl-card__progress">
+                          <div class="tv-tl-weeks">
+                            @for (week of weeksArray(); track week) {
+                              <div class="tv-tl-week-chip"
+                                   [class.tv-tl-week-chip--paid]="p.paidWeeks.includes(week)"
+                                   [class.tv-tl-week-chip--current]="week === t.currentWeek"
+                                   [title]="'Semana ' + week + (p.paidWeeks.includes(week) ? ' — Pagado' : ' — Pendiente')">
+                              </div>
+                            }
                           </div>
-                          <div class="h-1 w-full bg-pink-50 rounded-full mt-2 overflow-hidden">
-                             <div class="h-full bg-pink-300 transition-all duration-1000" [style.width]="(p.paidWeeks.length / t.totalWeeks * 100) + '%'"></div>
+                          <span class="tv-tl-card__progress-label">
+                            {{ p.paidWeeks.length }}/{{ t.totalWeeks }} abonos
+                          </span>
+                        </div>
+
+                        <div class="tv-tl-bar">
+                          <div class="tv-tl-bar__fill"
+                               [style.width]="(p.paidWeeks.length / t.totalWeeks * 100) + '%'"
+                               [class.tv-tl-bar__fill--complete]="p.paidWeeks.length === t.totalWeeks">
                           </div>
-                       </div>
-                     </div>
-                   }
-                 </div>
-              </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  }
+                </div>
+              </section>
+
             </div>
           }
+
         }
       </div>
 
-       <!-- Assistant Widget -->
-       @if (tanda() && !loading()) {
-        <div class="fixed bottom-6 right-6 z-40 flex items-end justify-end gap-3 pointer-events-none">
+      <!-- ░░ ASSISTANT WIDGET ░░ -->
+      @if (tanda() && !loading()) {
+        <div class="tv-assistant">
           @if (showAssistantBubble()) {
-            <div class="bg-white/95 backdrop-blur-2xl rounded-[1.5rem] p-4 shadow-2xl border border-pink-100 max-w-[200px] pointer-events-auto animate-fade-in-up relative group/bubble">
-              <button (click)="showAssistantBubble.set(false)" 
-                      class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-pink-500 shadow-lg border border-pink-50 flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all z-30 active:scale-90" 
-                      title="Cerrar mensaje">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <div class="tv-assistant__bubble tv-anim-in">
+              <button class="tv-assistant__close" (click)="showAssistantBubble.set(false)" aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
-
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[9px] font-black text-pink-500 uppercase">Asistente Virtual</span>
-              </div>
-              <p class="text-[10px] text-pink-900 font-medium italic">"¡Recuerda que estamos ahorrando juntas! Si tienes dudas sobre tu pago, escríbenos. ✨"</p>
+              <p class="tv-assistant__label">Asistente</p>
+              <p class="tv-assistant__text">¿Tienes dudas sobre tu pago? Escríbenos, estamos para ayudarte.</p>
             </div>
           }
-          <button (click)="showAssistantBubble.set(true)" class="shrink-0 w-14 h-14 bg-gradient-to-br from-pink-100 to-rose-200 rounded-full flex items-center justify-center text-3xl shadow-xl border-4 border-white pointer-events-auto hover:scale-110 active:scale-95 transition-all animate-bounce-subtle">
-            👩🏻‍💻
+          <button class="tv-assistant__btn" (click)="showAssistantBubble.set(!showAssistantBubble())" aria-label="Abrir asistente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </button>
         </div>
-       }
+      }
 
-       <!-- Toast Notification -->
-       @if (toastVisible()) {
-        <div class="fixed bottom-24 left-0 right-0 z-[100] flex justify-center pointer-events-none px-4">
-          <div class="animate-bounce-up-y-only pointer-events-auto">
-            <div class="bg-pink-950/95 backdrop-blur-md text-white text-[11px] font-black uppercase tracking-widest pl-6 pr-12 py-4 rounded-full shadow-2xl flex items-center gap-2.5 border border-pink-500/30 relative">
-              <span class="text-lg">✨</span>
-              <span>{{ toastMessage() }}</span>
-              <button (click)="toastVisible.set(false)" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all z-20">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-              </button>
-            </div>
-          </div>
+      <!-- ░░ TOAST ░░ -->
+      @if (toastVisible()) {
+        <div class="tv-toast tv-anim-in">
+          <svg class="tv-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>{{ toastMessage() }}</span>
+          <button class="tv-toast__close" (click)="toastVisible.set(false)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
-       }
+      }
+
     </div>
   `,
   styles: [`
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-    @keyframes float-delayed { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    @keyframes pulse-slow { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-    @keyframes wiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
-    @keyframes fade-in-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-    
-    @keyframes bounce-up-y-only { 0% { opacity: 0; transform: translateY(100vh); } 60% { opacity: 1; transform: translateY(-15px); } 80% { transform: translateY(5px); } 100% { transform: translateY(0); } }
-    
-    .animate-float { animation: float 6s ease-in-out infinite; }
-    .animate-float-delayed { animation: float-delayed 5s ease-in-out infinite; animation-delay: 2s; }
-    .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
-    .animate-wiggle { animation: wiggle 3s ease-in-out infinite; }
-    .animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    .animate-fade-in { animation: fade-in 0.4s ease-out both; }
-    .animate-bounce-subtle { animation: bounce-subtle 2s infinite; }
-    .animate-bounce-up-y-only { animation: bounce-up-y-only 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    /* ═══════════════════════════════════════════════
+       TANDA VIEW — PREMIUM DARK REDESIGN
+       Design System: Deep violet + amber gold accent
+    ═══════════════════════════════════════════════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    /* ── Root ── */
+    .tv-root {
+      min-height: 100dvh;
+      background: #0a0812;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #f0edf8;
+      position: relative;
+      overflow-x: hidden;
+      padding-bottom: 6rem;
+    }
+
+    /* ── BG Orbs ── */
+    .tv-bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .tv-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+    }
+    .tv-orb--1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #7c3aed, transparent 70%);
+      top: -100px; left: -100px;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+    .tv-orb--2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #db2777, transparent 70%);
+      bottom: 20%; right: -100px;
+      animation: orbFloat 10s ease-in-out infinite reverse;
+    }
+    .tv-orb--3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, #d97706, transparent 70%);
+      top: 50%; left: 30%;
+      opacity: 0.15;
+      animation: orbFloat 15s ease-in-out infinite;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33%       { transform: translate(20px,-30px) scale(1.05); }
+      66%       { transform: translate(-15px,20px) scale(0.95); }
+    }
+
+    /* ── Container ── */
+    .tv-container {
+      position: relative; z-index: 10;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    /* ── Loading ── */
+    .tv-loader {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 70vh; gap: 1rem;
+    }
+    .tv-loader__text { color: #a78bfa; font-weight: 600; font-size: 0.875rem; }
+
+    /* ── Error ── */
+    .tv-error {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 70vh; text-align: center; gap: 0.75rem;
+    }
+    .tv-error__icon { font-size: 3.5rem; }
+    .tv-error__title { font-size: 1.5rem; font-weight: 800; color: #f0edf8; }
+    .tv-error__desc { color: #9ca3af; font-size: 0.875rem; }
+
+    /* ── Spinner ── */
+    .tv-spinner {
+      width: 2.5rem; height: 2.5rem;
+      border: 3px solid #2d2040;
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .tv-spinner--sm { width: 1rem; height: 1rem; border-width: 2px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── HERO ── */
+    .tv-hero {
+      text-align: center;
+      padding: 2.5rem 1rem 2rem;
+      background: linear-gradient(180deg, rgba(124,58,237,0.12) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 1.5rem;
+    }
+    .tv-hero__badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+    .tv-hero__name {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #fff;
+      margin: 0 0 0.4rem;
+      line-height: 1.1;
+    }
+    .tv-hero__tagline {
+      font-size: 0.8rem;
+      color: #9d8dc0;
+      margin: 0 0 1.75rem;
+      font-weight: 500;
+    }
+
+    /* KPI Strip */
+    .tv-kpi-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.25rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(16px);
+    }
+    .tv-kpi { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+    .tv-kpi__val {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .tv-kpi__label { font-size: 0.6rem; font-weight: 600; color: #6d5fa0; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tv-kpi-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.08); margin: 0 0.5rem; }
+
+    /* Progress bar */
+    .tv-progress-wrap { margin-bottom: 1.25rem; }
+    .tv-progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 100px;
+      overflow: hidden;
+      position: relative;
+    }
+    .tv-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7c3aed, #db2777, #f59e0b);
+      border-radius: 100px;
+      position: relative;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tv-progress-glow {
+      position: absolute;
+      right: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 12px; height: 12px;
+      background: #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 0 12px 4px rgba(245,158,11,0.6);
+    }
+    .tv-progress-labels {
+      display: flex; justify-content: space-between;
+      margin-top: 0.4rem;
+      font-size: 0.6rem; color: #6d5fa0; font-weight: 600;
+    }
+
+    /* Week dots */
+    .tv-weeks-dots {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 0.35rem; margin-top: 0.5rem;
+    }
+    .tv-week-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.3s;
+    }
+    .tv-week-dot--done { background: #7c3aed; border-color: #7c3aed; }
+    .tv-week-dot--current {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      box-shadow: 0 0 8px rgba(245,158,11,0.7);
+      transform: scale(1.4);
+    }
+
+    /* ── App Banner ── */
+    .tv-app-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .tv-app-banner__left { display: flex; align-items: center; gap: 0.75rem; }
+    .tv-app-banner__icon { font-size: 1.4rem; }
+    .tv-app-banner__title { font-size: 0.75rem; font-weight: 700; color: #e2d8ff; margin: 0; }
+    .tv-app-banner__sub { font-size: 0.6rem; color: #6d5fa0; margin: 0; }
+    .tv-app-banner__btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .tv-app-btn {
+      font-size: 0.65rem; font-weight: 700;
+      padding: 0.35rem 0.7rem; border-radius: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .tv-app-btn--solid {
+      background: #fff; color: #0a0812;
+    }
+    .tv-app-btn--outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #e2d8ff;
+    }
+    .tv-app-btn:hover { opacity: 0.85; }
+
+    /* ── TABS ── */
+    .tv-tabs {
+      display: flex; gap: 0.375rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1rem;
+      padding: 0.375rem;
+      margin-bottom: 1.75rem;
+    }
+    .sticky-tabs {
+      position: sticky;
+      top: 0.75rem;
+      z-index: 30;
+      backdrop-filter: blur(24px);
+    }
+    .tv-tab {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.65rem 0.5rem;
+      border-radius: 0.75rem;
+      border: none;
+      background: transparent;
+      color: #6d5fa0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      letter-spacing: 0.01em;
+    }
+    .tv-tab__icon { width: 1rem; height: 1rem; }
+    .tv-tab--active {
+      background: rgba(124,58,237,0.2);
+      color: #c4b5fd;
+      border: 1px solid rgba(124,58,237,0.35);
+    }
+    .tv-tab:hover:not(.tv-tab--active) { color: #a78bfa; background: rgba(255,255,255,0.04); }
+
+    /* ── Tab Content ── */
+    .tv-tab-content { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    /* ── Winner Card ── */
+    .tv-winner-card {
+      position: relative;
+      text-align: center;
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      border-radius: 1.5rem;
+      padding: 2rem 1.5rem;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .tv-winner-card__glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+    }
+    .tv-winner-card__crown { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; position: relative; }
+    .tv-winner-card__title { font-size: 1.25rem; font-weight: 900; color: #fff; margin: 0 0 0.35rem; position: relative; }
+    .tv-winner-card__desc { font-size: 0.78rem; color: rgba(255,255,255,0.85); margin: 0; position: relative; }
+
+    /* ── Section ── */
+    .tv-section { margin-bottom: 1.5rem; }
+    .tv-section__header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+    .tv-section__title { font-size: 1rem; font-weight: 800; color: #f0edf8; margin: 0; }
+    .tv-section__hint { font-size: 0.65rem; color: #6d5fa0; font-weight: 600; }
+
+    /* ── Payment Tabs ── */
+    .tv-pay-tabs {
+      display: flex; gap: 0.25rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 0.85rem;
+      padding: 0.25rem;
+      margin-bottom: 1rem;
+    }
+    .tv-pay-tab {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      padding: 0.6rem 0.25rem;
+      border: none; background: transparent;
+      color: #6d5fa0;
+      font-size: 0.6rem; font-weight: 700;
+      cursor: pointer; border-radius: 0.65rem;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .tv-pay-tab__icon { width: 1.1rem; height: 1.1rem; }
+    .tv-pay-tab--active { background: rgba(124,58,237,0.15); color: #c4b5fd; }
+    .tv-pay-tab:hover:not(.tv-pay-tab--active) { color: #a78bfa; }
+
+    /* ── Pay Cards ── */
+    .tv-pay-content { min-height: 160px; }
+    .tv-pay-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+    }
+    .tv-pay-card--transfer { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.06); }
+    .tv-pay-card--oxxo    { border-color: rgba(234,88,12,0.3);  background: rgba(234,88,12,0.06);  }
+    .tv-pay-card--cash    { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.06); }
+
+    .tv-pay-card__header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .tv-pay-card__icon-wrap {
+      width: 2.5rem; height: 2.5rem; border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .tv-pay-card__icon-wrap svg { width: 1.2rem; height: 1.2rem; }
+    .tv-pay-card__icon-wrap--blue   { background: rgba(99,102,241,0.2); color: #818cf8; }
+    .tv-pay-card__icon-wrap--orange { background: rgba(234,88,12,0.2);  color: #fb923c; }
+    .tv-pay-card__icon-wrap--green  { background: rgba(16,185,129,0.2); color: #34d399; }
+    .tv-pay-card__logo { width: 2rem; height: 2rem; background: #00b1ea; border-radius: 0.5rem; }
+    .tv-pay-card__logo--mp { background: linear-gradient(135deg, #00b1ea, #0070e0); }
+    .tv-pay-card__provider { font-size: 0.8rem; font-weight: 700; color: #e2d8ff; display: block; }
+    .tv-pay-card__sub { font-size: 0.65rem; color: #6d5fa0; }
+    .tv-pay-card__owner {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; color: #9d8dc0; margin-top: 0.75rem;
+    }
+    .tv-pay-card__owner svg { width: 0.875rem; height: 0.875rem; flex-shrink: 0; }
+    .tv-pay-card__owner strong { color: #c4b5fd; }
+    .tv-pay-card__shield { font-size: 0.65rem; color: #6d5fa0; text-align: center; margin-top: 0.75rem; }
+
+    /* Copy field */
+    .tv-copy-field {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0.875rem;
+      padding: 0.875rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      gap: 0.75rem;
+      user-select: none;
+    }
+    .tv-copy-field:hover { background: rgba(255,255,255,0.09); border-color: rgba(124,58,237,0.4); }
+    .tv-copy-field:active { transform: scale(0.98); }
+    .tv-copy-field__body { display: flex; flex-direction: column; gap: 0.2rem; }
+    .tv-copy-field__label { font-size: 0.6rem; font-weight: 700; color: #6d5fa0; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tv-copy-field__value { font-family: 'Courier New', monospace; font-size: 0.85rem; font-weight: 700; color: #f0edf8; letter-spacing: 0.05em; }
+    .tv-copy-field__action {
+      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+      font-size: 0.55rem; font-weight: 700; color: #a78bfa; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .tv-copy-field__action svg { width: 1rem; height: 1rem; }
+
+    /* Info note */
+    .tv-info-note {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; color: #9d8dc0;
+      background: rgba(255,255,255,0.04);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.875rem;
+      margin-top: 0.75rem;
+    }
+    .tv-info-note svg { width: 0.875rem; height: 0.875rem; flex-shrink: 0; color: #fb923c; }
+
+    /* Cash info */
+    .tv-cash-info { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.25rem; }
+    .tv-cash-info__item {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.8rem; font-weight: 600; color: #e2d8ff;
+    }
+    .tv-cash-info__item svg { width: 1.1rem; height: 1.1rem; color: #34d399; flex-shrink: 0; }
+
+    /* MP Fields */
+    .tv-mp-field {
+      height: 3rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0.75rem;
+      padding: 0 1rem;
+      display: flex; align-items: center;
+    }
+    .tv-mp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    /* Form fields */
+    .tv-field-wrap { display: flex; flex-direction: column; gap: 0.35rem; }
+    .tv-field-label { font-size: 0.65rem; font-weight: 700; color: #6d5fa0; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tv-field-select, .tv-field-input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem; font-weight: 600;
+      color: #f0edf8;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .tv-field-select:focus, .tv-field-input:focus { border-color: rgba(124,58,237,0.5); }
+    .tv-field-input::placeholder { color: #4a3d6b; }
+
+    /* MP fetching */
+    .tv-mp-fetching { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: #a78bfa; justify-content: center; }
+
+    /* Pay result */
+    .tv-pay-result { text-align: center; padding: 1.5rem 0; }
+    .tv-pay-result__icon {
+      width: 3.5rem; height: 3.5rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900; margin: 0 auto 1rem;
+    }
+    .tv-pay-result__icon--ok { background: rgba(16,185,129,0.2); color: #34d399; border: 2px solid rgba(16,185,129,0.4); }
+    .tv-pay-result__icon--err { background: rgba(239,68,68,0.2); color: #f87171; border: 2px solid rgba(239,68,68,0.4); }
+    .tv-pay-result__title { font-size: 1.1rem; font-weight: 800; color: #f0edf8; margin: 0 0 0.4rem; }
+    .tv-pay-result__desc { font-size: 0.78rem; color: #9d8dc0; margin: 0 0 1.25rem; }
+
+    /* ── Buttons ── */
+    .tv-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      font-size: 0.8rem; font-weight: 700;
+      padding: 0.85rem 1.25rem; border-radius: 0.875rem;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+    .tv-btn--full { width: 100%; }
+    .tv-btn--primary {
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+    }
+    .tv-btn--primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .tv-btn--primary:active { transform: scale(0.97); }
+    .tv-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .tv-btn--messenger {
+      background: #0084ff;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0,132,255,0.3);
+    }
+    .tv-btn--messenger:hover { background: #0073e6; }
+    .tv-btn--ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #a78bfa;
+    }
+    .tv-btn__icon { width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+
+    /* Contact CTA */
+    .tv-contact-cta { margin-top: 1.25rem; }
+
+    /* ── Policy Card ── */
+    .tv-policy-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 1rem;
+      padding: 1rem 1.1rem;
+    }
+    .tv-policy-card__icon {
+      width: 2.25rem; height: 2.25rem; flex-shrink: 0;
+      background: rgba(124,58,237,0.15);
+      border-radius: 0.625rem;
+      display: flex; align-items: center; justify-content: center;
+      color: #a78bfa;
+    }
+    .tv-policy-card__icon svg { width: 1rem; height: 1rem; }
+    .tv-policy-card__title { font-size: 0.72rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 0.25rem; }
+    .tv-policy-card__text { font-size: 0.78rem; color: #9d8dc0; margin: 0; line-height: 1.5; }
+    .tv-policy-card__text strong { color: #c4b5fd; }
+
+    /* ── TIMELINE (Grupo) ── */
+    .tv-timeline { display: flex; flex-direction: column; }
+    .tv-tl-item {
+      display: grid;
+      grid-template-columns: 2.25rem 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 0 0.875rem;
+      position: relative;
+    }
+    .tv-tl-item--current .tv-tl-card {
+      background: rgba(124,58,237,0.08);
+      border-color: rgba(124,58,237,0.3);
+    }
+
+    /* Turn circle */
+    .tv-tl-turn {
+      width: 2.25rem; height: 2.25rem;
+      border-radius: 0.625rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800;
+      grid-column: 1; grid-row: 1;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .tv-tl-turn svg { width: 0.9rem; height: 0.9rem; }
+    .tv-tl-turn--done    { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .tv-tl-turn--current { background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; box-shadow: 0 4px 16px rgba(124,58,237,0.4); }
+    .tv-tl-turn--pending { background: rgba(255,255,255,0.04); color: #4a3d6b; border: 1px solid rgba(255,255,255,0.08); }
+
+    /* Connector line */
+    .tv-tl-line {
+      width: 2px;
+      background: rgba(255,255,255,0.06);
+      margin: 0.35rem auto 0;
+      min-height: 1rem;
+      grid-column: 1; grid-row: 2;
+      justify-self: center;
+    }
+
+    /* Participant card */
+    .tv-tl-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 1rem;
+      padding: 0.875rem 1rem;
+      margin-bottom: 0.625rem;
+      grid-column: 2; grid-row: 1 / span 2;
+    }
+    .tv-tl-card__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .tv-tl-card__info { flex: 1; min-width: 0; }
+    .tv-tl-card__name { font-size: 0.875rem; font-weight: 700; color: #f0edf8; margin: 0 0 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tv-tl-card__meta { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .tv-tl-badge {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 0.06em;
+      background: rgba(255,255,255,0.06); color: #9d8dc0;
+      padding: 0.2rem 0.5rem; border-radius: 100px;
+      text-transform: uppercase;
+    }
+    .tv-tl-badge--variant { background: rgba(124,58,237,0.15); color: #a78bfa; }
+
+    /* Delivery badge */
+    .tv-tl-delivery {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.2rem; flex-shrink: 0;
+      border-radius: 0.625rem;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .tv-tl-delivery svg { width: 0.875rem; height: 0.875rem; }
+    .tv-tl-delivery--done { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+    .tv-tl-delivery--pending { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+
+    /* Week chips */
+    .tv-tl-card__progress { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .tv-tl-weeks { display: flex; flex-wrap: wrap; gap: 0.2rem; flex: 1; }
+    .tv-tl-week-chip {
+      width: 0.9rem; height: 0.55rem; border-radius: 100px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.3s;
+    }
+    .tv-tl-week-chip--paid { background: #7c3aed; border-color: #7c3aed; }
+    .tv-tl-week-chip--current.tv-tl-week-chip--paid { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+    .tv-tl-card__progress-label { font-size: 0.6rem; font-weight: 700; color: #6d5fa0; white-space: nowrap; }
+
+    /* Participant bar */
+    .tv-tl-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+    .tv-tl-bar__fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #db2777); border-radius: 100px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+    .tv-tl-bar__fill--complete { background: linear-gradient(90deg, #10b981, #34d399); }
+
+    /* ── ASSISTANT ── */
+    .tv-assistant {
+      position: fixed; bottom: 1.5rem; right: 1.25rem;
+      z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;
+    }
+    .tv-assistant__bubble {
+      background: rgba(15,10,30,0.92);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 1.1rem;
+      padding: 0.875rem 1rem;
+      max-width: 200px;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .tv-assistant__close {
+      position: absolute; top: -0.5rem; right: -0.5rem;
+      width: 1.5rem; height: 1.5rem;
+      background: rgba(124,58,237,0.6); color: #fff;
+      border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tv-assistant__close svg { width: 0.7rem; height: 0.7rem; }
+    .tv-assistant__label { font-size: 0.6rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 0.3rem; }
+    .tv-assistant__text { font-size: 0.72rem; color: #c4b5fd; margin: 0; line-height: 1.4; }
+    .tv-assistant__btn {
+      width: 3.25rem; height: 3.25rem; border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #db2777);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.4);
+      transition: all 0.2s;
+      animation: assistantPulse 3s ease-in-out infinite;
+    }
+    .tv-assistant__btn:hover { transform: scale(1.1); }
+    .tv-assistant__btn svg { width: 1.25rem; height: 1.25rem; }
+    @keyframes assistantPulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+      50%       { box-shadow: 0 8px 32px rgba(124,58,237,0.7); }
+    }
+
+    /* ── TOAST ── */
+    .tv-toast {
+      position: fixed;
+      bottom: 5.5rem;
+      left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      display: flex; align-items: center; gap: 0.625rem;
+      background: rgba(15,10,30,0.92);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(16,185,129,0.4);
+      border-radius: 100px;
+      padding: 0.75rem 1rem 0.75rem 0.875rem;
+      color: #f0edf8;
+      font-size: 0.75rem; font-weight: 700;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+      white-space: nowrap;
+    }
+    .tv-toast__icon { width: 1.1rem; height: 1.1rem; color: #34d399; flex-shrink: 0; }
+    .tv-toast__close {
+      background: rgba(255,255,255,0.1); border: none; border-radius: 50%;
+      width: 1.25rem; height: 1.25rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #9d8dc0;
+    }
+    .tv-toast__close svg { width: 0.65rem; height: 0.65rem; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .tv-anim-in { animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    /* ── UTILITIES ── */
+    .hidden { display: none !important; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
   `]
 })
 export class TandaViewComponent implements OnInit {
@@ -482,7 +1197,6 @@ export class TandaViewComponent implements OnInit {
     const baseUrl = t.businessMessengerUrl || 'https://m.me/';
     let ref = `tanda_${t.id}`;
 
-    // Si ya seleccionó quién es, lo incluimos en el ref para que sepas quién te escribe
     const pId = this.selectedParticipantId();
     if (pId) {
       const p = t.participants.find((x: any) => x.id === pId);
@@ -499,11 +1213,6 @@ export class TandaViewComponent implements OnInit {
   isWinnerThisWeek = computed(() => {
     const t = this.tanda();
     if (!t) return false;
-    // En una tanda real, necesitaríamos identificar qué participante es la que abrió el link.
-    // Como es un link genérico por ahora, podríamos basarlo en algún parámetro opcional, 
-    // pero para demos mostramos si alguna participante tiene su turno esta semana.
-    // Pero el usuario pidió "vista de la clienta", así que por ahora lo dejamos genérico o 
-    // basado en URL si pasamos el participantId.
     return false;
   });
 
@@ -514,7 +1223,7 @@ export class TandaViewComponent implements OnInit {
 
   copyText(val: string) {
     navigator.clipboard.writeText(val).then(() => {
-      this.showToast('Número Copiado 📋✨');
+      this.showToast('Copiado al portapapeles');
     });
   }
 
@@ -553,7 +1262,7 @@ export class TandaViewComponent implements OnInit {
       if ((window as any).MercadoPago) { resolve(); return; }
       const script = document.createElement('script');
       script.src = 'https://sdk.mercadopago.com/js/v2';
-      script.crossOrigin = 'anonymous'; // Crucial for detailed error logging
+      script.crossOrigin = 'anonymous';
       script.onload = () => {
         console.log('✅ MP SDK Loaded Successfully');
         resolve();
@@ -574,7 +1283,6 @@ export class TandaViewComponent implements OnInit {
       return;
     }
 
-    console.log('💳 Card Tab Selected');
     if (!this.mpSdkLoaded()) {
       try {
         await this.loadMpScript();
@@ -585,20 +1293,14 @@ export class TandaViewComponent implements OnInit {
           throw new Error('MercadoPago object not found after script load');
         }
       } catch (err: any) {
-        console.error('🛑 MP Initialization Error:', {
-          message: err.message,
-          stack: err.stack,
-          cause: err.cause
-        });
-        this.showToast('Error al cargar pagos con tarjeta 💔');
+        console.error('🛑 MP Initialization Error:', err);
+        this.showToast('Error al cargar pagos con tarjeta');
         return;
       }
     }
 
-    // Give Angular time to render the form container
     setTimeout(() => {
       const formEl = document.getElementById('mp-card-form');
-      console.log('🔍 Checking for card form element:', !!formEl);
       if (formEl) {
         try {
           this.mountCardForm();
@@ -606,28 +1308,16 @@ export class TandaViewComponent implements OnInit {
           console.error('🛑 MP Mounting Error:', mountErr);
         }
       } else {
-        console.warn('⚠️ Card form element not found, retrying...');
         setTimeout(() => this.mountCardForm(), 300);
       }
     }, 200);
   }
 
   private mountCardForm() {
-    console.log('🔨 Mounting Card Form...');
-    if (!this.mp) {
-      console.error('❌ Cannot mount: MP not initialized');
-      return;
-    }
-    if (this.cardFormInstance) {
-      console.warn('⚠️ Card form already mounted');
-      return;
-    }
+    if (!this.mp || this.cardFormInstance) return;
 
     const formEl = document.getElementById('mp-card-form');
-    if (!formEl) {
-      console.error('❌ Cannot mount: Form element missing');
-      return;
-    }
+    if (!formEl) return;
 
     try {
       this.cardFormInstance = this.mp.cardForm({
@@ -653,18 +1343,13 @@ export class TandaViewComponent implements OnInit {
             this.submitCardPayment();
           },
           onFetching: (resource: string) => {
-            console.log('Fetching resource:', resource);
             this.mpFetching.set(true);
-            setTimeout(() => this.mpFetching.set(false), 2000); // Reset if it gets stuck
+            setTimeout(() => this.mpFetching.set(false), 2000);
           }
         }
       });
-      console.log('✨ Card Form Instance Created:', !!this.cardFormInstance);
     } catch (e: any) {
       console.error('🛑 MP cardForm Initialization Error:', JSON.stringify(e));
-      if (Array.isArray(e)) {
-        e.forEach((err, idx) => console.error(`Error [${idx}]:`, err));
-      }
     }
   }
 
@@ -682,7 +1367,7 @@ export class TandaViewComponent implements OnInit {
 
     const data = this.cardFormInstance.getCardFormData();
     if (!data.token) {
-      this.showToast('Completa los datos de tu tarjeta 💳');
+      this.showToast('Completa los datos de tu tarjeta');
       return;
     }
 
@@ -698,8 +1383,7 @@ export class TandaViewComponent implements OnInit {
         this.mpProcessing.set(false);
         this.mpResult.set({ status: res.status, message: 'Pago aprobado' });
         if (res.status === 'approved') {
-          this.showToast('¡Pago Realizado! 🎉');
-          // Actualizar UI local (opcional: recargar tanda)
+          this.showToast('¡Pago realizado!');
           this.loadTanda(this.accessToken);
         }
         this.unmountCardForm();
@@ -739,25 +1423,18 @@ export class TandaViewComponent implements OnInit {
   getDeliveryDate(startDate: string, turn: number): Date {
     if (!startDate) return new Date();
 
-    // Extraemos las partes de la fecha (YYYY-MM-DD)
     const datePart = startDate.split('T')[0];
     const parts = datePart.split('-');
 
-    // Forzamos el parseo local para evitar saltos de día por UTC
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
 
-    const date = new Date(year, month, day, 12, 0, 0); // 12:00 PM local para ser súper seguros
-
-    // Sumamos las semanas según el turno
+    const date = new Date(year, month, day, 12, 0, 0);
     date.setDate(date.getDate() + (turn - 1) * 7);
 
-    // Ajustamos al domingo de esa semana (Las entregas son los domingos)
-    // En JS getDay(): 0=Domingo, 1=Lunes, ..., 6=Sábado
     const dayOfWeek = date.getDay();
     if (dayOfWeek !== 0) {
-      // Sumamos los días necesarios para llegar al domingo (7 - dayOfWeek)
       date.setDate(date.getDate() + (7 - dayOfWeek) % 7);
     }
 

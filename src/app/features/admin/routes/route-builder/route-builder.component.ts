@@ -691,7 +691,8 @@ export class RouteBuilderComponent implements OnInit {
             longitude: o.clientLongitude,
             deliveryInstructions: o.deliveryInstructions,
             hasCoords: this.orderHasCoords(o),
-            packageCount: o.packageCount ?? 0,
+            packageCount: (o as any).packageCount ?? 0,
+
             isTandaPending: false
         }));
         const tandaRows: CandidateRow[] = this.availableTandas().map(t => ({

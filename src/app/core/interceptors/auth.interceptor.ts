@@ -6,8 +6,10 @@ const PUBLIC_PATH_PATTERNS = [
     '/pedido/',
     '/repartidor/',
     '/tanda-view/',
+    '/public-tanda/',
     '/live/',
 ];
+
 
 /**
  * Inyecta Authorization (JWT del Account) en TODAS las llamadas autenticadas

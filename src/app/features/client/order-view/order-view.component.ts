@@ -135,6 +135,32 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
             </div>
           </div>
 
+          <!-- Banner Invitación Descarga App Neni Clientas (Rastreo Pedidos) -->
+          <div class="card-coquette bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-6 text-white shadow-2xl rounded-[2.5rem] relative overflow-hidden my-6 border-2 border-white/40">
+            <div class="absolute -right-6 -bottom-6 text-9xl opacity-15 pointer-events-none select-none">📱</div>
+            <div class="relative z-10 space-y-3">
+              <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-pink-100">
+                <span>✨ Neni's App Clientas</span>
+              </div>
+              <h3 class="text-xl font-black leading-tight font-display">
+                ¡Rastrea tus pedidos y entregas en tu celular! 📲
+              </h3>
+              <p class="text-xs text-pink-100 font-medium leading-relaxed">
+                Descarga la app oficial para recibir notificaciones cuando tu pedido salga en ruta, ver la ubicación de tu repartidor y acumular puntos.
+              </p>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <a href="https://nenisapp.com/download" target="_blank" 
+                   class="flex items-center gap-2 bg-white text-pink-900 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg hover:scale-105 transition-all">
+                  <span>🍎 App Store</span>
+                </a>
+                <a href="https://nenisapp.com/download" target="_blank" 
+                   class="flex items-center gap-2 bg-white/20 border border-white/40 text-white font-black text-xs px-4 py-2.5 rounded-2xl backdrop-blur-md hover:bg-white/30 transition-all">
+                  <span>🤖 Google Play</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
           <!-- Smart Dashboard Top Bar (Sticky) -->
           <div id="balance-summary" class="sticky top-2 z-30 px-2 -mx-2 mb-6" [style.opacity]="isUnboxed() ? 1 : 0">
             <div class="bg-white/95 backdrop-blur-2xl rounded-3xl p-3 shadow-md border border-pink-100 flex items-center justify-between">

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, computed, HostListener, CUSTOM_ELEMENTS_SCHEMA, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
-import { GoogleMap, MapMarker, MapPolyline } from '@angular/google-maps';
+import { GoogleMap, MapInfoWindow, MapMarker } from '@angular/google-maps';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -41,7 +41,7 @@ interface GeocodedOrder extends OrderSummaryDto {
     RouterLink,
     GoogleMap,
     MapMarker,
-    MapPolyline,
+    MapInfoWindow,
     DragDropModule,
     RouteOptimizerComponent,
     AddressEditorV2Component
@@ -731,8 +731,12 @@ interface GeocodedOrder extends OrderSummaryDto {
                 <map-marker [position]="mapCenter" [options]="baseMarkerOpts"></map-marker>
                 <!-- Delivery markers -->
                 @for (d of mapDeliveries; track d.deliveryId) {
-                  @if (d.latitude && d.longitude) {
-                    <map-marker [position]="{ lat: d.latitude, lng: d.longitude }" [options]="getDeliveryMarkerOpts(d)"></map-marker>
+                  @if (d.latitude != null && d.longitude != null) {
+                    <map-marker #deliveryMarker="mapMarker"
+                      [position]="{ lat: d.latitude, lng: d.longitude }"
+                      [options]="getDeliveryMarkerOpts(d)"
+                      (mapClick)="openMapDelivery(deliveryMarker, d)">
+                    </map-marker>
                   }
                 }
                 
@@ -741,9 +745,17 @@ interface GeocodedOrder extends OrderSummaryDto {
                   <map-marker [position]="entry.value" [options]="driverMarkerOptions"></map-marker>
                 }
 
-                @if (mapPolylinePath().length > 0) {
-                  <map-polyline [path]="mapPolylinePath()" [options]="mapPolylineOptions"></map-polyline>
-                }
+                <map-info-window>
+                  @if (activeMapDelivery(); as delivery) {
+                    <div class="min-w-44 px-1 py-1 text-sm text-slate-700">
+                      <p class="font-bold text-pink-900">Parada {{ delivery.sortOrder }} · {{ delivery.clientName }}</p>
+                      @if (delivery.alternativeAddress || delivery.clientAddress) {
+                        <p class="mt-1 text-xs text-slate-500">{{ delivery.alternativeAddress || delivery.clientAddress }}</p>
+                      }
+                      <p class="mt-1 text-xs font-semibold text-pink-600">{{ delivery.status }}</p>
+                    </div>
+                  }
+                </map-info-window>
               </google-map>
 
               @if (plottingMap()) {
@@ -1127,9 +1139,10 @@ export class RoutesComponent implements OnInit, OnDestroy {
   showMapModal = signal(false);
   mapRoute = signal<RouteDto | null>(null);
   mapDeliveries: RouteDeliveryDto[] = [];
-  mapPolylinePath = signal<google.maps.LatLngLiteral[]>([]);
   plottingMap = signal(false);
   @ViewChild(GoogleMap) googleMap!: GoogleMap;
+  @ViewChild(MapInfoWindow) mapInfoWindow?: MapInfoWindow;
+  activeMapDelivery = signal<RouteDeliveryDto | null>(null);
 
   mapCenter: google.maps.LatLngLiteral = { lat: GEO_CONFIG.defaultLat, lng: GEO_CONFIG.defaultLng };
   mapZoom = 13;
@@ -1161,12 +1174,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
     ]
   };
   baseMarkerOpts: google.maps.MarkerOptions = { title: 'Base' };
-  mapPolylineOptions: google.maps.PolylineOptions = {
-    strokeColor: '#ec4899',
-    strokeWeight: 5,
-    strokeOpacity: 0.75,
-    clickable: false
-  };
 
   // Corte Modal
   showCorteModal = signal(false);
@@ -2186,12 +2193,12 @@ export class RoutesComponent implements OnInit, OnDestroy {
 
   // ═══ DRIVER LINK ═══
   copyDriverLink(route: RouteDto): void {
-    const link = route.driverLink || `${window.location.origin}/repartidor/${route.driverToken}`;
+    const link = this.getDriverLink(route);
     navigator.clipboard.writeText(link).then(() => this.toast.success('¡Link copiado! 📋✅'));
   }
 
   shareWhatsApp(route: RouteDto): void {
-    const link = route.driverLink || `${window.location.origin}/repartidor/${route.driverToken}`;
+    const link = this.getDriverLink(route);
     const text = `🚗 Ruta #${route.id}\n📦 ${route.deliveries.length} entregas\n\n🔗 ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
@@ -2209,7 +2216,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
   openMap(route: RouteDto): void {
     this.mapRoute.set(route);
     this.mapDeliveries = route.deliveries;
-    this.mapPolylinePath.set([]);
+    this.activeMapDelivery.set(null);
     this.showMapModal.set(true);
 
     // Try to center on device GPS first
@@ -2222,7 +2229,12 @@ export class RoutesComponent implements OnInit, OnDestroy {
   closeMap(): void {
     this.showMapModal.set(false);
     this.mapRoute.set(null);
-    this.mapPolylinePath.set([]);
+    this.activeMapDelivery.set(null);
+  }
+
+  openMapDelivery(marker: MapMarker, delivery: RouteDeliveryDto): void {
+    this.activeMapDelivery.set(delivery);
+    this.mapInfoWindow?.open(marker);
   }
 
   getDeliveryMarkerOpts(d: RouteDeliveryDto): google.maps.MarkerOptions {
@@ -2241,26 +2253,41 @@ export class RoutesComponent implements OnInit, OnDestroy {
   private async plotMapRoute(route: RouteDto): Promise<void> {
     this.plottingMap.set(true);
     const sorted = [...route.deliveries].sort((a, b) => a.sortOrder - b.sortOrder);
-    const path: google.maps.LatLngLiteral[] = [this.mapCenter];
+    const points: google.maps.LatLngLiteral[] = [this.mapCenter];
 
     for (const d of sorted) {
       const lat = d.latitude;
       const lng = d.longitude;
-      if (lat && lng) {
-        path.push({ lat, lng });
+      if (lat != null && lng != null) {
+        points.push({ lat, lng });
       }
     }
-
-    this.mapPolylinePath.set(path.length > 1 ? path : []);
 
     this.plottingMap.set(false);
     setTimeout(() => {
       if (this.googleMap) {
         const bounds = new google.maps.LatLngBounds();
-        path.forEach(p => bounds.extend(p));
+        points.forEach(p => bounds.extend(p));
         this.googleMap.fitBounds(bounds, 50);
       }
     }, 400);
+  }
+
+  private getDriverLink(route: RouteDto): string {
+    const suppliedLink = route.driverLink?.trim() ?? '';
+    if (suppliedLink && !this.isLegacyRegiBazarLink(suppliedLink)) return suppliedLink;
+
+    const token = route.driverToken?.trim();
+    return token ? `${window.location.origin}/repartidor/${encodeURIComponent(token)}` : suppliedLink;
+  }
+
+  private isLegacyRegiBazarLink(link: string): boolean {
+    try {
+      const host = new URL(link).hostname.toLowerCase();
+      return host === 'regibazar.com' || host.endsWith('.regibazar.com');
+    } catch {
+      return false;
+    }
   }
 
   // ═══ CORTE / LIQUIDACIÓN ═══

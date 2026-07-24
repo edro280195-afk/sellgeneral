@@ -20,15 +20,27 @@ interface CandidateRow {
     rawId: number | string;
     clientId?: number;
     clientName: string;
+    phone?: string;
     address?: string;
     clientAddress?: string;
     latitude?: number | null;
     longitude?: number | null;
     deliveryInstructions?: string;
     hasCoords: boolean;
+    packageCount?: number;
     isTandaPending: boolean;
     tandaName?: string;
     tandaWeek?: number;
+}
+
+type CandidateFilter = 'all' | 'selected' | 'no-packages' | 'no-coords' | 'orders' | 'tandas';
+
+interface ClientCandidateGroup {
+    key: string;
+    clientName: string;
+    phone?: string;
+    rows: CandidateRow[];
+    selectedCount: number;
 }
 
 declare const google: any;
@@ -39,7 +51,7 @@ declare const google: any;
     imports: [CommonModule, FormsModule, GoogleMap, MapMarker, MapPolyline, AddressEditorV2Component],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     template: `
-    <div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 p-4 sm:p-6">
+    <div class="min-h-screen bg-[#fffaf8] p-4 sm:p-6">
 
         <!-- HEADER + KPIS -->
         <div class="max-w-[1600px] mx-auto mb-4">
@@ -62,6 +74,24 @@ declare const google: any;
                         class="px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black text-sm shadow-lg shadow-pink-200 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none">
                     {{ saving() ? 'Guardando...' : (isEditMode() ? '🔄 Actualizar Ruta' : '✓ Guardar Ruta') }}
                 </button>
+            </div>
+
+            <div class="mb-4 grid grid-cols-3 items-start text-center">
+                <div class="relative flex flex-col items-center gap-1 text-pink-700">
+                    <span class="grid h-8 w-8 place-items-center rounded-full border-2 border-pink-500 bg-pink-50 text-xs font-black">1</span>
+                    <span class="text-[10px] font-black">Seleccionar</span>
+                </div>
+                <div class="relative flex flex-col items-center gap-1"
+                     [class.text-pink-700]="(preview()?.stops?.length ?? 0) > 0" [class.text-slate-400]="(preview()?.stops?.length ?? 0) === 0">
+                    <span class="grid h-8 w-8 place-items-center rounded-full border-2 text-xs font-black"
+                          [class.border-pink-500]="(preview()?.stops?.length ?? 0) > 0" [class.bg-pink-50]="(preview()?.stops?.length ?? 0) > 0"
+                          [class.border-slate-200]="(preview()?.stops?.length ?? 0) === 0">2</span>
+                    <span class="text-[10px] font-black">Preparar y revisar</span>
+                </div>
+                <div class="flex flex-col items-center gap-1 text-slate-400">
+                    <span class="grid h-8 w-8 place-items-center rounded-full border-2 border-slate-200 text-xs font-black">3</span>
+                    <span class="text-[10px] font-black">Crear y compartir</span>
+                </div>
             </div>
 
             <!-- KPIs -->
@@ -199,6 +229,26 @@ declare const google: any;
                             Tandas ({{ tandasCount() }})
                         </button>
                     </div>
+                    <div class="mt-1.5 flex gap-1.5">
+                        <button (click)="filterMode.set('selected')"
+                                [class.bg-pink-500]="filterMode() === 'selected'" [class.text-white]="filterMode() === 'selected'"
+                                [class.bg-pink-50]="filterMode() !== 'selected'" [class.text-pink-600]="filterMode() !== 'selected'"
+                                class="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                            Elegidas ({{ selected().size }})
+                        </button>
+                        <button (click)="filterMode.set('no-packages')"
+                                [class.bg-violet-600]="filterMode() === 'no-packages'" [class.text-white]="filterMode() === 'no-packages'"
+                                [class.bg-violet-50]="filterMode() !== 'no-packages'" [class.text-violet-600]="filterMode() !== 'no-packages'"
+                                class="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                            Sin bolsas ({{ noPackagesCount() }})
+                        </button>
+                        <button (click)="filterMode.set('orders')"
+                                [class.bg-pink-500]="filterMode() === 'orders'" [class.text-white]="filterMode() === 'orders'"
+                                [class.bg-pink-50]="filterMode() !== 'orders'" [class.text-pink-600]="filterMode() !== 'orders'"
+                                class="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                            Pedidos
+                        </button>
+                    </div>
                     <div class="flex items-center justify-between mt-2 text-[11px] font-bold">
                         <button (click)="selectAllVisible()" class="text-pink-500 hover:underline">Seleccionar visibles</button>
                         <button (click)="clearSelection()" class="text-pink-400 hover:underline">Limpiar</button>
@@ -211,7 +261,30 @@ declare const google: any;
                     } @else if (visibleCandidates().length === 0) {
                         <p class="text-center text-pink-300 italic text-sm py-8">Nada por aquí 🌸</p>
                     }
-                    @for (row of visibleCandidates(); track row.key) {
+                    @for (group of visibleClientGroups(); track group.key) {
+                        <button type="button" (click)="toggleClientGroup(group.key)"
+                                class="w-full mb-1.5 rounded-2xl border px-3 py-2.5 text-left transition-colors"
+                                [class.border-pink-200]="isClientGroupExpanded(group.key) || group.selectedCount > 0"
+                                [class.bg-pink-50]="isClientGroupExpanded(group.key) || group.selectedCount > 0"
+                                [class.border-pink-100]="!isClientGroupExpanded(group.key) && group.selectedCount === 0"
+                                [class.bg-white]="!isClientGroupExpanded(group.key) && group.selectedCount === 0">
+                            <div class="flex items-center gap-2">
+                                <span class="h-8 w-8 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center font-black text-xs">
+                                    {{ group.clientName.slice(0, 1).toUpperCase() }}
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-sm font-black text-pink-900">{{ group.clientName }}</span>
+                                    <span class="block truncate text-[10px] font-semibold text-pink-400">
+                                        {{ group.rows.length }} {{ group.rows.length === 1 ? 'pedido/tanda' : 'pedidos/tandas' }}
+                                        @if (group.selectedCount > 0) { · {{ group.selectedCount }} seleccionado{{ group.selectedCount === 1 ? '' : 's' }} }
+                                        @if (group.phone) { · {{ group.phone }} }
+                                    </span>
+                                </span>
+                                <span class="text-pink-500 text-lg">{{ isClientGroupExpanded(group.key) ? '⌃' : '⌄' }}</span>
+                            </div>
+                        </button>
+                        @if (isClientGroupExpanded(group.key)) {
+                        @for (row of group.rows; track row.key) {
                         <label class="flex items-center gap-2 p-2.5 rounded-2xl cursor-pointer mb-1 transition-all"
                                [class.bg-pink-50]="selected().has(row.key)"
                                [class.border]="selected().has(row.key)"
@@ -231,6 +304,15 @@ declare const google: any;
                                     @if (!row.hasCoords) {
                                         <span class="px-1 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded uppercase">Sin dir</span>
                                     }
+                                    @if (row.kind === 'Order') {
+                                        <span class="px-1 py-0.5 rounded uppercase text-[9px] font-black"
+                                              [class.bg-emerald-50]="(row.packageCount ?? 0) > 0"
+                                              [class.text-emerald-700]="(row.packageCount ?? 0) > 0"
+                                              [class.bg-slate-100]="(row.packageCount ?? 0) === 0"
+                                              [class.text-slate-500]="(row.packageCount ?? 0) === 0">
+                                            {{ row.packageCount ?? 0 }} {{ (row.packageCount ?? 0) === 1 ? 'bolsa' : 'bolsas' }}
+                                        </span>
+                                    }
                                 </div>
                                 @if (row.address) {
                                     <p class="text-[10px] text-pink-400 truncate">📍 {{ row.address }}</p>
@@ -243,7 +325,31 @@ declare const google: any;
                                     📍
                                 </button>
                             }
+                            @if (row.kind === 'Order') {
+                                <button (click)="openPackageAdder(row, $event)"
+                                        class="px-2 h-7 rounded-xl bg-violet-50 text-violet-600 hover:bg-violet-100 text-[10px] font-black transition-all shrink-0"
+                                        [title]="(row.packageCount ?? 0) > 0 ? 'Agregar bolsas a este pedido' : 'Crear bolsas para este pedido'">
+                                    {{ (row.packageCount ?? 0) > 0 ? '+ Bolsas' : 'Crear bolsas' }}
+                                </button>
+                            }
                         </label>
+                        @if (addingPackagesFor()?.key === row.key) {
+                            <div class="mx-2 mb-2 flex items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50/70 p-2.5">
+                                <span class="text-[11px] font-bold text-violet-800">Agregar</span>
+                                <button type="button" (click)="changePackagesToAdd(-1)" [disabled]="packagesToAdd() <= 1"
+                                        class="h-7 w-7 rounded-lg bg-white text-violet-700 font-black disabled:opacity-40">−</button>
+                                <span class="min-w-5 text-center text-sm font-black text-violet-900">{{ packagesToAdd() }}</span>
+                                <button type="button" (click)="changePackagesToAdd(1)"
+                                        class="h-7 w-7 rounded-lg bg-white text-violet-700 font-black">+</button>
+                                <button type="button" (click)="addPackagesToOrder(row)" [disabled]="generatingPackagesFor() === row.key"
+                                        class="ml-auto rounded-xl bg-violet-600 px-3 py-1.5 text-[10px] font-black text-white disabled:opacity-50">
+                                    {{ generatingPackagesFor() === row.key ? 'Agregando...' : 'Confirmar' }}
+                                </button>
+                                <button type="button" (click)="closePackageAdder()" class="text-violet-500 text-sm" title="Cancelar">×</button>
+                            </div>
+                        }
+                        }
+                    }
                     }
                 </div>
             </div>
@@ -480,7 +586,8 @@ export class RouteBuilderComponent implements OnInit {
     hoveredKey = signal<string | null>(null);
     searchTerm = '';
     searchSignal = signal('');
-    filterMode = signal<'all' | 'no-coords' | 'tandas'>('all');
+    filterMode = signal<CandidateFilter>('all');
+    expandedClientGroups = signal<Set<string>>(new Set());
     mobileView = signal<MobileView>('list');
 
     preview = signal<PreviewRouteResponse | null>(null);
@@ -488,6 +595,9 @@ export class RouteBuilderComponent implements OnInit {
     saving = signal(false);
     geocodingNow = signal(false);
     pickingAddressFor = signal<CandidateRow | null>(null);
+    addingPackagesFor = signal<CandidateRow | null>(null);
+    packagesToAdd = signal(1);
+    generatingPackagesFor = signal<StopKey | null>(null);
 
     mapsReady = signal(typeof google !== 'undefined' && !!google?.maps);
     mapCenter = signal<google.maps.LatLngLiteral>({ lat: 27.4861, lng: -99.5069 });
@@ -574,12 +684,14 @@ export class RouteBuilderComponent implements OnInit {
             rawId: o.id,
             clientId: o.clientId,
             clientName: o.clientName,
+            phone: o.clientPhone,
             address: getEffectiveDeliveryAddress(o.clientAddress, o.alternativeAddress),
             clientAddress: o.clientAddress,
             latitude: o.clientLatitude,
             longitude: o.clientLongitude,
             deliveryInstructions: o.deliveryInstructions,
             hasCoords: this.orderHasCoords(o),
+            packageCount: o.packageCount ?? 0,
             isTandaPending: false
         }));
         const tandaRows: CandidateRow[] = this.availableTandas().map(t => ({
@@ -588,6 +700,7 @@ export class RouteBuilderComponent implements OnInit {
             rawId: t.tandaParticipantId,
             clientId: t.clientId,
             clientName: t.clientName,
+            phone: t.clientPhone,
             address: t.clientAddress,
             clientAddress: t.clientAddress,
             latitude: t.clientLatitude,
@@ -605,15 +718,44 @@ export class RouteBuilderComponent implements OnInit {
         const term = this.searchSignal().trim().toLowerCase();
         const mode = this.filterMode();
         return this.candidates().filter(c => {
+            if (mode === 'selected' && !this.selected().has(c.key)) return false;
+            if (mode === 'no-packages' && (c.kind !== 'Order' || (c.packageCount ?? 0) > 0)) return false;
             if (mode === 'no-coords' && c.hasCoords) return false;
+            if (mode === 'orders' && c.kind !== 'Order') return false;
             if (mode === 'tandas' && c.kind !== 'Tanda') return false;
-            if (term && !(c.clientName.toLowerCase().includes(term) || (c.address ?? '').toLowerCase().includes(term))) return false;
+            if (term) {
+                const searchable = [c.clientName, c.phone, c.address, c.kind, String(c.rawId)]
+                    .filter((value): value is string => !!value)
+                    .join(' ')
+                    .toLowerCase();
+                if (!searchable.includes(term)) return false;
+            }
             return true;
         });
     });
 
     noCoordsCount = computed(() => this.candidates().filter(c => !c.hasCoords).length);
     tandasCount = computed(() => this.candidates().filter(c => c.kind === 'Tanda').length);
+    noPackagesCount = computed(() => this.candidates().filter(c => c.kind === 'Order' && (c.packageCount ?? 0) === 0).length);
+
+    visibleClientGroups = computed<ClientCandidateGroup[]>(() => {
+        const groups = new Map<string, CandidateRow[]>();
+        for (const row of this.visibleCandidates()) {
+            const key = `${row.clientName.trim().toLowerCase()}|${row.phone?.trim() ?? ''}`;
+            const entries = groups.get(key) ?? [];
+            entries.push(row);
+            groups.set(key, entries);
+        }
+
+        const selected = this.selected();
+        return [...groups.entries()].map(([key, rows]) => ({
+            key,
+            clientName: rows[0].clientName,
+            phone: rows[0].phone,
+            rows,
+            selectedCount: rows.filter(row => selected.has(row.key)).length
+        }));
+    });
 
     selectedRows = computed(() => {
         const sel = this.selected();
@@ -631,7 +773,6 @@ export class RouteBuilderComponent implements OnInit {
 
     canSave = computed(() =>
         this.selected().size > 0
-        && this.selectedWithoutCoords().length === 0
         && !this.saving()
         && !this.loadingPreview()
         && (this.preview()?.stops?.length ?? 0) > 0
@@ -870,6 +1011,17 @@ export class RouteBuilderComponent implements OnInit {
         if (next.has(key)) { next.delete(key); this.zoneSelectedKeys.delete(key); }
         else next.add(key);
         this.selected.set(next);
+    }
+
+    isClientGroupExpanded(key: string): boolean {
+        return this.expandedClientGroups().has(key);
+    }
+
+    toggleClientGroup(key: string): void {
+        const next = new Set(this.expandedClientGroups());
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        this.expandedClientGroups.set(next);
     }
 
     selectAllVisible(): void {
@@ -1150,6 +1302,22 @@ export class RouteBuilderComponent implements OnInit {
 
     save(): void {
         if (!this.canSave()) return;
+        const withoutPackages = this.selectedRows().filter(row =>
+            row.kind === 'Order' && (row.packageCount ?? 0) === 0);
+        const withoutCoords = this.selectedWithoutCoords();
+        if (withoutPackages.length > 0 || withoutCoords.length > 0) {
+            const warnings: string[] = [];
+            if (withoutPackages.length > 0) {
+                warnings.push(`${withoutPackages.length} ${withoutPackages.length === 1 ? 'pedido no tiene bolsas' : 'pedidos no tienen bolsas'}`);
+            }
+            if (withoutCoords.length > 0) {
+                warnings.push(`${withoutCoords.length} ${withoutCoords.length === 1 ? 'parada no tiene ubicación' : 'paradas no tienen ubicación'}`);
+            }
+            const confirmed = window.confirm(
+                `Puedes crear la ruta, pero hay pendientes:\n\n• ${warnings.join('\n• ')}\n\n¿Crear de todos modos?`
+            );
+            if (!confirmed) return;
+        }
         const stops = this.preview()?.stops ?? [];
         const orderIds: number[] = [];
         const tandaIds: string[] = [];
@@ -1227,6 +1395,41 @@ export class RouteBuilderComponent implements OnInit {
     openAddressPicker(row: CandidateRow, event: Event): void {
         event.stopPropagation();
         this.pickingAddressFor.set(row);
+    }
+
+    openPackageAdder(row: CandidateRow, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        this.addingPackagesFor.set(row);
+        this.packagesToAdd.set(1);
+    }
+
+    closePackageAdder(): void {
+        this.addingPackagesFor.set(null);
+        this.packagesToAdd.set(1);
+    }
+
+    changePackagesToAdd(delta: number): void {
+        this.packagesToAdd.update(count => Math.max(1, count + delta));
+    }
+
+    addPackagesToOrder(row: CandidateRow): void {
+        if (row.kind !== 'Order' || typeof row.rawId !== 'number') return;
+
+        const count = this.packagesToAdd();
+        this.generatingPackagesFor.set(row.key);
+        this.api.generatePackages(row.rawId, { count }).subscribe({
+            next: () => {
+                this.toast.success(`${count} ${count === 1 ? 'bolsa agregada' : 'bolsas agregadas'} para ${row.clientName}`);
+                this.generatingPackagesFor.set(null);
+                this.closePackageAdder();
+                this.loadCandidates();
+            },
+            error: (error) => {
+                this.generatingPackagesFor.set(null);
+                this.toast.error(error.error?.message || 'No se pudieron agregar las bolsas');
+            }
+        });
     }
 
     onAddressConfirmed(result: { address: string; lat: number; lng: number; deliveryInstructions: string }): void {

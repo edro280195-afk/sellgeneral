@@ -47,7 +47,7 @@ import { gsap } from 'gsap';
         } @else if (tanda(); as t) {
           
           <!-- Header Hero -->
-          <div class="text-center animate-slide-down relative mb-8">
+          <div class="text-center animate-slide-down relative mb-6">
              <div class="text-5xl mb-2 animate-wiggle inline-block drop-shadow-sm">🎀</div>
              <h1 class="text-3xl font-black text-pink-600 tracking-tight font-display mb-1">
                {{ t.name }}
@@ -57,7 +57,34 @@ import { gsap } from 'gsap';
              </p>
           </div>
 
+          <!-- Banner Invitación Descarga App Neni Clientas -->
+          <div class="card-coquette bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-6 text-white shadow-2xl rounded-[2.5rem] relative overflow-hidden my-6 border-2 border-white/40">
+            <div class="absolute -right-6 -bottom-6 text-9xl opacity-15 pointer-events-none select-none">📱</div>
+            <div class="relative z-10 space-y-3">
+              <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-pink-100">
+                <span>✨ Neni's App Clientas</span>
+              </div>
+              <h3 class="text-xl font-black leading-tight font-display">
+                ¡Lleva tus Tandas y Compras en tu celular! 📲
+              </h3>
+              <p class="text-xs text-pink-100 font-medium leading-relaxed">
+                Descarga la app oficial para recibir notificaciones de tu turno en tiempo real, confirmar abonos en 1 toque y ver ofertas exclusivas de tu tienda.
+              </p>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <a href="https://nenisapp.com/download" target="_blank" 
+                   class="flex items-center gap-2 bg-white text-pink-900 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg hover:scale-105 transition-all">
+                  <span>🍎 App Store</span>
+                </a>
+                <a href="https://nenisapp.com/download" target="_blank" 
+                   class="flex items-center gap-2 bg-white/20 border border-white/40 text-white font-black text-xs px-4 py-2.5 rounded-2xl backdrop-blur-md hover:bg-white/30 transition-all">
+                  <span>🤖 Google Play</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
           <!-- Sticky Nav Tabs -->
+
           <div id="nav-tabs" class="flex p-1.5 bg-white/60 backdrop-blur-xl rounded-[2rem] mb-8 border border-white sticky top-4 z-30 shadow-sm">
             <button class="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-300" 
                     [ngClass]="activeTab() === 'summary' ? 'bg-white text-pink-600 shadow-sm scale-105' : 'text-pink-300'" 

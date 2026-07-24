@@ -126,6 +126,9 @@ export function buildOrderMessage(data: OrderMessageData): string {
     if (fechaLimite) lineas.push(`Fecha límite para pasar a recoger tu pedido: ${fechaLimite}.`);
 
     lineas.push('');
+    lineas.push('📲 *Rastrea tu pedido y descarga Neni\'s App:*');
+    lineas.push(data.publicLink);
+    lineas.push('');
     lineas.push('Cualquier duda quedamos al pendiente. ❤️✨');
 
     return lineas.join('\n');
@@ -138,8 +141,11 @@ export function buildPaymentReminderMessage(clientName: string, balanceDue: numb
     return [
         `Hola ${nombre} 💕`,
         `Te recuerdo que tu pedido tiene un saldo pendiente de ${saldo}.`,
+        '',
+        `📲 *Rastrea tu envío y paga desde Neni's App:*`,
         publicLink,
         '',
         '¿Cómo te gustaría pagarlo? Quedo al pendiente ✨🛍️'
     ].join('\n');
 }
+

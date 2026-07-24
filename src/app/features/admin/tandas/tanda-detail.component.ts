@@ -184,10 +184,16 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                           <input type="checkbox" [checked]="p.isDelivered" (click)="onConfirmSundayDelivery(p)" class="w-4 h-4 rounded border-pink-200 text-pink-500 focus:ring-pink-300 cursor-pointer">
                         </td>
                         <td class="text-center">
-                          <button (click)="selectedParticipantActions.set(p)" class="w-8 h-8 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all">
-                             ⚙️
-                          </button>
+                          <div class="flex items-center justify-center gap-1">
+                            <button (click)="sendWhatsAppReminder(p)" class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs hover:bg-emerald-100 transition-all" title="Enviar recordatorio por WhatsApp">
+                               💬
+                            </button>
+                            <button (click)="selectedParticipantActions.set(p)" class="w-8 h-8 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all">
+                               ⚙️
+                            </button>
+                          </div>
                         </td>
+
                       </tr>
                     } @empty {
                       <tr>
@@ -719,7 +725,22 @@ export class TandaDetailComponent implements OnInit {
     return date;
   }
 
+  sendWhatsAppReminder(p: TandaParticipantDto) {
+    this.tandaService.getWhatsAppReminder(p.id).subscribe({
+      next: (res) => {
+        if (res.whatsAppUrl) {
+          window.open(res.whatsAppUrl, '_blank');
+        } else if (res.messageText) {
+          navigator.clipboard.writeText(res.messageText);
+          this.toastService.show('Mensaje copiado al portapapeles ✨', 'success');
+        }
+      },
+      error: () => this.toastService.show('No pudimos generar el recordatorio por WhatsApp', 'error')
+    });
+  }
+
   // Inscripción
+
   allClients = signal<ClientDto[]>([]);
   clientSearch = signal('');
   showOnlyFrequent = signal(true);
@@ -924,30 +945,39 @@ export class TandaDetailComponent implements OnInit {
   onAddParticipant() {
     const t = this.tanda();
     const sc = this.selectedClient();
-    if (t && sc && !this.isEnrolling()) {
-      this.isEnrolling.set(true);
-      this.tandaService.addParticipant({
-        tandaId: t.id,
-        customerId: sc.id,
-        assignedTurn: this.enrollTurn,
-        variant: this.enrollVariant,
-        weeklyAmount: this.enrollWeeklyAmount || undefined
-      }).subscribe({
-        next: () => {
-          this.toastService.success(`${sc.name} inscrita con éxito ✨`);
-          this.loadTanda(t.id);
-          this.selectedClient.set(null);
-          this.enrollVariant = '';
-          this.enrollWeeklyAmount = undefined;
-          this.isEnrolling.set(false);
-        },
-        error: (err) => {
-          this.isEnrolling.set(false);
-          this.toastService.error(err.error?.message || 'Error al inscribir clienta');
-        }
-      });
+    const searchName = this.clientSearch().trim();
+    if (!t || this.isEnrolling()) return;
+    if (!sc && !searchName) {
+      this.toastService.error('Selecciona una clienta o escribe su nombre');
+      return;
     }
+
+    this.isEnrolling.set(true);
+    this.tandaService.addParticipant({
+      tandaId: t.id,
+      customerId: sc ? sc.id : 0,
+      customerName: !sc ? searchName : undefined,
+      assignedTurn: this.enrollTurn,
+      variant: this.enrollVariant,
+      weeklyAmount: this.enrollWeeklyAmount || undefined
+    }).subscribe({
+      next: () => {
+        const nameDisplay = sc ? sc.name : searchName;
+        this.toastService.success(`${nameDisplay} inscrita con éxito ✨`);
+        this.loadTanda(t.id);
+        this.selectedClient.set(null);
+        this.clientSearch.set('');
+        this.enrollVariant = '';
+        this.enrollWeeklyAmount = undefined;
+        this.isEnrolling.set(false);
+      },
+      error: (err) => {
+        this.isEnrolling.set(false);
+        this.toastService.error(err.error?.message || 'Error al inscribir clienta');
+      }
+    });
   }
+
 
   onProcessPenalties() {
     const t = this.tanda();

@@ -1133,7 +1133,9 @@ export interface CreateTandaDto {
 }
 
 export interface CreateTandaParticipantDto {
-    customerId: number;
+    customerId?: number;
+    customerName?: string;
+    facebookProfileUrl?: string;
     assignedTurn: number;
     variant?: string;
     weeklyAmount?: number;
@@ -1141,11 +1143,14 @@ export interface CreateTandaParticipantDto {
 
 export interface AddParticipantDto {
     tandaId: string;
-    customerId: number;
+    customerId?: number;
+    customerName?: string;
+    facebookProfileUrl?: string;
     assignedTurn: number;
     variant?: string;
     weeklyAmount?: number;
 }
+
 
 export interface RegisterPaymentDto {
     participantId: string;

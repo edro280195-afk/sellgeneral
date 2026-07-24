@@ -89,4 +89,14 @@ export class TandaService {
   reorderParticipants(tandaId: string, participantIds: string[]): Observable<any> {
     return this.http.post(`${this.base}/${tandaId}/reorder`, { participantIds });
   }
+
+  getWhatsAppReminder(participantId: string, weekNumber?: number): Observable<any> {
+    const params = weekNumber ? { weekNumber: weekNumber.toString() } : {};
+    return this.http.get<any>(`${this.base}/participants/${participantId}/whatsapp-reminder`, { params });
+  }
+
+  drawTurns(tandaId: string): Observable<TandaDto> {
+    return this.http.post<TandaDto>(`${this.base}/${tandaId}/draw-turns`, {});
+  }
 }
+

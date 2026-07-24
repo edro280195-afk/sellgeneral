@@ -91,7 +91,7 @@ export class TandaService {
   }
 
   getWhatsAppReminder(participantId: string, weekNumber?: number): Observable<any> {
-    const params = weekNumber ? { weekNumber: weekNumber.toString() } : undefined;
+    const params: Record<string, string> = weekNumber ? { weekNumber: weekNumber.toString() } : {};
     return this.http.get<any>(`${this.base}/participants/${participantId}/whatsapp-reminder`, { params });
   }
 

@@ -142,6 +142,7 @@ export interface OrderSummaryDto {
     amountPaid: number;
     balanceDue: number;
     advancePayment: number;
+    packageCount?: number;
     paymentMethod?: string;
     salesPeriodId?: number;
     salesPeriodName?: string;

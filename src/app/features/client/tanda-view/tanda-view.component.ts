@@ -505,13 +505,13 @@ import { gsap } from 'gsap';
        Design System: Deep violet + amber gold accent
     ═══════════════════════════════════════════════ */
 
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
     /* ── Root ── */
     .tv-root {
       min-height: 100dvh;
       background: #0a0812;
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       color: #f0edf8;
       position: relative;
       overflow-x: hidden;

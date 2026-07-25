@@ -20,15 +20,12 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
             <div class="relative z-10 w-full max-w-md mx-4 animate-scale-in">
                 <div class="glass-strong rounded-3xl p-8 shadow-2xl" style="box-shadow: 0 25px 60px rgba(236, 72, 153, 0.15)">
                     <div class="text-center mb-8 animate-slide-down">
-                        <div class="inline-flex items-center justify-center w-32 h-32 mb-2">
+                        <div class="inline-flex items-center justify-center w-full max-w-[280px] mb-2">
                             <img
-                                src="assets/brand/nenis-mark.png"
+                                src="assets/brand/nenis-logo.png"
                                 alt="Neni's"
-                                class="w-full h-full object-contain">
+                                class="w-full h-auto object-contain">
                         </div>
-                        <h1 class="text-3xl font-bold gradient-text" style="font-family: 'Dancing Script', cursive; font-size: 2.5rem;">
-                            Neni's App
-                        </h1>
                         <p class="text-pink-400 mt-2 text-sm font-medium">✨ La plataforma de tu tienda ✨</p>
                     </div>
 

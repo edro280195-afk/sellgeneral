@@ -4,8 +4,8 @@
     "description": "Neni's App - La plataforma de tu tienda ✨",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#fff4f7",
-    "theme_color": "#f05d7a",
+    "background_color": "#fff7fa",
+    "theme_color": "#f84070",
     "icons": [
         {
             "src": "pwa-icon-192.png",

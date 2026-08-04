@@ -19,7 +19,7 @@ import {
 type PeriodicityKey = 'monthly' | 'quarterly' | 'annual';
 type CheckoutStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 
-const VALID_PLANS: PlanTierName[] = ['Entrada', 'Pro', 'Elite'];
+const VALID_PLANS: PlanTierName[] = ['Básico', 'Pro', 'Elite'];
 const VALID_PERIODICITIES: PeriodicityKey[] = ['monthly', 'quarterly', 'annual'];
 
 const FORM_ID = 'mp-checkout-card-form';
@@ -503,7 +503,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
 
     protected planTagline(): string {
         switch (this.plan()) {
-            case 'Entrada': return 'Para empezar a vender y entregar.';
+            case 'Básico': return 'Para empezar a vender y entregar.';
             case 'Pro': return `El plan que usa ${this.theme.name() || 'Regi Bazar'}. Todo lo importante.`;
             case 'Elite': return 'C.A.M.I. y rutas con tráfico en vivo.';
             default: return '';
@@ -511,7 +511,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
     }
 
     protected featuresFor(plan: PlanTierName) {
-        const rank: Record<string, number> = { Entrada: 1, Pro: 2, Elite: 3 };
+        const rank: Record<string, number> = { 'Básico': 1, Pro: 2, Elite: 3 };
         const planRank = rank[plan] ?? 0;
         return this.bootstrap.featureCatalog().map(f => ({
             ...f,

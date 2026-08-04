@@ -652,7 +652,7 @@ export class LayoutComponent implements OnInit {
   }
 
   protected requiredPlan(item: NavItem): PlanTierName {
-    if (!item.featureKey) return 'Entrada';
+    if (!item.featureKey) return 'Básico';
     const feat = this.bootstrap.featureCatalog().find(f => f.key === item.featureKey);
     return (feat?.requiredPlan as PlanTierName) ?? 'Pro';
   }

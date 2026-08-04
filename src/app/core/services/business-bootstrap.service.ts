@@ -5,13 +5,13 @@ import { BrandService } from './brand.service';
 import { SubscriptionService } from './subscription.service';
 import { BusinessMeDto, SubscriptionAccountStateDto } from '../models';
 
-const FEATURE_LABELS: Record<string, { label: string; emoji: string; plan: 'Entrada' | 'Pro' | 'Elite' }> = {
-    ManualOrders: { label: 'Pedidos manuales', emoji: '📝', plan: 'Entrada' },
-    ClientDirectory: { label: 'Directorio de clientas', emoji: '👩‍💼', plan: 'Entrada' },
-    PublicTrackingLink: { label: 'Link público de rastreo', emoji: '🔗', plan: 'Entrada' },
-    OrderStatusPush: { label: 'Notificaciones push de pedido', emoji: '🔔', plan: 'Entrada' },
-    ClientAccount: { label: 'Cuenta para la clienta', emoji: '👛', plan: 'Entrada' },
-    Loyalty: { label: 'RegiPuntos / Lealtad', emoji: '💖', plan: 'Entrada' },
+const FEATURE_LABELS: Record<string, { label: string; emoji: string; plan: 'Básico' | 'Pro' | 'Elite' }> = {
+    ManualOrders: { label: 'Pedidos manuales', emoji: '📝', plan: 'Básico' },
+    ClientDirectory: { label: 'Directorio de clientas', emoji: '👩‍💼', plan: 'Básico' },
+    PublicTrackingLink: { label: 'Link público de rastreo', emoji: '🔗', plan: 'Básico' },
+    OrderStatusPush: { label: 'Notificaciones push de pedido', emoji: '🔔', plan: 'Básico' },
+    ClientAccount: { label: 'Cuenta para la clienta', emoji: '👛', plan: 'Básico' },
+    Loyalty: { label: 'RegiPuntos / Lealtad', emoji: '💖', plan: 'Básico' },
     LivePush: { label: 'Lives (captura de pedidos)', emoji: '📺', plan: 'Pro' },
     LiveGpsTracking: { label: 'GPS en vivo durante el live', emoji: '📍', plan: 'Pro' },
     Financials: { label: 'Finanzas y gastos', emoji: '💰', plan: 'Pro' },
@@ -29,7 +29,7 @@ export interface FeatureDescriptor {
     key: string;
     label: string;
     emoji: string;
-    requiredPlan: 'Entrada' | 'Pro' | 'Elite';
+    requiredPlan: 'Básico' | 'Pro' | 'Elite';
     enabled: boolean;
 }
 
@@ -77,7 +77,7 @@ export class BusinessBootstrapService {
                 enabled: enabled.has(key),
             }))
             .sort((a, b) => {
-                const order: Record<string, number> = { Entrada: 1, Pro: 2, Elite: 3 };
+                const order: Record<string, number> = { 'Básico': 1, Pro: 2, Elite: 3 };
                 return (order[a.requiredPlan] ?? 99) - (order[b.requiredPlan] ?? 99);
             });
     });

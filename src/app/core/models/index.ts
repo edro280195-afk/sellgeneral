@@ -831,7 +831,7 @@ export type SubscriptionStatusName =
     | 'Expired'
     | 'Canceled';
 
-export type PlanTierName = 'Entrada' | 'Pro' | 'Elite' | 'Bloqueado';
+export type PlanTierName = 'Básico' | 'Pro' | 'Elite' | 'Bloqueado';
 
 export type PeriodicityName = 'monthly' | 'quarterly' | 'annual';
 

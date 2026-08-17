@@ -15,7 +15,6 @@ import { CouponService } from '../../../core/services/coupon.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { GoogleAutocompleteDirective } from '../../../shared/directives/google-autocomplete.directive';
-import { buildMessengerLink, buildOrderMessage } from '../../../core/utils/messenger.util';
 
 @Component({
   selector: 'app-orders',
@@ -254,10 +253,6 @@ import { buildMessengerLink, buildOrderMessage } from '../../../core/utils/messe
                     <textarea class="input-coquette" [(ngModel)]="editClientData.alternativeAddress" placeholder="Dirección Alternativa" rows="2"
                               appGoogleAutocomplete (placeChanged)="onAltAddressSelected($event)"></textarea>
                     <textarea class="input-coquette" [(ngModel)]="editClientData.deliveryInstructions" placeholder="Instrucciones de entrega (Clienta)" rows="2"></textarea>
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#0099FF] text-sm">𝓶</span>
-                      <input class="input-coquette pl-8" [(ngModel)]="editClientData.facebookProfileUrl" placeholder="URL del perfil de Facebook (para Messenger)" />
-                    </div>
                     <select class="input-coquette" [(ngModel)]="editClientData.type">
                       <option value="Nueva">Nueva</option>
                       <option value="Frecuente">Frecuente</option>
@@ -594,9 +589,6 @@ import { buildMessengerLink, buildOrderMessage } from '../../../core/utils/messe
             
             <div class="flex gap-1.5">
               <button class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:text-purple-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-purple-100/50" title="Copiar Enlace Público" (click)="copyLink()">🔗</button>
-              <button class="w-10 h-10 rounded-2xl bg-[#e8f4ff] hover:bg-[#cce4ff] hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-[#b3d5f5]/50" title="Enviar por Messenger" (click)="sendMessenger()">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#0099FF"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-              </button>
               <button class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-blue-100/50" title="En Camino" (click)="sendWaOnRoute()">🚗</button>
               <button class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-rose-100/50" title="Cobrar" (click)="sendWaPaymentRequest()">💸</button>
               <button class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-amber-100/50" title="Regalo Cumpleaños 🎂" (click)="applyBirthdayGift()">🎁</button>
@@ -692,7 +684,7 @@ export class OrdersComponent implements OnInit {
 
   // Quick Client Edit
   showClientEdit = signal(false);
-  editClientData = { name: '', phone: '', address: '', alternativeAddress: '', type: 'Nueva', deliveryInstructions: '', facebookProfileUrl: '' };
+  editClientData = { name: '', phone: '', address: '', alternativeAddress: '', type: 'Nueva', deliveryInstructions: '' };
 
   // RegiPuntos (canje)
   rewards = signal<LoyaltyRewardDto[]>([]);
@@ -942,8 +934,7 @@ export class OrdersComponent implements OnInit {
           address: ord.clientAddress || '',
           alternativeAddress: ord.alternativeAddress || '',
           deliveryInstructions: ord.deliveryInstructions || '',
-          type: ord.type || 'Nueva',
-          facebookProfileUrl: ord.clientFacebookProfileUrl || ''
+          type: ord.type || 'Nueva'
         };
       }
     }
@@ -971,8 +962,7 @@ export class OrdersComponent implements OnInit {
       ...(trimmedAddress ? { clientAddress: trimmedAddress } : {}),
       alternativeAddress: this.editClientData.alternativeAddress,
       type: this.editClientData.type,
-      deliveryInstructions: this.editClientData.deliveryInstructions,
-      clientFacebookProfileUrl: this.editClientData.facebookProfileUrl
+      deliveryInstructions: this.editClientData.deliveryInstructions
     }).subscribe({
       next: () => {
         this.toast.success('Datos de clienta actualizados 👤💖');
@@ -1117,37 +1107,6 @@ export class OrdersComponent implements OnInit {
     if (!o || !o.link) return;
     const link = o.link.replace('/o/', '/pedido/');
     navigator.clipboard.writeText(link).then(() => this.toast.success('Enlace copiado 🔗'));
-  }
-
-  sendMessenger(): void {
-    const o = this.selectedOrder();
-    if (!o) return;
-    const link = o.link.replace('/o/', '/pedido/');
-    const msg = buildOrderMessage({
-      clientName: o.clientName,
-      publicLink: link,
-      scheduledDeliveryDate: o.scheduledDeliveryDate,
-      expiresAt: o.expiresAt
-    });
-
-    navigator.clipboard.writeText(msg).then(() => {
-      this.toast.success('Mensaje copiado 💬 — abre Messenger y pégalo');
-    });
-
-    const chatUrl = buildMessengerLink(o.clientFacebookProfileUrl);
-    if (chatUrl) {
-      window.open(chatUrl, '_blank');
-    } else {
-      this.toast.info('Pega el mensaje en Messenger. Tip: guarda el Facebook de la clienta para abrir su chat directo 💡');
-    }
-
-    // Marcar como notificada (no bloqueante)
-    if (!o.notifiedAt) {
-      this.api.markOrderNotified(o.id, true).subscribe({
-        next: () => this.reloadSelectedOrder(),
-        error: () => { /* silencioso: el envío ya ocurrió */ }
-      });
-    }
   }
 
   sendWaTicket(): void {
@@ -1314,7 +1273,6 @@ export class OrdersComponent implements OnInit {
 
         <div class="footer">
           <p class="gracias">¡Gracias por tu compra! 🌸</p>
-          <p class="social">👍 Síguenos en nuestra página de Facebook:</p>
           <p class="social-bold">${this.theme.name() || 'Regi Bazar'}</p>
         </div>
 

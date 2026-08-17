@@ -41,11 +41,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/orders/send-links/send-links.component').then(m => m.SendLinksComponent)
             },
             {
-                path: 'live/import',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/live/live-import.component').then(m => m.LiveImportComponent)
-            },
-            {
                 path: 'live/:id/review',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/live/live-review.component').then(m => m.LiveReviewComponent)
@@ -59,11 +54,6 @@ export const routes: Routes = [
                 path: 'clients/duplicates',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/clients/duplicates/duplicates.component').then(m => m.ClientsDuplicatesComponent)
-            },
-            {
-                path: 'clients/facebook-import',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/clients/facebook-import/facebook-import.component').then(m => m.FacebookImportComponent)
             },
             {
                 path: 'clients/:id',
@@ -124,11 +114,6 @@ export const routes: Routes = [
                 path: 'tandas/:id',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/tandas/tanda-detail.component').then(m => m.TandaDetailComponent)
-            },
-            {
-                path: 'live',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/live/live-import.component').then(m => m.LiveImportComponent)
             },
             {
                 path: 'live/:id/review',

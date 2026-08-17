@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 
-type LoginMethod = 'phone' | 'facebook' | 'email';
+type LoginMethod = 'phone' | 'email';
 
 @Component({
     selector: 'app-login',
@@ -29,7 +29,7 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                         <p class="text-pink-400 mt-2 text-sm font-medium">✨ La plataforma de tu tienda ✨</p>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 mb-6 bg-pink-50/60 rounded-2xl p-1.5">
+                    <div class="grid grid-cols-2 gap-2 mb-6 bg-pink-50/60 rounded-2xl p-1.5">
                         <button
                             type="button"
                             (click)="setMethod('phone')"
@@ -39,16 +39,6 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                             [class.text-pink-600]="method() === 'phone'"
                             [class.text-pink-400]="method() !== 'phone'">
                             📱 Teléfono
-                        </button>
-                        <button
-                            type="button"
-                            (click)="setMethod('facebook')"
-                            class="py-2 rounded-xl text-sm font-medium transition"
-                            [class.bg-white]="method() === 'facebook'"
-                            [class.shadow]="method() === 'facebook'"
-                            [class.text-pink-600]="method() === 'facebook'"
-                            [class.text-pink-400]="method() !== 'facebook'">
-                            f Facebook
                         </button>
                         <button
                             type="button"
@@ -143,29 +133,6 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                                 </button>
                             </form>
                         }
-                    } @else if (method() === 'facebook') {
-                        <div class="space-y-4">
-                            <button
-                                type="button"
-                                (click)="facebookLogin()"
-                                class="w-full py-3.5 rounded-xl font-semibold bg-[#1877F2] text-white hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                                [disabled]="loading()">
-                                @if (loading()) {
-                                    <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    <span>Conectando…</span>
-                                } @else {
-                                    <span>Continuar con Facebook</span>
-                                }
-                            </button>
-                            <p class="text-xs text-pink-400 text-center">
-                                // DEV: el SDK de Facebook se conecta cuando esté configurado.
-                            </p>
-                            @if (errorMsg()) {
-                                <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm text-center">
-                                    😿 {{ errorMsg() }}
-                                </div>
-                            }
-                        </div>
                     } @else {
                         <form (ngSubmit)="submitEmail()" class="space-y-4">
                             @if (emailMode() === 'register') {
@@ -241,7 +208,7 @@ type LoginMethod = 'phone' | 'facebook' | 'email';
                         </form>
                     }
 
-                    @if (method() !== 'email') {
+                    @if (method() === 'phone') {
                         <button
                             type="button"
                             class="w-full mt-6 text-sm font-semibold text-pink-500 hover:text-pink-700"
@@ -381,28 +348,6 @@ export class LoginComponent {
                     this.errorMsg.set('El proveedor SMS aún no está conectado. Usa correo por ahora.');
                 } else {
                     this.errorMsg.set(err?.error?.message || 'Código inválido o expirado');
-                }
-            }
-        });
-    }
-
-    facebookLogin(): void {
-        this.loading.set(true);
-        this.errorMsg.set('');
-
-        // El SDK real de Facebook iria aqui; mientras tanto mandamos un token
-        // dummy y dejamos que el backend responda 501 para confirmar el wiring.
-        this.auth.facebookLogin({ accessToken: 'dev-fb-token' }).subscribe({
-            next: () => {
-                this.toast.success('¡Bienvenida! 💖');
-                this.afterAuth();
-            },
-            error: (err) => {
-                this.loading.set(false);
-                if (err?.status === 501) {
-                    this.errorMsg.set('Facebook Login aún no está conectado. Usa teléfono o correo.');
-                } else {
-                    this.errorMsg.set(err?.error?.message || 'No se pudo iniciar con Facebook');
                 }
             }
         });

@@ -17,7 +17,6 @@ const FEATURE_LABELS: Record<string, { label: string; emoji: string; plan: 'Bás
     Financials: { label: 'Finanzas y gastos', emoji: '💰', plan: 'Pro' },
     TandasRaffles: { label: 'Tandas y sorteos', emoji: '🎉', plan: 'Pro' },
     Pos: { label: 'Punto de venta', emoji: '🛒', plan: 'Pro' },
-    FacebookImport: { label: 'Importar clientas de Facebook', emoji: '📥', plan: 'Pro' },
     VipDrops: { label: 'Lanzamientos VIP', emoji: '👑', plan: 'Pro' },
     CamiAssistant: { label: 'Asistente C.A.M.I.', emoji: '✦', plan: 'Elite' },
     TrafficRouteOptimization: { label: 'Optimización de rutas con tráfico', emoji: '🚦', plan: 'Elite' },

@@ -247,10 +247,6 @@ import { gsap } from 'gsap';
                               <div class="tv-pay-result__icon tv-pay-result__icon--ok">✓</div>
                               <h4 class="tv-pay-result__title">¡Abono realizado!</h4>
                               <p class="tv-pay-result__desc">Tu pago de la semana {{ t.currentWeek }} fue registrado con éxito.</p>
-                              <a [href]="messengerUrl" target="_blank" rel="noopener" class="tv-btn tv-btn--messenger tv-btn--full">
-                                <svg class="tv-btn__icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                                Avisar por Messenger
-                              </a>
                             } @else {
                               <div class="tv-pay-result__icon tv-pay-result__icon--err">✕</div>
                               <h4 class="tv-pay-result__title">Pago no procesado</h4>
@@ -317,7 +313,7 @@ import { gsap } from 'gsap';
 
                         <div class="tv-info-note">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                          Envía foto de tu ticket por Messenger después de pagar
+                          Envía la foto de tu ticket a la vendedora después de pagar
                         </div>
                       </div>
                     }
@@ -349,11 +345,6 @@ import { gsap } from 'gsap';
                   }
                 </div>
 
-                <!-- Contact CTA -->
-                <a [href]="messengerUrl" target="_blank" rel="noopener" class="tv-btn tv-btn--messenger tv-btn--full tv-contact-cta">
-                  <svg class="tv-btn__icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                  ¿Dudas o comprobantes? Escríbenos
-                </a>
               </section>
 
               <!-- ── POLÍTICAS ── -->
@@ -971,21 +962,12 @@ import { gsap } from 'gsap';
     .tv-btn--primary:hover { opacity: 0.9; transform: translateY(-1px); }
     .tv-btn--primary:active { transform: scale(0.97); }
     .tv-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .tv-btn--messenger {
-      background: #0084ff;
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(0,132,255,0.3);
-    }
-    .tv-btn--messenger:hover { background: #0073e6; }
     .tv-btn--ghost {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.15);
       color: #a78bfa;
     }
     .tv-btn__icon { width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
-
-    /* Contact CTA */
-    .tv-contact-cta { margin-top: 1.25rem; }
 
     /* ── Policy Card ── */
     .tv-policy-card {
@@ -1202,22 +1184,6 @@ export class TandaViewComponent implements OnInit, OnDestroy {
   selectedParticipantId = signal<string | null>(null);
   showAssistantBubble = signal(true);
   private bubbleTimeout: any;
-
-  get messengerUrl() {
-    const t = this.tanda();
-    if (!t) return '';
-
-    const baseUrl = t.businessMessengerUrl || 'https://m.me/';
-    let ref = `tanda_${t.id}`;
-
-    const pId = this.selectedParticipantId();
-    if (pId) {
-      const p = t.participants.find((x: any) => x.id === pId);
-      if (p) ref += `_cli_${p.name.replace(/\s/g, '_')}`;
-    }
-
-    return `${baseUrl}?ref=${ref}`;
-  }
 
   toastVisible = signal(false);
   toastMessage = signal('');

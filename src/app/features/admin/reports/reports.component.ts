@@ -8,7 +8,7 @@ import { ReportDto, SalesPeriodDto, PeriodReportDto, AiInsight, OrderSummaryDto 
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { gsap } from 'gsap';
-import { buildMessengerLink, buildPaymentReminderMessage } from '../../../core/utils/messenger.util';
+import { buildPaymentReminderMessage } from '../../../core/utils/order-message.util';
 
 @Component({
   selector: 'app-reports',
@@ -575,10 +575,8 @@ import { buildMessengerLink, buildPaymentReminderMessage } from '../../../core/u
                           </td>
                           <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-1.5">
-                              <button class="w-9 h-9 rounded-xl bg-[#e8f4ff] hover:bg-[#cce4ff] active:scale-95 flex items-center justify-center transition-all border border-[#b3d5f5]/50"
-                                      title="Recordatorio de cobro por Messenger" (click)="remindPayment(o)">
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#0099FF"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                              </button>
+                              <button class="w-9 h-9 rounded-xl bg-pink-50 hover:bg-pink-100 active:scale-95 flex items-center justify-center transition-all border border-pink-100"
+                                      title="Copiar recordatorio de cobro" (click)="remindPayment(o)">💌</button>
                               <button class="w-9 h-9 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
                                       title="Copiar enlace del pedido" (click)="copyUnpaidLink(o)">🔗</button>
                             </div>
@@ -888,12 +886,6 @@ export class ReportsComponent implements OnInit {
     const link = o.link.replace('/o/', '/pedido/');
     const msg = buildPaymentReminderMessage(o.clientName, o.balanceDue ?? 0, link);
     navigator.clipboard.writeText(msg).then(() => this.toast.success(`Recordatorio de ${o.clientName} copiado 💬`));
-    const chatUrl = buildMessengerLink(o.clientFacebookProfileUrl);
-    if (chatUrl) {
-      window.open(chatUrl, '_blank');
-    } else {
-      this.toast.info('Sin Facebook guardado: pega el mensaje en Messenger 💡');
-    }
   }
 
   copyUnpaidLink(o: OrderSummaryDto): void {

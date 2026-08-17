@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { OrderSummaryDto, SalesPeriodDto } from '../../../../core/models';
-import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/messenger.util';
+import { buildOrderMessage } from '../../../../core/utils/order-message.util';
 
 @Component({
   selector: 'app-send-links',
@@ -20,7 +20,6 @@ import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/me
           <p class="text-sm text-pink-400 font-medium mt-1">Manda los enlaces de todo el live, uno por uno, sin perder el hilo.</p>
         </div>
         <div class="flex gap-2">
-          <a routerLink="/admin/clients/facebook-import" class="btn-coquette btn-outline-pink text-center align-middle inline-block">𝓶 Importar Facebooks</a>
           <a routerLink="/admin/orders" class="btn-coquette btn-outline-pink text-center align-middle inline-block">← Pedidos</a>
         </div>
       </div>
@@ -53,7 +52,7 @@ import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/me
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-in">
+      <div class="grid grid-cols-3 gap-3 animate-fade-in">
         <div class="card-coquette p-4 text-center">
           <p class="text-2xl font-black text-pink-900">{{ stats().total }}</p>
           <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">En lista</p>
@@ -65,10 +64,6 @@ import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/me
         <div class="card-coquette p-4 text-center">
           <p class="text-2xl font-black text-amber-600">{{ stats().pending }}</p>
           <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest">Pendientes</p>
-        </div>
-        <div class="card-coquette p-4 text-center">
-          <p class="text-2xl font-black text-rose-500">{{ stats().noFb }}</p>
-          <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest">Sin Facebook</p>
         </div>
       </div>
 
@@ -116,22 +111,7 @@ import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/me
                 <div class="flex items-center gap-3 mt-1 text-xs text-pink-400 font-medium">
                   <span>Pedido #{{ o.id }}</span>
                   <span class="font-black text-pink-700">{{ o.total | currency:'MXN':'symbol-narrow' }}</span>
-                  @if (o.clientFacebookProfileUrl) {
-                    <span class="text-[#0099FF] font-bold">𝓶 Facebook ✓</span>
-                  } @else {
-                    <button class="text-rose-400 font-bold hover:text-rose-600 underline" (click)="toggleFbEditor(o.id)">+ Agregar Facebook</button>
-                  }
                 </div>
-
-                <!-- Inline Facebook editor -->
-                @if (editingFb() === o.id) {
-                  <div class="mt-2 flex gap-2 animate-slide-down">
-                    <input class="input-coquette flex-1 text-xs" placeholder="Pega el enlace del perfil de Facebook"
-                           [(ngModel)]="fbDraft" (keyup.enter)="saveFacebook(o)" />
-                    <button class="btn-coquette btn-pink py-1.5 px-3 text-[11px]" (click)="saveFacebook(o)">Guardar</button>
-                    <button class="text-[11px] font-bold text-pink-400 px-2" (click)="editingFb.set(null)">✕</button>
-                  </div>
-                }
               </div>
 
               <!-- Actions -->
@@ -139,10 +119,9 @@ import { buildMessengerLink, buildOrderMessage } from '../../../../core/utils/me
                 <button class="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
                         title="Solo copiar el enlace" (click)="copyLink(o)">🔗</button>
 
-                <button class="flex items-center gap-2 px-4 h-10 rounded-xl bg-[#0099FF] text-white font-black text-sm hover:bg-[#0084e0] hover:scale-105 active:scale-95 transition-all shadow-md shadow-blue-200"
+                <button class="flex items-center gap-2 px-4 h-10 rounded-xl bg-pink-500 text-white font-black text-sm hover:bg-pink-600 hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-200"
                         (click)="send(o)">
-                  <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                  Enviar
+                  💌 Copiar y marcar enviado
                 </button>
 
                 @if (o.notifiedAt) {
@@ -170,9 +149,6 @@ export class SendLinksComponent implements OnInit {
   hideNotified = false;
   hideClosed = true;
 
-  editingFb = signal<number | null>(null);
-  fbDraft = '';
-
   private readonly CLOSED_STATUSES = ['Delivered', 'Canceled', 'NotDelivered'];
 
   filteredOrders = computed(() => {
@@ -190,8 +166,7 @@ export class SendLinksComponent implements OnInit {
     return {
       total: list.length,
       sent: list.filter(o => !!o.notifiedAt).length,
-      pending: list.filter(o => !o.notifiedAt).length,
-      noFb: list.filter(o => !o.clientFacebookProfileUrl).length
+      pending: list.filter(o => !o.notifiedAt).length
     };
   });
 
@@ -223,7 +198,7 @@ export class SendLinksComponent implements OnInit {
     });
   }
 
-  /** Construye el mensaje + lo copia + abre el chat directo de Messenger + marca enviado */
+  /** Construye el mensaje, lo copia y marca el pedido como enviado. */
   send(o: OrderSummaryDto): void {
     const link = o.link.replace('/o/', '/pedido/');
     const msg = buildOrderMessage({
@@ -236,13 +211,6 @@ export class SendLinksComponent implements OnInit {
     navigator.clipboard.writeText(msg).then(() => {
       this.toast.success(`Mensaje de ${o.clientName} copiado 💬`);
     });
-
-    const chatUrl = buildMessengerLink(o.clientFacebookProfileUrl);
-    if (chatUrl) {
-      window.open(chatUrl, '_blank');
-    } else {
-      this.toast.info('Sin Facebook guardado: pega el mensaje manualmente y guarda su perfil 💡');
-    }
 
     this.setNotified(o, true);
   }
@@ -265,29 +233,6 @@ export class SendLinksComponent implements OnInit {
         this.patchLocal(o.id, { notifiedAt: previous });
         this.toast.error('No se pudo guardar el estado de envío');
       }
-    });
-  }
-
-  toggleFbEditor(orderId: number): void {
-    this.fbDraft = '';
-    this.editingFb.set(this.editingFb() === orderId ? null : orderId);
-  }
-
-  saveFacebook(o: OrderSummaryDto): void {
-    const url = this.fbDraft.trim();
-    if (!url) { this.editingFb.set(null); return; }
-
-    // El nombre es obligatorio en el request; lo reenviamos para no borrarlo.
-    this.api.updateOrderDetails(o.id, {
-      clientName: o.clientName,
-      clientFacebookProfileUrl: url
-    }).subscribe({
-      next: () => {
-        this.patchLocal(o.id, { clientFacebookProfileUrl: url });
-        this.editingFb.set(null);
-        this.toast.success('Facebook guardado 𝓶✓ — ya puedes enviar directo');
-      },
-      error: () => this.toast.error('No se pudo guardar el Facebook')
     });
   }
 

@@ -103,6 +103,12 @@ interface NavItem {
               <span class="nav-label">Salir</span>
             }
           </button>
+          <button (click)="deleteAccount()" class="nav-link footer-btn logout-btn">
+            <span class="nav-icon">🗑️</span>
+            @if (sidebarOpen()) {
+              <span class="nav-label">Eliminar cuenta</span>
+            }
+          </button>
         </div>
       </aside>
 
@@ -718,5 +724,22 @@ export class LayoutComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  deleteAccount(): void {
+    const confirmed = window.confirm(
+      'Esta acción elimina tu cuenta, cierra tus sesiones y borra tus datos personales. Los historiales operativos necesarios pueden conservarse anonimizados. ¿Deseas continuar?'
+    );
+    if (!confirmed) return;
+
+    this.auth.deleteAccount().subscribe({
+      error: (error: unknown) => {
+        const response = error as { error?: { message?: unknown } };
+        const message = typeof response.error?.message === 'string'
+          ? response.error.message
+          : 'No pudimos eliminar tu cuenta. Inténtalo nuevamente.';
+        window.alert(message);
+      },
+    });
   }
 }

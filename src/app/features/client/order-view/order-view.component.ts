@@ -143,10 +143,10 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                 <span>✨ Neni's App Clientas</span>
               </div>
               <h3 class="text-xl font-black leading-tight font-display">
-                ¡Rastrea tus pedidos y entregas en tu celular! 📲
+                Conecta directamente con tu vendedora en Nenis App 📲
               </h3>
               <p class="text-xs text-pink-100 font-medium leading-relaxed">
-                Descarga la app oficial para recibir notificaciones cuando tu pedido salga en ruta, ver la ubicación de tu repartidor y acumular puntos.
+                Descarga Nenis App para seguir la mercancía de tu tienda favorita, ver la ubicación GPS de tu entrega al salir a ruta, recibir notificaciones instantáneas y ganar RegiPuntos.
               </p>
               <div class="flex flex-wrap gap-2 pt-1">
                 <a href="https://nenisapp.com/download" target="_blank" 
@@ -366,17 +366,9 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                     </div>
                   }
 
-                  <!-- CTAs de recuperación -->
-                  <div class="grid grid-cols-1 gap-3">
-                    <a [href]="messengerUrl" target="_blank" rel="noopener"
-                       class="flex items-center justify-center gap-3 bg-[#0099FF] text-white font-black text-sm py-4 px-5 rounded-2xl active:scale-95 transition-all shadow-xl">
-                      <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                      💬 ESCRIBIRLE A {{ order()?.businessName || 'REGI BAZAR' }}
-                    </a>
-                    <p class="text-center text-xs text-rose-500/80 font-medium px-2">
-                      Te ayudamos a reagendar la entrega lo antes posible 🎀
-                    </p>
-                  </div>
+                  <p class="text-center text-xs text-rose-500/80 font-medium px-2">
+                    Te ayudamos a reagendar la entrega lo antes posible 🎀
+                  </p>
                 </div>
               }
              </div>
@@ -512,13 +504,8 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                                 </div>
                               </div>
                             </div>
-                            <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 text-center space-y-3">
-                              <p class="text-sm font-black text-blue-900">📸 Toma captura de esta pantalla</p>
-                              <a [href]="messengerUrl" target="_blank" rel="noopener"
-                                 class="flex items-center justify-center gap-3 bg-[#0099FF] text-white font-black text-sm py-4 px-5 rounded-2xl active:scale-95 transition-all shadow-xl w-full">
-                                <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                                ENVIAR POR MESSENGER 🎀
-                              </a>
+                            <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 text-center">
+                              <p class="text-sm font-black text-blue-900">📸 Guarda una captura de esta pantalla</p>
                             </div>
                           </div>
                         } @else if (mpResult()?.status === 'in_process' || mpResult()?.status === 'pending') {
@@ -528,13 +515,8 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                               <p class="font-black text-amber-700 text-base">Pago en revisión</p>
                               <p class="text-xs text-amber-600 mt-2 mb-4">{{ mpResult()?.message }}</p>
                             </div>
-                            <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 text-center space-y-3">
+                            <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 text-center">
                               <p class="text-xs text-amber-800 font-medium leading-relaxed">Te avisamos en cuanto se apruebe 💕</p>
-                              <a [href]="messengerUrl" target="_blank" rel="noopener"
-                                 class="flex items-center justify-center gap-2 bg-[#0099FF] text-white font-black text-sm py-3 px-5 rounded-xl active:scale-95 transition-all shadow-md w-full">
-                                <svg class="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.672V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.974 12-11.111S18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26 5.887-3.26-6.559 6.863z"/></svg>
-                                Escribir a {{ order()?.businessName || 'Regi Bazar' }}
-                              </a>
                             </div>
                           </div>
                         } @else if (mpResult()) {
@@ -678,9 +660,8 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
               <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-8 text-white text-center shadow-xl relative overflow-hidden group">
                 <div class="absolute -right-10 -bottom-10 text-9xl opacity-10 group-hover:scale-125 transition-transform duration-1000">📸</div>
                 <h3 class="text-xl font-black font-display mb-2 drop-shadow-md">¡Presume tu estilo! 📸</h3>
-                <p class="text-[10px] font-bold opacity-80 mb-6 tracking-wide">Etiquétanos en tus historias de Facebook o IG al recibir tu pedido y gana <strong>RegiPuntos extra</strong> ✨</p>
+                <p class="text-[10px] font-bold opacity-80 mb-6 tracking-wide">Comparte tu estilo en tus redes al recibir tu pedido y gana <strong>RegiPuntos extra</strong> ✨</p>
                 <div class="flex justify-center gap-4 relative z-10">
-                  <a [href]="order()?.businessFacebookUrl || 'https://www.facebook.com/regi.bazar.852309'" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">f</a>
                   <a href="https://www.instagram.com/" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">IG</a>
                 </div>
               </div>
@@ -1247,15 +1228,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
 
-
-
-  get messengerUrl() {
-    const o = this.order();
-    if (!o) return '';
-    if (o.businessMessengerUrl) return o.businessMessengerUrl;
-    return `https://m.me/?ref=order_${o.id}`;
-  }
-
   // Countdown State
   countdownText = signal<string>('');
   private countdownInterval: any;
@@ -1464,18 +1436,18 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getStatusDetailMessage(status: string, deliveriesAhead: number): string {
     switch (status) {
-      case 'Pending': return 'Tu pedido está listo, confirma para prepararlo ✨';
-      case 'Confirmed': return '¡Pedido confirmado! Lo estamos preparando con mucho cariño 🎀';
-      case 'Shipped': return 'Tu paquetito está armado y listo para salir ✨';
+      case 'Pending': return 'Tu vendedora ha registrado tu pedido y lo preparará muy pronto 🌸';
+      case 'Confirmed': return '¡Pedido confirmado! Tu tienda está preparando tus productos con mucho cariño 📦';
+      case 'Shipped': return 'Tu paquete está armado en tienda y listo para salir 🏬';
       case 'InRoute':
         if (deliveriesAhead > 0) {
-          return `Tu pedido va en camino. El repartidor visita a ${deliveriesAhead} chicas antes que a ti 💕`;
+          return `Tu pedido va en camino. El repartidor realiza ${deliveriesAhead} entregas antes que a ti 🚚`;
         }
-        return '¡Prepárate, eres la siguiente parada! ✨';
-      case 'InTransit': return '¡Prepárate, el auto va directo a tu casa! 🎉';
-      case 'Delivered': return 'Tu pedido fue entregado, muchas gracias por hacernos parte de tu estilo 🌸';
-      case 'NotDelivered': return 'No se logró entregar. Porfa contacta a tu vendedora 💌';
-      case 'Canceled': return 'Este pedido ha sido cancelado. 💔';
+        return '¡Prepárate! Tu pedido es la siguiente entrega 📍';
+      case 'InTransit': return '¡Prepárate! El repartidor va directo a tu domicilio 📍';
+      case 'Delivered': return 'Tu pedido fue entregado con éxito, ¡muchas gracias por tu compra! 🌸';
+      case 'NotDelivered': return 'No se logró entregar. Por favor contacta a tu vendedora 💌';
+      case 'Canceled': return 'Este pedido ha sido cancelado 💔';
       default: return 'Estamos procesando tu pedido, pronto tendrás novedades 💕';
     }
   }

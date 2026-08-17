@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
     ConfirmLiveCandidateRequest,
-    ImportLiveRequest,
     LiveSessionDto,
     LiveReviewDto
 } from '../models';
@@ -13,10 +12,6 @@ import {
 export class LiveCaptureService {
     private http = inject(HttpClient);
     private readonly base = `${environment.apiUrl}/live`;
-
-    importLive(request: ImportLiveRequest): Observable<LiveSessionDto> {
-        return this.http.post<LiveSessionDto>(`${this.base}/import`, request);
-    }
 
     getSession(id: number): Observable<LiveSessionDto> {
         return this.http.get<LiveSessionDto>(`${this.base}/${id}`);

@@ -17,7 +17,6 @@ import {
     ResolveClientRequest, ResolveClientResponse,
     ClientAliasDto, AddAliasRequest, MergeClientsRequest, DuplicateSuggestionDto,
     ClientMergeAuditDto,
-    FacebookImportRow, FacebookImportPreviewResponse, FacebookImportApplyRow, FacebookImportApplyResponse,
     LoyaltyRewardDto
 } from '../models';
 
@@ -166,15 +165,6 @@ export class ApiService {
     // ── Resolver multi-señal de clientas ──
     resolveClient(req: ResolveClientRequest): Observable<ResolveClientResponse> {
         return this.http.post<ResolveClientResponse>(`${this.base}/clients/resolve`, req);
-    }
-
-    // ── Importación masiva de Facebook ──
-    facebookImportPreview(rows: FacebookImportRow[]): Observable<FacebookImportPreviewResponse> {
-        return this.http.post<FacebookImportPreviewResponse>(`${this.base}/clients/facebook-import/preview`, { rows });
-    }
-
-    facebookImportApply(rows: FacebookImportApplyRow[]): Observable<FacebookImportApplyResponse> {
-        return this.http.post<FacebookImportApplyResponse>(`${this.base}/clients/facebook-import/apply`, { rows });
     }
 
     getClientAliases(clientId: number): Observable<ClientAliasDto[]> {

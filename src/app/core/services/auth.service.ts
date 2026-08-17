@@ -10,7 +10,6 @@ import {
     PhoneOtpRequest,
     PhoneOtpResponse,
     PhoneOtpVerifyRequest,
-    FacebookLoginRequest,
     AuthMembershipDto,
 } from '../models';
 
@@ -89,9 +88,10 @@ export class AuthService {
             .pipe(tap(res => this.handleLoginSuccess(res)));
     }
 
-    facebookLogin(req: FacebookLoginRequest): Observable<LoginResponse> {
-        return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/facebook`, req)
-            .pipe(tap(res => this.handleLoginSuccess(res)));
+    deleteAccount(): Observable<void> {
+        return this.http.delete<void>(`${environment.apiUrl}/auth/me`).pipe(
+            tap(() => this.clearSession()),
+        );
     }
 
     // ── Sesion ──
@@ -144,6 +144,11 @@ export class AuthService {
     }
 
     logout(): void {
+        this.clearSession();
+        this.router.navigate(['/login']);
+    }
+
+    private clearSession(): void {
         this._token.set(null);
         this._accountId.set(null);
         this._displayName.set('');
@@ -152,7 +157,6 @@ export class AuthService {
         this._expiresAt.set(null);
 
         Object.values(STORAGE_KEYS).forEach(k => this.remove(k));
-        this.router.navigate(['/login']);
     }
 
     getToken(): string | null {

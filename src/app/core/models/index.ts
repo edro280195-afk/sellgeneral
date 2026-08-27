@@ -925,10 +925,114 @@ export interface OrderPackageDto {
     loadedAt?: string;
     deliveredAt?: string;
     returnedAt?: string;
+    mediaSize?: string;
 }
 
 export interface GeneratePackagesRequest {
     count: number;
+}
+
+export interface LabelTemplateVersionEditorDto {
+    id: string;
+    versionNumber: number;
+    status: string;
+    revision: number;
+    designJson: string;
+    createdAt: string;
+    publishedAt: string | null;
+}
+
+export interface LabelTemplateVersionHistoryDto {
+    id: string;
+    versionNumber: number;
+    status: string;
+    createdAt: string;
+    publishedAt: string | null;
+}
+
+export interface LabelTemplateEditorDto {
+    id: string;
+    name: string;
+    description: string | null;
+    kind: string;
+    mediaSize: string;
+    isDefault: boolean;
+    publishedVersion: LabelTemplateVersionEditorDto | null;
+    draftVersion: LabelTemplateVersionEditorDto;
+    history: LabelTemplateVersionHistoryDto[];
+}
+
+export interface LabelAssetDto {
+    id: string;
+    name: string;
+    originalFileName: string;
+    contentType: string;
+    url: string;
+    sizeBytes: number;
+    uploadedAt: string;
+}
+
+export interface LabelTemplateSaveDraftRequest {
+    designJson: string;
+    expectedRevision: number;
+}
+
+export interface LabelPrintPayloadDto {
+    businessName: string;
+    order: {
+        id: number;
+        clientName: string;
+        phone: string | null;
+        address: string | null;
+        itemSummary: string;
+        deliveryInstructions: string | null;
+    };
+    package: {
+        id: string;
+        number: number;
+        total: number;
+        qrCodeValue: string;
+    };
+}
+
+export interface LabelPrintJobItemDto {
+    id: string;
+    orderPackageId: string;
+    sequence: number;
+    packageQrCodeValue: string;
+    payload: LabelPrintPayloadDto;
+}
+
+export interface LabelPrintJobDto {
+    id: string;
+    status: string;
+    mediaSize: string;
+    output: string;
+    copies: number;
+    requestedAt: string;
+    handedOffAt: string | null;
+    failureReason: string | null;
+    templateVersion: {
+        id: string;
+        versionNumber: number;
+        designJson: string;
+        publishedAt: string;
+    };
+    assets: { id: string; url: string }[];
+    items: LabelPrintJobItemDto[];
+}
+
+export interface CreateLabelPrintJobRequest {
+    packageIds: string[];
+    mediaSize: string;
+    copies?: number;
+    output?: string;
+}
+
+export interface UpdateLabelPrintJobStatusRequest {
+    status: string;
+    failureReason?: string;
+    output?: string;
 }
 
 export interface AiParsedOrder {

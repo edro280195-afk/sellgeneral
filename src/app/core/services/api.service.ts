@@ -17,7 +17,9 @@ import {
     ResolveClientRequest, ResolveClientResponse,
     ClientAliasDto, AddAliasRequest, MergeClientsRequest, DuplicateSuggestionDto,
     ClientMergeAuditDto,
-    LoyaltyRewardDto
+    LoyaltyRewardDto,
+    LabelTemplateEditorDto, LabelTemplateSaveDraftRequest, LabelAssetDto,
+    CreateLabelPrintJobRequest, LabelPrintJobDto, UpdateLabelPrintJobStatusRequest
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -98,6 +100,43 @@ export class ApiService {
 
     generatePackages(orderId: number, data: GeneratePackagesRequest): Observable<OrderPackageDto[]> {
         return this.http.post<OrderPackageDto[]>(`${this.base}/orders/${orderId}/packages/generate`, data);
+    }
+
+    getOrderLabelTemplate(mediaSize: string): Observable<LabelTemplateEditorDto> {
+        return this.http.get<LabelTemplateEditorDto>(this.base + '/label-templates/order-package/default', {
+            params: { mediaSize }
+        });
+    }
+
+    saveLabelTemplateDraft(id: string, request: LabelTemplateSaveDraftRequest): Observable<LabelTemplateEditorDto> {
+        return this.http.put<LabelTemplateEditorDto>(this.base + '/label-templates/' + id + '/draft', request);
+    }
+
+    publishLabelTemplate(id: string): Observable<LabelTemplateEditorDto> {
+        return this.http.post<LabelTemplateEditorDto>(this.base + '/label-templates/' + id + '/publish', {});
+    }
+
+    resetLabelTemplateDraft(id: string): Observable<LabelTemplateEditorDto> {
+        return this.http.post<LabelTemplateEditorDto>(this.base + '/label-templates/' + id + '/draft/reset', {});
+    }
+
+    getLabelAssets(): Observable<LabelAssetDto[]> {
+        return this.http.get<LabelAssetDto[]>(this.base + '/label-templates/assets');
+    }
+
+    uploadLabelAsset(file: File, name: string): Observable<LabelAssetDto> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('name', name);
+        return this.http.post<LabelAssetDto>(this.base + '/label-templates/assets', formData);
+    }
+
+    createLabelPrintJob(request: CreateLabelPrintJobRequest): Observable<LabelPrintJobDto> {
+        return this.http.post<LabelPrintJobDto>(this.base + '/label-print-jobs', request);
+    }
+
+    updateLabelPrintJobStatus(id: string, request: UpdateLabelPrintJobStatusRequest): Observable<LabelPrintJobDto> {
+        return this.http.put<LabelPrintJobDto>(this.base + '/label-print-jobs/' + id + '/status', request);
     }
 
     addPayment(orderId: number, payment: AddPaymentRequest): Observable<OrderPaymentDto> {

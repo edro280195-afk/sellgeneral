@@ -9,8 +9,8 @@ import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { OrderSummaryDto, ORDER_STATUS_CSS, SalesPeriodDto, ORDER_STATUS_LABELS, OrderPackageDto, OrderStatus, LoyaltyRewardDto } from '../../../core/models';
 import { gsap } from 'gsap';
-import * as QRCode from 'qrcode';
 import { BirthdayCouponComponent } from '../../../shared/components/birthday-coupon/birthday-coupon.component';
+import { LabelEditorComponent, LabelPrintRequest } from '../../../shared/components/label-editor/label-editor.component';
 import { CouponService } from '../../../core/services/coupon.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -19,7 +19,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, BirthdayCouponComponent, GoogleAutocompleteDirective],
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, BirthdayCouponComponent, LabelEditorComponent, GoogleAutocompleteDirective],
   template: `
     <div class="space-y-6">
       <!-- Header -->
@@ -443,7 +443,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               <div class="flex items-center justify-between mb-3">
                 <h4 class="text-xs font-black text-pink-600 uppercase tracking-widest flex items-center gap-2">🏷️ Logística y Etiquetas</h4>
                 @if (packages().length > 1) {
-                  <button class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 hover:from-purple-200 hover:to-indigo-200 border border-purple-200 px-3 py-1.5 rounded-lg text-[10px] font-black flex items-center gap-1 shadow-sm transition-all animate-pulse-pink" (click)="printAllLabels()">
+                  <button class="bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 hover:from-purple-200 hover:to-indigo-200 border border-purple-200 px-3 py-1.5 rounded-lg text-[10px] font-black flex items-center gap-1 shadow-sm transition-all animate-pulse-pink" (click)="openLabelEditor()">
                     Imprimir Todas ({{ packages().length }}) 🖨️✨
                   </button>
                 }
@@ -462,7 +462,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                           <p class="text-[9px] text-pink-400 font-medium font-mono truncate w-24">{{ pkg.qrCodeValue }}...</p>
                         </div>
                       </div>
-                      <button class="bg-gradient-to-r from-pink-100 to-rose-100 text-pink-600 hover:from-pink-200 hover:to-rose-200 border border-pink-200 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 shadow-sm transition-all" (click)="printLabel(pkg, selectedOrder()!)">
+                      <button class="bg-gradient-to-r from-pink-100 to-rose-100 text-pink-600 hover:from-pink-200 hover:to-rose-200 border border-pink-200 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 shadow-sm transition-all" (click)="openLabelEditor(pkg)">
                         🖨️ Imprimir
                       </button>
                     </div>
@@ -597,6 +597,17 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
         </div>
       }
 
+      @if (showLabelEditor() && labelEditorPackage() && selectedOrder(); as order) {
+        <app-label-editor
+          [order]="order"
+          [packageData]="labelEditorPackage()!"
+          [packages]="packages()"
+          [businessName]="theme.name() || 'Regi Bazar'"
+          [logoUrl]="theme.logoUrl()"
+          (closed)="closeLabelEditor()"
+          (printRequested)="handleLabelPrint($event)" />
+      }
+
       <!-- Hidden Coupon for Capture -->
       <div style="position: fixed; left: -9999px; top: 0; z-index: -1;">
         @if (selectedOrder()) {
@@ -696,8 +707,11 @@ export class OrdersComponent implements OnInit {
   packagesToGenerate = 1;
 
   // Printing
+  showLabelEditor = signal(false);
+  labelEditorPackage = signal<OrderPackageDto | null>(null);
   showPrintPreview = signal(false);
   printHtml = signal('');
+  pendingLabelPrintJobId = signal<string | null>(null);
   safePrintHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.printHtml()));
   private printIframe?: HTMLIFrameElement;
 
@@ -1176,211 +1190,27 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  async printLabel(pkg: OrderPackageDto, orderData: OrderSummaryDto) {
-    const html = await this.generateLabelHtml(pkg, orderData, this.packages().length);
-    this.openPrintWindow(html, `Etiqueta Bolsa ${pkg.packageNumber}`);
-  }
-
-  async printAllLabels() {
+  openLabelEditor(pkg?: OrderPackageDto): void {
     const order = this.selectedOrder();
-    if (!order || !this.packages().length) return;
-
-    try {
-      let combinedHtml = '';
-      const total = this.packages().length;
-
-      for (const pkg of this.packages()) {
-        const labelHtml = await this.generateLabelHtml(pkg, order, total, true);
-        combinedHtml += labelHtml;
-      }
-
-      const fullHtml = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>
-              @page { margin: 0; size: 100mm 150mm; }
-              body { margin: 0; padding: 0; }
-              .page-break { page-break-after: always; }
-              .label-wrapper { 
-                margin: 0; padding: 4mm; box-sizing: border-box; 
-                width: 100mm; height: 148mm; overflow: hidden;
-                font-family: Arial, sans-serif; display: flex; 
-                flex-direction: column; justify-content: space-between; align-items: center;
-              }
-              .header { text-align: center; width: 100%; }
-              .header h2 { margin: 2px 0; font-size: 16px; font-weight: bold; }
-              .header h3 { margin: 2px 0; font-size: 14px; font-weight: normal; }
-              .info { 
-                text-align: left; width: 100%; font-size: 16px; font-weight: bold; 
-                border-top: 2px dashed #000; border-bottom: 2px dashed #000; 
-                padding: 5px 0; margin: 5px 0;
-              }
-              .info p { margin: 2px 0; }
-              .qr-container { 
-                display: flex; justify-content: center; align-items: center; 
-                flex-grow: 1; width: 100%; overflow: hidden;
-              }
-              .qr-container img { max-width: 75mm; max-height: 75mm; width: auto; height: auto; }
-              .footer { text-align: center; width: 100%; }
-              .footer h1 { margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase;}
-              .footer p { margin: 2px 0; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            ${combinedHtml}
-          </body>
-        </html>
-      `;
-
-      this.openPrintWindow(fullHtml, `Etiquetas Pedido ${order.id}`);
-    } catch (e) {
-      console.error(e);
-      this.toast.error('Error al generar etiquetas masivas 🖨️');
+    const selectedPackage = pkg ?? this.packages()[0];
+    if (!order || !selectedPackage) {
+      this.toast.error('Primero genera al menos una bolsa para diseñar su etiqueta');
+      return;
     }
+
+    this.labelEditorPackage.set(selectedPackage);
+    this.showLabelEditor.set(true);
   }
 
-  private async generateLabelHtml(pkg: OrderPackageDto, orderData: OrderSummaryDto, totalPackages: number, isBulk = false): Promise<string> {
-    // 1. QR Limpio y rápido. Bajamos la corrección de error a 'M' porque ya no hay logo que lo tape
-    const finalQrUrl = await QRCode.toDataURL(pkg.qrCodeValue, {
-      errorCorrectionLevel: 'M',
-      width: 400,
-      margin: 1
-    });
-
-    // 2. Opcional: Si quieres poner el logo hasta arriba en lugar de texto
-    const logoUrl = window.location.origin + '/assets/logo-termico.png';
-
-    const content = `
-      <div class="label-wrapper ${isBulk ? 'page-break' : ''}">
-        
-        <div class="header">
-          <h2>{{ theme.name() }}</h2>
-        </div>
-
-        <div class="info-box">
-          <p class="label-text">ENTREGAR A:</p>
-          <p class="client-name">${orderData.clientName}</p>
-        </div>
-
-        <div class="qr-container">
-          <img src="${finalQrUrl}" alt="QR Pedido" />
-        </div>
-
-        <div class="logistics">
-          <h1>BOLSA ${pkg.packageNumber} DE ${totalPackages}</h1>
-        </div>
-
-        <div class="footer">
-          <p class="gracias">¡Gracias por tu compra! 🌸</p>
-          <p class="social-bold">${this.theme.name() || 'Regi Bazar'}</p>
-        </div>
-
-      </div>
-    `;
-
-    if (isBulk) return content;
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            @page { margin: 0; size: 100mm 150mm; }
-            body { 
-              margin: 0; 
-              padding: 0; 
-              background-color: white; 
-              color: black;
-            }
-            .label-wrapper { 
-              margin: 0; 
-              padding: 6mm 4mm; 
-              box-sizing: border-box; 
-              width: 100mm; 
-              height: 148mm; 
-              font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-              display: flex; 
-              flex-direction: column; 
-              justify-content: space-between; 
-              align-items: center;
-              text-align: center;
-            }
-            
-            /* Header */
-            .header { width: 100%; margin-bottom: 5px; }
-            .top-logo { max-width: 60mm; height: auto; margin-bottom: 5px; }
-            .header h2 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
-            .header h3 { margin: 2px 0 0 0; font-size: 16px; font-weight: normal; font-style: italic; }
-            
-            /* Info Box */
-            .info-box { 
-              width: 90%; 
-              border-top: 2px dashed #000; 
-              border-bottom: 2px dashed #000; 
-              padding: 10px 0; 
-              margin: 10px 0; 
-            }
-            .label-text { margin: 0; font-size: 12px; font-weight: bold; color: #333; }
-            .client-name { margin: 5px 0 0 0; font-size: 22px; font-weight: 900; line-height: 1.1; }
-            
-            /* QR */
-            .qr-container { 
-              flex-grow: 1; 
-              display: flex; 
-              justify-content: center; 
-              align-items: center; 
-              width: 100%; 
-            }
-            .qr-container img { width: 65mm; height: 65mm; object-fit: contain; }
-            
-            /* Logistics */
-            .logistics { 
-              width: 100%; 
-              background-color: #000; 
-              color: #fff; /* Inversión de color para que resalte en térmico */
-              padding: 8px 0; 
-              margin: 5px 0;
-              border-radius: 4px; /* Las impresoras térmicas modernas imprimen bordes curvos sin problema */
-            }
-            .logistics h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: 2px; }
-            
-            /* Footer */
-            .footer { width: 100%; margin-top: 5px; }
-            .gracias { margin: 0 0 5px 0; font-size: 18px; font-weight: bold; }
-            .social { margin: 0; font-size: 13px; }
-            .social-bold { margin: 2px 0 0 0; font-size: 16px; font-weight: 900; }
-          </style>
-        </head>
-        <body>
-          ${content}
-          <script>
-            window.onload = function() { 
-              setTimeout(() => { 
-                window.print(); 
-                window.close(); 
-              }, 300); 
-            }
-          </script>
-        </body>
-      </html>
-    `;
+  closeLabelEditor(): void {
+    this.showLabelEditor.set(false);
+    this.labelEditorPackage.set(null);
   }
 
-  private fillRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-    ctx.fill();
+  handleLabelPrint(request: LabelPrintRequest): void {
+    this.closeLabelEditor();
+    this.pendingLabelPrintJobId.set(request.jobId);
+    this.openPrintWindow(request.html, request.title);
   }
 
   private openPrintWindow(html: string, title: string) {
@@ -1393,6 +1223,7 @@ export class OrdersComponent implements OnInit {
   closePrintPreview() {
     this.showPrintPreview.set(false);
     this.printHtml.set('');
+    this.pendingLabelPrintJobId.set(null);
     if (!this.drawerOpen()) {
       document.body.style.overflow = '';
     }
@@ -1404,9 +1235,11 @@ export class OrdersComponent implements OnInit {
 
     if (Capacitor.isNativePlatform()) {
       Printer.printHtml({ html }).then(() => {
+        this.markLabelPrintJob('SentToSystem');
         this.toast.success('Impresión enviada 🖨️');
-      }).catch((err: any) => {
+      }).catch((err: unknown) => {
         console.error('Error al imprimir nativamente:', err);
+        this.markLabelPrintJob('Failed', 'Error al conectar con la impresora');
         this.toast.error('Error al conectar con la impresora');
       });
       return;
@@ -1439,9 +1272,25 @@ export class OrdersComponent implements OnInit {
         if (this.printIframe?.contentWindow) {
           this.printIframe.contentWindow.focus();
           this.printIframe.contentWindow.print();
+          this.markLabelPrintJob('SentToSystem');
+          this.toast.success('Impresión enviada 🖨️');
         }
       }, 800);
     }
+  }
+
+  private markLabelPrintJob(status: 'SentToSystem' | 'Failed', failureReason?: string): void {
+    const jobId = this.pendingLabelPrintJobId();
+    if (!jobId) return;
+
+    this.api.updateLabelPrintJobStatus(jobId, {
+      status,
+      output: 'SystemPrint',
+      ...(failureReason ? { failureReason } : {})
+    }).subscribe({
+      error: error => console.error('No se pudo actualizar el estado de impresión:', error)
+    });
+    this.pendingLabelPrintJobId.set(null);
   }
 
   private animateList(): void {

@@ -1,0 +1,135 @@
+<div class="editor-backdrop" role="presentation" (click)="closed.emit()">
+    <section class="editor-shell" role="dialog" aria-modal="true" aria-labelledby="label-editor-title" (click)="$event.stopPropagation()">
+        <header class="editor-header">
+            <div>
+                <p class="eyebrow">Diseño de etiquetas</p>
+                <h2 id="label-editor-title">Arma tu etiqueta</h2>
+                <p class="subtitle">Agrega los elementos de la etiqueta de Regi Bazar y revisa cómo quedará antes de imprimir.</p>
+            </div>
+            <button type="button" class="icon-button" aria-label="Cerrar editor" (click)="closed.emit()">×</button>
+        </header>
+        <div class="editor-body">
+            <aside class="editor-sidebar" aria-label="Herramientas de etiqueta">
+                <div class="sidebar-section">
+                    <div class="section-heading">
+                        <div><p class="eyebrow">Elementos</p><h3>Agregar al diseño</h3></div>
+                        <span class="count-badge">{{ enabledCount() }}</span>
+                    </div>
+                    <div class="tool-grid">
+                        @for (option of elementOptions; track option.type) {
+                            <button type="button" class="tool-button" (click)="addElement(option.type)" [attr.aria-label]="'Agregar ' + option.label">
+                                <span class="tool-icon" [class]="'tool-icon-' + option.icon" aria-hidden="true">
+                                    @switch (option.icon) {
+                                        @case ('qr') { ◈ }
+                                        @case ('counter') { 1/4 }
+                                        @case ('divider') { ─ }
+                                        @case ('decoration') { ✦ }
+                                        @case ('message') { Aa }
+                                        @default { ◇ }
+                                    }
+                                </span>
+                                <span>{{ option.label }}</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="sidebar-section layers-section">
+                    <div class="section-heading"><div><p class="eyebrow">Composición</p><h3>Capas de la etiqueta</h3></div></div>
+                    <div class="layer-list">
+                        @for (element of elements(); track element.id) {
+                            <div class="layer-row" [class.selected]="selectedElementId() === element.id" [class.hidden-layer]="!element.enabled">
+                                <button type="button" class="layer-main" (click)="selectElement(element.id)" [attr.aria-label]="'Editar ' + elementTitle(element)">
+                                    <span class="layer-status" aria-hidden="true">{{ element.enabled ? '●' : '○' }}</span>
+                                    <span>{{ element.label }}</span>
+                                </button>
+                                <button type="button" class="layer-toggle" [disabled]="isRequiredElement(element.id)" [attr.aria-label]="isRequiredElement(element.id) ? element.label + ' obligatorio' : (element.enabled ? 'Ocultar ' : 'Mostrar ') + element.label" (click)="toggleElement(element.id)">
+                                    {{ isRequiredElement(element.id) ? 'Obligatorio' : element.enabled ? 'Ocultar' : 'Mostrar' }}
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                @if (selectedElement(); as selected) {
+                    <div class="sidebar-section properties-section">
+                        <div class="section-heading">
+                            <div><p class="eyebrow">Propiedades</p><h3>{{ selected.label }}</h3></div>
+                            @if (isRemovable(selected)) { <button type="button" class="remove-button" (click)="removeSelected()">Quitar</button> }
+                        </div>
+                        @if (selected.text !== undefined) {
+                            <label class="field-label" [for]="'label-text-' + selected.id">Texto</label>
+                            <textarea class="field-input" [id]="'label-text-' + selected.id" [value]="selected.text" rows="3" (input)="updateSelectedText($event)"></textarea>
+                        }
+                        @if (selected.fontSize !== undefined) {
+                            <label class="field-label" [for]="'label-size-' + selected.id">Tamaño (px)</label>
+                            <input class="field-input" type="number" min="8" max="48" [id]="'label-size-' + selected.id" [value]="selected.fontSize" (input)="updateSelectedFontSize($event)">
+                        }
+                        @if (selected.text !== undefined || selected.type === 'clientName') {
+                            <label class="field-label" [for]="'label-align-' + selected.id">Alineación</label>
+                            <select class="field-input" [id]="'label-align-' + selected.id" [value]="selected.align || 'center'" (change)="updateSelectedAlign($event)">
+                                <option value="left">Izquierda</option><option value="center">Centro</option><option value="right">Derecha</option>
+                            </select>
+                            <button type="button" class="bold-toggle" [class.active]="selected.bold" (click)="toggleSelectedBold()"><span aria-hidden="true">B</span> Texto en negritas</button>
+                        }
+                        @if (selected.type === 'brand') {
+                            <label class="field-label" for="label-logo-upload">Logo para impresión</label>
+                            <input id="label-logo-upload" class="field-input" type="file" accept="image/png,image/jpeg,image/webp" (change)="uploadLogo($event)" [disabled]="uploadingAsset()">
+                            <p class="field-help">{{ selectedLogoAssetId() ? 'El logo se incluirá en la etiqueta impresa.' : 'Sube el logo para que también aparezca en la impresión.' }}</p>
+                        }
+                    </div>
+                }
+            </aside>
+            <main class="preview-area">
+                <div class="preview-toolbar">
+                    <div><p class="eyebrow">Vista previa</p><p class="preview-caption">Bolsa {{ packageData().packageNumber }} de {{ packages().length }} · QR real de esta bolsa</p></div>
+                    <div class="preview-actions">
+                        <button type="button" class="secondary-button" (click)="resetLayout()" [disabled]="saving() || publishing()">Restablecer</button>
+                        <button type="button" class="secondary-button" (click)="saveLayout()" [disabled]="saving() || publishing()">{{ saving() ? 'Guardando…' : 'Guardar borrador' }}</button>
+                        <button type="button" class="secondary-button" (click)="publishLayout()" [disabled]="saving() || publishing()">{{ publishing() ? 'Publicando…' : 'Publicar diseño' }}</button>
+                    </div>
+                </div>
+                @if (templateLoading()) { <p class="editor-status">Cargando plantilla del servidor…</p> }
+                @if (statusMessage()) { <p class="editor-status success">{{ statusMessage() }}</p> }
+                @if (errorMessage()) { <p class="editor-status error">{{ errorMessage() }}</p> }
+                <div class="canvas-wrap">
+                    <div class="label-canvas" [class.no-frame]="!isEnabled('frame')">
+                        @if (isEnabled('top-decoration')) { <div class="label-top-decoration" aria-hidden="true"><span>✦</span><span class="house-mark">⌂</span><span>✦</span></div> }
+                        @if (isEnabled('brand')) {
+                            <div class="label-brand" (click)="selectElement('brand')" [class.selected-preview]="selectedElementId() === 'brand'">
+                                @if (logoUrl()) { <img [src]="logoUrl()" [alt]="'Logo de ' + businessName()"> }
+                                <span>{{ businessName() }}</span>
+                            </div>
+                        }
+                        @if (isEnabled('tagline')) { <div class="label-tagline" (click)="selectElement('tagline')" [class.selected-preview]="selectedElementId() === 'tagline'">{{ elements().find(e => e.id === 'tagline')?.text }}</div> }
+                        @if (isEnabled('top-divider')) { <div class="label-divider dotted" (click)="selectElement('top-divider')"></div> }
+                        @for (element of elements(); track element.id) {
+                            @if (element.enabled && element.type === 'text' && element.id !== 'deliver-to') {
+                                <div class="label-free-text" [style.font-size.px]="element.fontSize" [style.font-weight]="element.bold ? 800 : 500" [style.text-align]="element.align || 'center'" (click)="selectElement(element.id)" [class.selected-preview]="selectedElementId() === element.id">{{ element.text }}</div>
+                            }
+                        }
+                        @if (isEnabled('deliver-to')) { <div class="label-deliver" (click)="selectElement('deliver-to')" [class.selected-preview]="selectedElementId() === 'deliver-to'">{{ elements().find(e => e.id === 'deliver-to')?.text }}</div> }
+                        @if (isEnabled('client-name')) { <div class="label-client" [style.font-size.px]="elements().find(e => e.id === 'client-name')?.fontSize" (click)="selectElement('client-name')" [class.selected-preview]="selectedElementId() === 'client-name'">{{ order().clientName }}</div> }
+                        @if (isEnabled('client-divider')) { <div class="label-divider" (click)="selectElement('client-divider')"></div> }
+                        <div class="label-qr-row">
+                            @if (isEnabled('qr')) { <div class="label-qr-box" (click)="selectElement('qr')" [class.selected-preview]="selectedElementId() === 'qr'"><div class="qr-placeholder">@if (qrPreviewUrl()) { <img [src]="qrPreviewUrl()" alt="Código QR de la bolsa"> } @else { <span>QR</span><small>{{ packageData().qrCodeValue.slice(0, 12) }}…</small> }</div></div> }
+                            @if (isEnabled('package-counter')) { <div class="label-package-counter" (click)="selectElement('package-counter')" [class.selected-preview]="selectedElementId() === 'package-counter'"><span class="counter-ribbon">BOLSA</span><strong>{{ packageData().packageNumber }}</strong><span>DE</span><strong>{{ packages().length }}</strong><span class="bag-mark" aria-hidden="true">♡</span></div> }
+                        </div>
+                        @for (element of elements(); track element.id) {
+                            @if (element.enabled && element.type === 'decoration' && element.id !== 'top-decoration' && element.id !== 'footer-decoration') { <div class="label-decoration" (click)="selectElement(element.id)" [class.selected-preview]="selectedElementId() === element.id">{{ element.icon === 'leaves' ? '⌁ ❧ ⌁' : element.icon === 'sparkles' ? '✦  ✦  ✦' : '♥' }}</div> }
+                        }
+                        @if (isEnabled('bottom-divider')) { <div class="label-divider" (click)="selectElement('bottom-divider')"></div> }
+                        @if (isEnabled('footer-message')) { <div class="label-footer-message" [style.font-size.px]="elements().find(e => e.id === 'footer-message')?.fontSize" (click)="selectElement('footer-message')" [class.selected-preview]="selectedElementId() === 'footer-message'">{{ elements().find(e => e.id === 'footer-message')?.text }}</div> }
+                        @if (isEnabled('footer-thanks')) { <div class="label-footer-thanks" (click)="selectElement('footer-thanks')" [class.selected-preview]="selectedElementId() === 'footer-thanks'">{{ elements().find(e => e.id === 'footer-thanks')?.text }}</div> }
+                        @if (isEnabled('footer-decoration')) { <div class="label-footer-decoration" aria-hidden="true">⌁  ❧  ⌁</div> }
+                    </div>
+                </div>
+                <div class="editor-footer">
+                    <div><p class="footer-note">El QR y el contador se actualizan automáticamente por bolsa.</p><p class="footer-note muted">Formato de impresión: 100 × 150 mm.</p></div>
+                    <div class="print-actions">
+                        @if (packages().length > 1) { <button type="button" class="secondary-button print-all-button" [disabled]="printing()" (click)="printAll()">{{ printing() ? 'Preparando…' : 'Imprimir todas' }}</button> }
+                        <button type="button" class="primary-button" [disabled]="printing()" (click)="printCurrent()">{{ printing() ? 'Preparando…' : 'Imprimir esta etiqueta' }}</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+</div>

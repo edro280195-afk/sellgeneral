@@ -16,7 +16,13 @@ export class PushNotificationService {
         return permission === 'granted';
     }
 
-    async subscribeToNotifications(role: 'admin' | 'driver' | 'client', identifiers: { clientId?: number, routeToken?: string } = {}): Promise<void> {
+    /**
+     * Suscribe este navegador a Web Push. El backend NO confía en el rol que se declara:
+     *  - 'admin'  → exige la sesión (JWT) de dueña/administradora; el interceptor la adjunta.
+     *  - 'client' → exige el token del pedido (`orderToken`); la clienta y el negocio salen de ese pedido.
+     *  - 'driver' → exige el token de una ruta existente (`routeToken`).
+     */
+    async subscribeToNotifications(role: 'admin' | 'driver' | 'client', identifiers: { orderToken?: string, routeToken?: string } = {}): Promise<void> {
         if (!('serviceWorker' in navigator)) return;
 
         const registration = await navigator.serviceWorker.ready;
@@ -37,7 +43,7 @@ export class PushNotificationService {
                 auth: subData.keys?.['auth']
             },
             role: role,
-            clientId: identifiers.clientId,
+            orderToken: identifiers.orderToken,
             driverRouteToken: identifiers.routeToken
         }));
 

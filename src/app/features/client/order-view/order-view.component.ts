@@ -1360,7 +1360,10 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
         const checkOrder = setInterval(() => {
           const ord = this.order();
           if (ord) {
-            this.push.subscribeToNotifications('client', { clientId: ord.id });
+            // Antes se mandaba `ord.id`, que la vista pública del pedido nunca trae
+            // (solo `clientId`/`orderId`): la suscripción quedaba sin clienta y jamás recibía avisos.
+            // Ahora se manda el token del pedido y el backend deriva de ahí a la clienta.
+            this.push.subscribeToNotifications('client', { orderToken: this.accessToken });
             clearInterval(checkOrder);
           }
         }, 1000);

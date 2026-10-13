@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DecimalPipe, DatePipe, CommonModule } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ReportDto, SalesPeriodDto, PeriodReportDto, AiInsight, OrderSummaryDto } from '../../../core/models';
+import { ReportDto, AiInsight, OrderSummaryDto } from '../../../core/models';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { gsap } from 'gsap';
@@ -58,16 +58,6 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
             </div>
           </div>
           
-          <div class="min-w-[240px]">
-            <label class="label-coquette text-pink-800 font-black mb-2 block text-xs tracking-widest uppercase">✂️ Por Corte de Venta</label>
-            <select class="input-coquette w-full bg-white/50 border-pink-50 cursor-pointer" (change)="onPeriodChange($event)">
-              <option value="">Selecciona un corte...</option>
-              @for (p of periods(); track p.id) {
-                <option [value]="p.id">{{ p.name }} ({{ p.startDate | date:'dd MMM' }})</option>
-              }
-            </select>
-          </div>
-
           <div class="flex gap-2">
             <button (click)="exportToExcel()" class="btn-coquette bg-gradient-to-r from-green-400 to-emerald-500 text-white h-[42px] px-6 hover:scale-105 active:scale-95 shadow-md flex items-center gap-2 group border-0">
               <span class="group-hover:rotate-12 transition-transform block italic font-black text-xs">📥 EXCEL</span>
@@ -753,7 +743,6 @@ export class ReportsComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   data = signal<ReportDto | null>(null);
-  periods = signal<SalesPeriodDto[]>([]);
   loading = signal(false);
   
   // AI Insights State
@@ -863,7 +852,6 @@ export class ReportsComponent implements OnInit {
       this.activeTab.set(tab);
     }
 
-    this.loadPeriods();
     this.loadReport();
     this.loadUnpaid();
   }
@@ -900,25 +888,6 @@ export class ReportsComponent implements OnInit {
       Postponed: '📅 Pospuesto', Canceled: '🚫 Cancelado'
     };
     return map[status] || status;
-  }
-
-  loadPeriods(): void {
-    this.api.getSalesPeriods().subscribe({
-      next: (p) => this.periods.set(p),
-      error: () => this.toast.error('Error al cargar cortes')
-    });
-  }
-
-  onPeriodChange(event: any): void {
-    const id = event.target.value;
-    if (!id) return;
-
-    const period = this.periods().find(p => p.id === parseInt(id));
-    if (period) {
-      this.startDate = period.startDate.toString().split('T')[0];
-      this.endDate = period.endDate.toString().split('T')[0];
-      this.loadReport();
-    }
   }
 
   onDateChange(): void {

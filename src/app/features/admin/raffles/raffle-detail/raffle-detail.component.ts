@@ -560,7 +560,7 @@ export class RaffleDetailComponent implements OnInit, AfterViewInit {
     private readonly router = inject(Router);
     private readonly theme = inject(ThemeService);
 
-    businessName = computed(() => this.theme.name() || 'REGI BAZAR');
+    businessName = computed(() => this.theme.name() || "Neni's App");
 
     raffle = signal<RaffleDetailDto | null>(null);
     participants = signal<RaffleParticipantDto[]>([]);
@@ -1132,7 +1132,7 @@ export class RaffleDetailComponent implements OnInit, AfterViewInit {
 
         ctx.font = '500 20px "Poppins", sans-serif';
         ctx.fillStyle = '#db2777';
-        ctx.fillText('#REGIBAZAR', W / 2, 920);
+        ctx.fillText('#NENISAPP', W / 2, 920);
 
         // Date
         ctx.font = '400 18px "Poppins", sans-serif';

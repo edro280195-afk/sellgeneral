@@ -497,8 +497,6 @@ import { gsap } from 'gsap';
        Design System: Deep violet + amber gold accent
     ═══════════════════════════════════════════════ */
 
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
-
     /* ── Body override when tanda-view is active ── */
     body.tv-dark-mode {
       background: #0a0812 !important;
@@ -515,7 +513,7 @@ import { gsap } from 'gsap';
     .tv-root {
       min-height: 100dvh;
       background: #0a0812;
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
       color: #f0edf8;
       position: relative;
       overflow-x: hidden;

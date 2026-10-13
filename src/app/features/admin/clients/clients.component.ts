@@ -46,7 +46,7 @@ import { gsap } from 'gsap';
               <span class="animate-wiggle inline-block drop-shadow-md">💎</span> 
               Directorio de Clientas
             </h1>
-            <p class="text-sm text-pink-500 font-medium ml-1 mt-1">El corazón de {{ theme.name() || 'Regi Bazar' }} 💕</p>
+            <p class="text-sm text-pink-500 font-medium ml-1 mt-1">El corazón de {{ theme.name() || "Neni's App" }} 💕</p>
           </div>
           <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-2">
             <span class="text-2xl animate-pulse">🌸</span>

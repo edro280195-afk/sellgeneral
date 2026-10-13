@@ -41,11 +41,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/orders/send-links/send-links.component').then(m => m.SendLinksComponent)
             },
             {
-                path: 'live/:id/review',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/live/live-review.component').then(m => m.LiveReviewComponent)
-            },
-            {
                 path: 'clients',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/clients/clients.component').then(m => m.ClientsComponent)
@@ -76,6 +71,21 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/routes/route-builder/route-builder.component').then(m => m.RouteBuilderComponent)
             },
             {
+                path: 'inventory',
+                canActivate: [subscriptionGuard],
+                loadComponent: () => import('./features/admin/inventory/inventory.component').then(m => m.InventoryComponent)
+            },
+            {
+                path: 'inventory/:id',
+                canActivate: [subscriptionGuard],
+                loadComponent: () => import('./features/admin/inventory/inventory.component').then(m => m.InventoryComponent)
+            },
+            {
+                path: 'labels',
+                canActivate: [subscriptionGuard],
+                loadComponent: () => import('./features/admin/labels/labels.component').then(m => m.LabelsComponent)
+            },
+            {
                 path: 'suppliers',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/suppliers/suppliers.component').then(m => m.SuppliersComponent)
@@ -91,11 +101,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/reports/reports.component').then(m => m.ReportsComponent)
             },
             {
-                path: 'sales-periods',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/sales-periods/sales-periods.component').then(m => m.SalesPeriodsComponent)
-            },
-            {
                 path: 'cami',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/cami/cami-panel.component').then(m => m.CamiPanelComponent)
@@ -106,6 +111,11 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/glow-up/glow-up.component').then(m => m.GlowUpComponent)
             },
             {
+                path: 'notifications',
+                canActivate: [subscriptionGuard],
+                loadComponent: () => import('./features/admin/notifications/notifications.component').then(m => m.NotificationsComponent)
+            },
+            {
                 path: 'tandas',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/tandas/tandas.component').then(m => m.TandasComponent)
@@ -114,11 +124,6 @@ export const routes: Routes = [
                 path: 'tandas/:id',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/tandas/tanda-detail.component').then(m => m.TandaDetailComponent)
-            },
-            {
-                path: 'live/:id/review',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/live/live-review.component').then(m => m.LiveReviewComponent)
             },
             {
                 path: 'raffles',
@@ -148,10 +153,6 @@ export const routes: Routes = [
     {
         path: 'pedido/:token',
         loadComponent: () => import('./features/client/order-view/order-view.component').then(m => m.OrderViewComponent)
-    },
-    {
-        path: 'live/:id',
-        loadComponent: () => import('./features/live/live-view/live-view.component').then(m => m.LiveViewComponent)
     },
     {
         path: 'repartidor/:token',

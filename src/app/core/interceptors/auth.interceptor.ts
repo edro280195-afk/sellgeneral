@@ -7,14 +7,13 @@ const PUBLIC_PATH_PATTERNS = [
     '/repartidor/',
     '/tanda-view/',
     '/public-tanda/',
-    '/live/',
 ];
 
 
 /**
  * Inyecta Authorization (JWT del Account) en TODAS las llamadas autenticadas
  * y X-Business-Id en las llamadas a /api/** de admin. Las vistas públicas
- * (pedido/repartidor/tanda-view/live) van por token de recurso y NO
+ * (pedido/repartidor/tanda-view) van por token de recurso y NO
  * necesitan X-Business-Id ni el JWT del Account.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {

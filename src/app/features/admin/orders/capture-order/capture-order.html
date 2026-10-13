@@ -2,14 +2,13 @@
     <!-- Header -->
     <div class="flex flex-col gap-2 animate-slide-down">
         <h2 class="text-2xl font-bold text-pink-900 m-0">📦 Captura Rápida</h2>
-        <p class="text-pink-400 font-medium m-0">Sube tu Excel del Live o captura a mano, tú decides bewis ✨</p>
+        <p class="text-pink-400 font-medium m-0">Carga pedidos desde Excel o captúralos a mano, tú decides ✨</p>
     </div>
 
     <div class="tab-switch">
         <button [class.active]="mode() === 'excel'" (click)="mode.set('excel')">📄 Excel</button>
         <button [class.active]="mode() === 'manual'" (click)="mode.set('manual')">🚀 Turbo</button>
         <button [class.active]="mode() === 'traditional'" (click)="mode.set('traditional')">✏️ Manual</button>
-        <button [class.active]="mode() === 'live'" (click)="mode.set('live')" class="live-tab">✨ IA Gemini</button>
     </div>
 
     <!-- ═══════════ EXCEL TAB ═══════════ -->
@@ -445,161 +444,6 @@
                         @if (uploading()) { <span class="spinner mr-2"></span> Guardando... }
                         @else { 💖 Crear Pedido }
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    }
-
-    <!-- ═══════════ AI GEMINI TAB ═══════════ -->
-    @if (mode() === 'live') {
-    <div class="animate-fade-in relative z-20">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- LEFT: Input Panel -->
-            <div class="lg:col-span-5 flex flex-col gap-5">
-
-                <!-- Mic Card -->
-                <div class="card-coquette p-5 flex flex-col items-center border-t-4 border-t-purple-500 shadow-xl relative overflow-hidden">
-                    @if (isListening()) {
-                    <div class="absolute inset-0 bg-purple-50/50 animate-pulse pointer-events-none"></div>
-                    }
-
-                    <button
-                        class="w-20 h-20 rounded-full border-4 border-purple-100 flex items-center justify-center text-4xl bg-white shadow-xl transition-all duration-300 relative z-10"
-                        [class.border-purple-500]="isListening()" [class.scale-110]="isListening()"
-                        (pointerdown)="startListening()"
-                        (pointerup)="stopListeningAndAnalyze()"
-                        (pointerleave)="stopListeningAndAnalyze()">
-                        🎙️
-                    </button>
-
-                    <div class="mt-3 text-center z-10 h-5">
-                        @if (isListening()) {
-                        <span class="text-purple-600 font-black tracking-widest uppercase text-xs animate-pulse">● ESCUCHANDO ●</span>
-                        } @else {
-                        <span class="text-purple-400 font-bold text-xs">Mantén presionado para dictar</span>
-                        }
-                    </div>
-
-                    @if (interimTranscript()) {
-                    <div class="w-full mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2 text-center z-10">
-                        <p class="text-amber-800 font-medium italic text-xs">{{ interimTranscript() }}</p>
-                    </div>
-                    }
-                </div>
-
-                <!-- Transcript Textarea -->
-                <div class="card-coquette p-4 space-y-2">
-                    <label class="label-coquette flex items-center gap-2 text-sm">📝 Dicta o escribe los pedidos</label>
-                    <textarea
-                        class="input-coquette w-full min-h-[200px] text-sm leading-relaxed resize-y"
-                        [ngModel]="liveTranscript()"
-                        (ngModelChange)="liveTranscript.set($event)"
-                        placeholder="Ejemplo: 'Anota a Lupe dos colchas a 150, a María una toalla azul de 50, y a Pedro tres sábanas a 200 cada una'"
-                    ></textarea>
-                </div>
-
-                <!-- AI Analyze Button -->
-                <button
-                    class="w-full py-4 rounded-2xl text-base font-black shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
-                    [class.bg-gradient-to-r]="!isAnalyzing()"
-                    [class.from-purple-500]="!isAnalyzing()"
-                    [class.to-indigo-600]="!isAnalyzing()"
-                    [class.text-white]="!isAnalyzing()"
-                    [class.hover:shadow-2xl]="!isAnalyzing()"
-                    [class.hover:scale-[1.01]]="!isAnalyzing()"
-                    [class.bg-gray-200]="isAnalyzing()"
-                    [class.text-gray-500]="isAnalyzing()"
-                    (click)="analyzeWithAI()"
-                    [disabled]="isAnalyzing() || !liveTranscript().trim()">
-                    @if (isAnalyzing()) {
-                    <span class="spinner mr-2"></span> Gemini analizando...
-                    } @else {
-                    ✨ Analizar con Gemini AI
-                    }
-                </button>
-            </div>
-
-            <!-- RIGHT: AI Results Panel -->
-            <div class="lg:col-span-7 relative z-10">
-                <div class="card-coquette sticky top-[80px] p-0 overflow-hidden flex flex-col h-[560px]">
-                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white flex justify-between items-center shadow-md z-10">
-                        <h4 class="font-bold text-lg m-0 flex items-center gap-2"><span>🤖</span> Pedidos detectados</h4>
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold backdrop-blur-sm">{{ aiVisibleCount() }} pedidos</span>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-purple-50/30">
-                        @if (aiResults().length === 0 && !isAnalyzing()) {
-                        <div class="h-full flex flex-col items-center justify-center text-center opacity-50">
-                            <span class="text-5xl mb-3">✨</span>
-                            <p class="text-purple-800 font-bold">Dicta y presiona "Analizar"</p>
-                            <p class="text-xs text-purple-500 mt-1">Gemini extraerá los pedidos automáticamente</p>
-                        </div>
-                        }
-
-                        @if (isAnalyzing()) {
-                        <div class="h-full flex flex-col items-center justify-center text-center">
-                            <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-3xl animate-bounce mb-4">
-                                🧠
-                            </div>
-                            <p class="text-purple-800 font-bold animate-pulse">Gemini está pensando...</p>
-                        </div>
-                        }
-
-                        @for (result of aiResults(); track result.id) {
-                            @if (result.visible) {
-                            <div class="ai-result-row animate-slide-up group">
-                                <div class="w-1 bg-gradient-to-b from-purple-400 to-indigo-500 absolute left-0 top-0 bottom-0 rounded-l-xl"></div>
-                                <div class="flex-1 min-w-0 pl-3 py-1">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <input type="text" [(ngModel)]="result.clientName"
-                                            class="font-bold text-purple-900 bg-transparent border-b border-transparent hover:border-purple-200 focus:border-purple-400 transition-all text-sm p-0 m-0 focus:ring-0 focus:outline-none flex-1 min-w-0">
-                                    </div>
-                                    <div class="flex items-center gap-3 text-xs">
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-purple-400">Cant:</span>
-                                            <input type="number" [(ngModel)]="result.quantity" min="1"
-                                                class="w-10 bg-transparent border-b border-transparent hover:border-purple-200 focus:border-purple-400 text-purple-700 font-bold p-0 m-0 focus:ring-0 focus:outline-none text-center">
-                                        </div>
-                                        <span class="text-purple-300">×</span>
-                                        <input type="text" [(ngModel)]="result.productName"
-                                            class="flex-1 bg-transparent border-b border-transparent hover:border-purple-200 focus:border-purple-400 text-purple-600 p-0 m-0 focus:ring-0 focus:outline-none min-w-0">
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-purple-400">$</span>
-                                            <input type="number" [(ngModel)]="result.unitPrice" step="0.01"
-                                                class="w-16 bg-transparent border-b border-transparent hover:border-purple-200 focus:border-purple-400 text-purple-700 font-bold p-0 m-0 focus:ring-0 focus:outline-none">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-right shrink-0 px-2 border-l border-purple-100">
-                                    <p class="font-black text-purple-600 text-sm">${{ result.unitPrice * result.quantity | number:'1.0-0' }}</p>
-                                </div>
-                                <button class="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                    (click)="removeAiResult(result.id)">✕</button>
-                            </div>
-                            }
-                        }
-                    </div>
-
-                    <!-- Submit Bar -->
-                    @if (aiVisibleCount() > 0) {
-                    <div class="bg-white p-4 border-t border-purple-100 shadow-[0_-4px_15px_rgba(139,92,246,0.05)] z-10">
-                        <div class="flex justify-between items-end mb-3 bg-purple-50/50 p-3 rounded-xl border border-purple-100">
-                            <span class="text-purple-600 font-bold text-sm uppercase tracking-wide">Total</span>
-                            <span class="text-2xl font-black text-purple-600 leading-none">{{ aiTotal() | currency:'MXN':'symbol-narrow' }}</span>
-                        </div>
-                        <button class="w-full py-4 text-lg font-black rounded-2xl shadow-lg transition-all bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:shadow-2xl"
-                            (click)="submitAiResults()"
-                            [disabled]="aiSubmitting()">
-                            @if (aiSubmitting()) {
-                            <span class="spinner mr-2"></span> {{ aiProgress() }}
-                            } @else {
-                            💖 Crear {{ aiVisibleCount() }} Pedidos
-                            }
-                        </button>
-                    </div>
-                    }
                 </div>
             </div>
         </div>

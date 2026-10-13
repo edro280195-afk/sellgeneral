@@ -130,7 +130,7 @@ export class GpsService {
     BackgroundGeolocation.addWatcher(
       {
         backgroundMessage: 'Tu ubicación se comparte para optimizar la ruta de entrega.',
-        backgroundTitle: `${this.theme.name() || 'Regi Bazar'} • En Ruta 🚚`,
+        backgroundTitle: `${this.theme.name() || "Neni's App"} • En Ruta 🚚`,
         requestPermissions: true,
         stale: false,
         distanceFilter: 10

@@ -13,7 +13,7 @@ export class BirthdayCouponComponent {
   @Input() clientName: string = 'Clienta';
   @Input() couponValue: number = 200;
   private theme = inject(ThemeService);
-  themeName = computed(() => this.theme.name() || 'REGI BAZAR');
+  themeName = computed(() => this.theme.name() || "Neni's App");
   
   get today(): string {
     const date = new Date();

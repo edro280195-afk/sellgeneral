@@ -9,6 +9,8 @@ import { SubscriptionBannersComponent } from '../../../shared/components/subscri
 import { SubscriptionPaywallComponent } from '../../../shared/components/subscription-paywall/subscription-paywall.component';
 import { UpsellModalComponent } from '../../../shared/components/upsell-modal/upsell-modal.component';
 import { BusinessSwitcherComponent } from '../../../shared/components/business-switcher/business-switcher.component';
+import { PwaInstallComponent } from '../../../shared/components/pwa-install/pwa-install.component';
+import { ApiService } from '../../../core/services/api.service';
 
 interface NavItem {
   label: string;
@@ -30,6 +32,7 @@ interface NavItem {
     SubscriptionPaywallComponent,
     UpsellModalComponent,
     BusinessSwitcherComponent,
+    PwaInstallComponent,
   ],
   template: `
     <!-- Mobile overlay -->
@@ -77,6 +80,14 @@ interface NavItem {
                   @if (isLocked(item)) {
                     <span class="nav-lock" aria-label="Requiere plan superior">🔒</span>
                   }
+                  @if (item.route === '/admin/notifications' && unreadNotifications() > 0) {
+                    <span class="nav-badge" aria-label="Notificaciones sin leer">
+                      {{ unreadNotifications() > 9 ? '9+' : unreadNotifications() }}
+                    </span>
+                  }
+                }
+                @if (!sidebarOpen() && item.route === '/admin/notifications' && unreadNotifications() > 0) {
+                  <span class="nav-unread-dot" aria-label="Notificaciones sin leer"></span>
                 }
                 @if (!sidebarOpen()) {
                   <div class="nav-tooltip">
@@ -131,6 +142,7 @@ interface NavItem {
           </div>
           <div class="top-right">
             <app-business-switcher />
+            <app-pwa-install />
             <a routerLink="/admin/brand" class="brand-shortcut" title="Mi marca">
               🎨
             </a>
@@ -343,6 +355,31 @@ interface NavItem {
       background: rgba(255, 255, 255, 0.15);
       border-radius: 999px;
       padding: 0.1rem 0.4rem;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      min-width: 1.35rem;
+      padding: 0.12rem 0.35rem;
+      border-radius: 999px;
+      background: #fff0f6;
+      color: #b00050;
+      font-size: 0.62rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+      box-shadow: 0 0 0 3px rgba(255, 240, 246, 0.12);
+    }
+
+    .nav-unread-dot {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.55rem;
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: #fff0f6;
+      box-shadow: 0 0 0 3px rgba(255, 240, 246, 0.14);
     }
 
     .nav-icon {
@@ -610,9 +647,12 @@ interface NavItem {
 })
 export class LayoutComponent implements OnInit {
   private auth = inject(AuthService);
+  private api = inject(ApiService);
   protected bootstrap = inject(BusinessBootstrapService);
   protected theme = inject(ThemeService);
   private upsell = inject(UpsellService);
+
+  readonly unreadNotifications = signal(0);
 
   sidebarOpen = signal(window.innerWidth > 1024);
   isMobile = signal(window.innerWidth <= 1024);
@@ -639,6 +679,12 @@ export class LayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.bootstrap.load();
+    if (this.auth.currentRole() !== 'Driver') {
+      this.api.getUnreadNotificationsCount('seller').subscribe({
+        next: count => this.unreadNotifications.set(count),
+        error: () => { /* La navegación sigue disponible aunque la API no responda. */ },
+      });
+    }
   }
 
   protected brandInitial(): string {
@@ -683,14 +729,16 @@ export class LayoutComponent implements OnInit {
       { label: 'Enviar Enlaces', icon: '💌', route: '/admin/send-links' },
       { label: 'Clientas', icon: '👩‍💼', route: '/admin/clients' },
       { label: 'Rutas', icon: '🚗', route: '/admin/routes' },
+      { label: 'Inventario', icon: '🧺', route: '/admin/inventory', featureKey: 'LabelPrinting', showLocked: true },
+      { label: 'Etiquetas', icon: '🏷️', route: '/admin/labels', featureKey: 'LabelPrinting', showLocked: true },
       { label: 'Tandas', icon: '🔄', route: '/admin/tandas', featureKey: 'TandasRaffles', showLocked: true },
       { label: 'Sorteos', icon: '🎉', route: '/admin/raffles', featureKey: 'TandasRaffles', showLocked: true },
       { label: 'Proveedores', icon: '🏭', route: '/admin/suppliers' },
       { label: 'Finanzas', icon: '💰', route: '/admin/financials', featureKey: 'Financials', showLocked: true },
       { label: 'Reportes', icon: '📊', route: '/admin/reports', featureKey: 'Exports', showLocked: true },
-      { label: 'Cortes de Venta', icon: '📋', route: '/admin/sales-periods' },
       { label: 'C.A.M.I.', icon: '✦', route: '/admin/cami', featureKey: 'CamiAssistant', showLocked: true },
       { label: 'Glow Up', icon: '✨', route: '/admin/glow-up' },
+      { label: 'Notificaciones', icon: '🔔', route: '/admin/notifications' },
       { label: 'Mi Marca', icon: '🎨', route: '/admin/brand' },
       { label: 'Mi Plan', icon: '💎', route: '/admin/subscription' }
     ];

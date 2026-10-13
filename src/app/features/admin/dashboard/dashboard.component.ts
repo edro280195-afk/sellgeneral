@@ -155,35 +155,6 @@ Chart.register(...registerables);
           </a>
         </div>
 
-        <!-- Active Period Card -->
-        @if (data()!.activePeriod) {
-          <div class="active-period-banner card-coquette p-6 opacity-0 translate-y-10" style="background: linear-gradient(135deg, rgba(253,242,248,0.9), rgba(237,233,254,0.9));">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h3 class="text-lg font-bold text-pink-900 flex items-center gap-2">
-                  📋 Corte Activo: {{ data()!.activePeriod!.name }}
-                </h3>
-              </div>
-              <div class="flex flex-wrap gap-6">
-                <div class="text-center">
-                  <p class="text-xs text-pink-400 font-semibold uppercase">Ventas</p>
-                  <p class="text-xl font-bold text-green-700">{{ data()!.activePeriod!.totalSales | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-xs text-pink-400 font-semibold uppercase">Invertido</p>
-                  <p class="text-xl font-bold text-red-600">{{ data()!.activePeriod!.totalInvested | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-xs text-pink-400 font-semibold uppercase">Utilidad</p>
-                  <p class="text-xl font-bold" [class]="data()!.activePeriod!.netProfit >= 0 ? 'text-green-700' : 'text-red-600'">
-                    {{ data()!.activePeriod!.netProfit | currency:'MXN':'symbol-narrow':'1.0-0' }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-
         <!-- Charts & Activity Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Monthly Sales Chart -->

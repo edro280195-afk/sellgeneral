@@ -33,7 +33,7 @@ export class CouponService {
         try {
           await navigator.share({
             files: [file],
-            title: `Cupón de Cumpleaños ${this.theme.name() || 'Regi Bazar'}`,
+            title: `Cupón de Cumpleaños ${this.theme.name() || "Neni's App"}`,
             text: `¡Felicidades ${clientName}! Aquí tienes tu regalo.`
           });
           return;

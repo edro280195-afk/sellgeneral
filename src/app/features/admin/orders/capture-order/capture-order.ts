@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../core/services/api.service';
@@ -6,34 +6,6 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ClientDto, ManualOrderRequest, OrderType, ExcelUploadResultDto, OrderSummaryDto, PagedResult, ORDER_STATUS_CSS, CommonProductDto } from '../../../../core/models';
 import { normalizeOptionalAddress } from '../../../../core/utils/address.util';
 import { ClientResolverComponent, ClientResolveResult } from './client-resolver/client-resolver.component';
-
-interface LiveCapture {
-  id: string; // UUID
-  rawText: string;
-  parsed: {
-    clientName: string;
-    productDescription: string;
-    quantity: number;
-    totalPrice: number;
-    unitPrice: number;
-    confidence?: 'high' | 'medium' | 'low';
-  };
-  isConfirmed: boolean;
-  timestamp: Date;
-}
-
-interface LiveOrder {
-  id: string;
-  clientName: string;
-  items: {
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-  }[];
-  orderType: string;
-  selected: boolean;
-  totalForSort: number;
-}
 
 interface TurboQueueItem {
   id: string;
@@ -47,13 +19,6 @@ interface TurboQueueItem {
   resolvedClientId?: number;
 }
 
-const NUMBER_WORDS: Record<string, number> = {
-  'un': 1, 'una': 1, 'uno': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5,
-  'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10, 'once': 11, 'doce': 12,
-  'quince': 15, 'veinte': 20, 'treinta': 30, 'cuarenta': 40, 'cincuenta': 50,
-  'cien': 100, 'doscientos': 200, 'quinientos': 500, 'mil': 1000
-};
-
 function normalizeForMatch(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/(as|es|os|a|o|s)$/, '');
 }
@@ -65,14 +30,11 @@ function normalizeForMatch(text: string): string {
   templateUrl: './capture-order.html',
   styleUrl: './capture-order.css'
 })
-export class CaptureOrderComponent implements OnInit, OnDestroy {
+export class CaptureOrderComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
-  private cdr = inject(ChangeDetectorRef);
 
-
-
-  mode = signal<'manual' | 'traditional' | 'live' | 'excel'>('manual');
+  mode = signal<'manual' | 'traditional' | 'excel'>('manual');
   uploading = signal(false);
 
   // ═════════════════ SHARING RESULTS ═════════════════
@@ -172,38 +134,15 @@ export class CaptureOrderComponent implements OnInit, OnDestroy {
 
   turboClientCount = computed(() => this.turboGroupedQueue().length);
 
-  // ═════════════════ AI LIVE MODE ═════════════════
-  isListening = signal(false);
-  recognition: any;
-  interimTranscript = signal('');
-  liveTranscript = signal('');
-  isAnalyzing = signal(false);
-
-  // Inline AI results (staggered display)
-  aiResults = signal<{ id: string; clientName: string; productName: string; quantity: number; unitPrice: number; visible: boolean }[]>([]);
-  aiTotal = computed(() => this.aiResults().reduce((s, r) => s + r.unitPrice * r.quantity, 0));
-  aiVisibleCount = computed(() => this.aiResults().filter(r => r.visible).length);
-  aiSubmitting = signal(false);
-  aiProgress = signal('');
-
-  textInput = '';
-
-  // ═════════════════ INIT & DESTROY ═════════════════
+  // ═════════════════ INIT & DESTROY  // ═════════════════ INIT & DESTROY ═════════════════
   ngOnInit() {
     this.api.getClients().subscribe({
       next: (data) => this.clients.set(data),
       error: () => console.log('Error silenciado cargando clientas base')
     });
-    this.initSpeechRecognition();
   }
 
-  ngOnDestroy() {
-    if (this.recognition) {
-      this.recognition.stop();
-    }
-  }
-
-  // ═════════════════ EXCEL METHODS ═════════════════
+  // ═════════════════ EXCEL METHODS  // ═════════════════ EXCEL METHODS ═════════════════
   onDragOver(event: DragEvent) {
     event.preventDefault();
     this.dragging.set(true);
@@ -756,345 +695,6 @@ export class CaptureOrderComponent implements OnInit, OnDestroy {
     };
     process(0);
   }
-
-  // ═════════════════ LIVE MODE METHODS ═════════════════
-  private initSpeechRecognition() {
-    const win = window as any;
-    const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      console.warn("Speech Recognition not supported in this browser.");
-      return;
-    }
-
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = 'es-MX'; // Mexican Spanish best for "pesos", specific names
-
-    this.recognition.onstart = () => {
-      this.isListening.set(true);
-      this.cdr.detectChanges();
-    };
-
-    this.recognition.onresult = (event: any) => {
-      let interim = '';
-      let finalStr = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalStr += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
-      }
-
-      this.interimTranscript.set(interim);
-
-      if (finalStr.trim()) {
-        this.processTextChunk(finalStr.trim());
-      }
-      this.cdr.detectChanges();
-    };
-
-    this.recognition.onerror = (event: any) => {
-      console.error('Speech recognition error', event.error);
-      if (event.error === 'not-allowed') {
-        this.isListening.set(false);
-        this.toast.error('Gegi no tiene permiso para el micrófono 😭');
-      }
-    };
-
-    this.recognition.onend = () => {
-      // Auto-restart if we think we should still be listening
-      if (this.isListening()) {
-        try {
-          this.recognition.start();
-        } catch (e) { /* might already be started */ }
-      } else {
-        this.isListening.set(false);
-        this.cdr.detectChanges();
-      }
-    };
-  }
-
-  startListening() {
-    if (!this.recognition) {
-      this.toast.error('Tu navegador no soporta captura de voz. Usa el teclado 🥺');
-      return;
-    }
-    
-    // Prevent default context menu on long press
-    document.oncontextmenu = () => false;
-
-    if (!this.isListening()) {
-      this.isListening.set(true);
-      try {
-        this.recognition.start();
-      } catch (e) { }
-    }
-  }
-
-  stopListeningAndAnalyze() {
-    document.oncontextmenu = null; // restore context menu
-    
-    if (this.isListening()) {
-      this.isListening.set(false);
-      this.recognition.stop();
-      
-      // If we have some transcript accumulated, auto analyze
-      setTimeout(() => {
-         if (this.liveTranscript().trim() && !this.isAnalyzing()) {
-           this.analyzeWithAI();
-         }
-      }, 500); // Give the speech recognizer a split second to finish the last phrase
-    }
-  }
-
-  onTextSubmit() {
-    if (!this.textInput.trim()) return;
-    this.processTextChunk(this.textInput.trim());
-    this.textInput = '';
-  }
-
-  private processTextChunk(text: string) {
-    // Append to accumulated transcript for AI analysis
-    const current = this.liveTranscript().trim();
-    this.liveTranscript.set(current ? current + '. ' + text : text);
-    this.cdr.detectChanges();
-  }
-
-  analyzeWithAI() {
-    const text = this.liveTranscript().trim();
-    if (!text) {
-      this.toast.warning('Escribe o dicta algo primero 🎤');
-      return;
-    }
-
-    if (this.isListening()) {
-      this.isListening.set(false);
-      this.recognition.stop();
-    }
-
-    this.isAnalyzing.set(true);
-
-    // Get current state to pass to API
-    const currentState = this.aiResults().map(r => ({
-      clientName: r.clientName,
-      productName: r.productName,
-      quantity: r.quantity,
-      unitPrice: r.unitPrice
-    }));
-
-    this.api.parseLiveText(text, currentState).subscribe({
-      next: (orders) => {
-        this.isAnalyzing.set(false);
-        if (orders.length === 0) {
-          if (currentState.length > 0) {
-             this.toast.info('Carrito vaciado 🗑️');
-             this.aiResults.set([]);
-          } else {
-             this.toast.warning('No se detectaron pedidos. Intenta con más detalle 💬');
-          }
-          this.liveTranscript.set('');
-          return;
-        }
-
-        const currentResults = this.aiResults();
-
-        // Map to editable results
-        const results = orders.map(o => {
-          const matched = this.findBestClientMatch(o.clientName);
-          const finalClientName = matched ? matched.name : this.capitalizeWords(o.clientName);
-
-          // Find if this item existed in the previous state to prevent re-animating
-          const existing = currentResults.find(r => 
-            r.clientName.toLowerCase() === finalClientName.toLowerCase() && 
-            r.productName.toLowerCase() === o.productName.toLowerCase()
-          );
-
-          return {
-            id: existing ? existing.id : crypto.randomUUID(),
-            clientName: finalClientName,
-            productName: o.productName,
-            quantity: o.quantity,
-            unitPrice: o.unitPrice,
-            visible: existing ? true : false
-          };
-        });
-
-        this.aiResults.set(results);
-
-        // Staggered reveal ONLY for new hidden items
-        const newItems = results.filter(r => !r.visible);
-        newItems.forEach((item, idx) => {
-          setTimeout(() => {
-            this.aiResults.update(arr => arr.map(r => r.id === item.id ? { ...r, visible: true } : r));
-            this.cdr.detectChanges();
-          }, 200 * (idx + 1));
-        });
-
-        if (newItems.length > 0) {
-           this.toast.success(`✨ ${newItems.length} pedidos nuevos agregados`);
-        } else {
-           this.toast.success(`✨ Carrito actualizado con éxito`);
-        }
-        this.liveTranscript.set('');
-      },
-      error: (err) => {
-        console.error('AI parse error', err);
-        this.isAnalyzing.set(false);
-        this.toast.error('Error al analizar con IA 😿');
-      }
-    });
-  }
-
-  removeAiResult(id: string) {
-    this.aiResults.update(arr => arr.filter(r => r.id !== id));
-  }
-
-  submitAiResults() {
-    const results = this.aiResults().filter(r => r.visible);
-    if (results.length === 0) return;
-
-    // Group by client name
-    const grouped = new Map<string, typeof results>();
-    results.forEach(r => {
-      const key = r.clientName.toLowerCase().trim();
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(r);
-    });
-
-    this.aiSubmitting.set(true);
-    const entries = Array.from(grouped.entries());
-    let doneCount = 0;
-
-    const process = (idx: number) => {
-      if (idx >= entries.length) {
-        this.aiSubmitting.set(false);
-        this.aiResults.set([]);
-        this.toast.success(`💖 ${doneCount} pedidos creados`);
-        return;
-      }
-
-      const [, items] = entries[idx];
-      const clientName = items[0].clientName;
-      this.aiProgress.set(`Creando ${clientName} (${idx + 1}/${entries.length})...`);
-
-      // Determine client type dynamically
-      const matched = this.findBestClientMatch(clientName);
-      const determinedType = (matched && matched.ordersCount && matched.ordersCount >= 1) ? 'Frecuente' : 'Nueva';
-
-      this.api.createManualOrder({
-        clientName,
-        type: determinedType,
-        orderType: 'Delivery',
-        items: items.map(i => ({ productName: i.productName, quantity: i.quantity, unitPrice: i.unitPrice }))
-      }).subscribe({
-        next: () => { doneCount++; process(idx + 1); },
-        error: () => { this.toast.error(`Error con ${clientName} 😿`); process(idx + 1); }
-      });
-    };
-    process(0);
-  }
-
-  private parseLiveString(text: string) {
-    // 1. Clean up common noise
-    let clean = text.toLowerCase()
-      .replace(/pesos/g, '')
-      .replace(/cuesta/g, '')
-      .replace(/vale/g, '')
-      .replace(/por favor/g, '')
-      .replace(/para /g, ','); // "algo para fulana" -> "algo, fulana"
-
-    // Remove punctuation except commas
-    clean = clean.replace(/[.!?]/g, '');
-
-    const chunks = clean.split(',').map(s => s.trim()).filter(Boolean);
-
-    let clientName = '';
-    let productDescription = 'Articulo Live';
-    let quantity = 1;
-    let totalPrice = 0;
-
-    // A common structure is: [Name] [Product] [Price]  (separated by commas or 'y' or spaces)
-    // If we have commas, try to assign by type
-    if (chunks.length >= 2) {
-      // Find price (chunk with numbers)
-      for (let i = chunks.length - 1; i >= 0; i--) {
-        const numbers = chunks[i].match(/\d+/g);
-        if (numbers && numbers.length > 0) {
-          const possiblePrice = parseInt(numbers[numbers.length - 1], 10);
-          if (possiblePrice > 10) { // Assume > 10 is price
-            totalPrice = possiblePrice;
-
-            // Look for quantity
-            const otherNumbers = chunks[i].match(/\b[1-9]\b/);
-            if (otherNumbers && parseInt(otherNumbers[0], 10) < 10) {
-              quantity = parseInt(otherNumbers[0], 10);
-            }
-
-            chunks.splice(i, 1); // remove from chunks
-            break;
-          }
-        }
-      }
-
-      // Remaining: probably name and product
-      if (chunks.length > 0) clientName = chunks[0];
-      if (chunks.length > 1) productDescription = chunks[1];
-
-    } else {
-      // Space-based heuristic
-      const words = clean.split(' ');
-      // Numbers for price
-      for (const w of words) {
-        if (!isNaN(Number(w)) && Number(w) > 10) {
-          totalPrice = Number(w);
-          break; // first large number is price
-        }
-      }
-
-      // Numbers/Words for qty
-      const wordsWithoutPriceStr = clean.replace(totalPrice.toString(), '').trim().split(' ');
-      for (const w of words) { // Changed from wordsWithoutPriceStr to words to re-evaluate all words
-        if (!isNaN(Number(w)) && Number(w) > 0 && Number(w) <= 10) {
-          quantity = Number(w);
-          break;
-        }
-        if (NUMBER_WORDS[w]) {
-          quantity = NUMBER_WORDS[w];
-          break;
-        }
-      }
-
-      // Name usually first word
-      const nameMatch = clean.match(/^[a-z]+/i);
-      if (nameMatch) clientName = nameMatch[0];
-
-      // Rest is product
-      productDescription = clean
-        .replace(clientName.toLowerCase(), '')
-        .replace(totalPrice.toString(), '')
-        .replace(quantity.toString(), '')
-        .trim();
-
-      if (productDescription.length < 2) productDescription = 'Articulo Live';
-    }
-
-    // Capitalize Name
-    clientName = clientName.charAt(0).toUpperCase() + clientName.slice(1);
-
-    return {
-      clientName: clientName.trim(),
-      productDescription: productDescription.trim() || 'Articulo',
-      quantity: quantity,
-      totalPrice: totalPrice,
-      unitPrice: totalPrice / quantity
-    };
-  }
-
-  // (Legacy manual capture functions removed)
 
   // ═════════════════ RESULTS METHODS ═════════════════
   copyAllLinks() {

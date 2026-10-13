@@ -362,12 +362,6 @@ interface GeocodedOrder extends OrderSummaryDto {
                         (click)="shareWhatsApp(route)">
                   📱 <span class="hidden sm:inline">WhatsApp</span>
                 </button>
-                @if (route.status !== 'Completed') {
-                  <button class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-bold border border-amber-200 hover:bg-amber-100 active:scale-95 transition-all"
-                          (click)="openCorteModal(route)">
-                    💰 <span class="hidden sm:inline">Liquidar</span>
-                  </button>
-                }
                 <button class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all"
                         (click)="loadRouteBriefing(route.id)"
                         [disabled]="loadingBriefing() === route.id">
@@ -833,80 +827,6 @@ interface GeocodedOrder extends OrderSummaryDto {
       }
 
       <!-- ═══════════════════════════════════════════════════
-           MODAL: CORTE / LIQUIDACIÓN (Ticket Style)
-           ═══════════════════════════════════════════════════ -->
-      @if (showCorteModal() && corteRoute()) {
-        <div class="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in" (click)="closeCorte()">
-          <div class="w-[90%] max-w-[420px] rounded-2xl overflow-visible shadow-2xl animate-scale-in" (click)="$event.stopPropagation()"
-               style="background:#fdfbf7;">
-
-            <!-- Ticket Header -->
-            <div class="bg-gradient-to-r from-pink-500 to-rose-500 text-white text-center px-6 pt-6 pb-5 rounded-t-2xl relative border-b border-dashed border-pink-200">
-              <h3 class="text-xl font-black tracking-wide">💰 Liquidación de Chofer</h3>
-              <p class="text-sm opacity-90 mt-1">Ruta #{{ corteRoute()!.id }}</p>
-              
-              <!-- Zigzag bottom -->
-              <div class="absolute -bottom-[10px] left-0 right-0 h-[10px]"
-                   style="background: linear-gradient(-45deg, #fdfbf7 5px, transparent 0), linear-gradient(45deg, #fdfbf7 5px, transparent 0); background-size: 10px 10px; background-repeat: repeat-x;"></div>
-            </div>
-
-            <!-- Ticket Body -->
-            <div class="px-5 pt-8 pb-4 font-mono text-sm space-y-4">
-              <!-- Cash -->
-              <div class="flex justify-between">
-                <span>Efectivo Cobrado 💵</span>
-                <span class="font-bold text-emerald-600">{{ corteData().totalCash | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-              </div>
-              <div class="flex justify-between text-xs text-gray-400">
-                <span>Transferencias / Otros</span>
-                <span>{{ corteData().totalTransfer | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-              </div>
-
-              <div class="border-b border-dashed border-gray-300"></div>
-
-              <!-- Expenses -->
-              <div>
-                <p class="text-xs text-gray-400 font-black uppercase tracking-widest mb-2">Gastos 📉</p>
-                @if (corteRoute()!.expenses?.length) {
-                  @for (exp of corteRoute()!.expenses!; track exp.id) {
-                    <div class="flex justify-between mb-1 text-xs">
-                      <span>{{ exp.expenseType }} {{ exp.notes ? '(' + exp.notes + ')' : '' }}</span>
-                      <span class="font-bold text-red-500">-{{ exp.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-                    </div>
-                  }
-                } @else {
-                  <p class="text-xs text-gray-300 italic">Sin gastos registrados.</p>
-                }
-                <div class="flex justify-between mt-2 pt-2 border-t border-dashed border-gray-200 font-bold text-xs">
-                  <span>Total Gastos</span>
-                  <span class="text-red-500">-{{ corteData().totalExpenses | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-                </div>
-              </div>
-
-              <div class="border-b-2 border-dashed border-gray-400"></div>
-
-              <!-- Total -->
-              <div class="text-center pt-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total a Entregar</p>
-                <p class="text-4xl font-black text-pink-500 mt-1" style="font-family:'Outfit',sans-serif">
-                  {{ corteData().totalToDeliver | currency:'MXN':'symbol-narrow':'1.2-2' }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Ticket Footer -->
-            <div class="flex gap-3 px-5 pb-5">
-              <button class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-500 font-bold text-sm" (click)="closeCorte()">Cancelar</button>
-              <button class="flex-[2] py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm shadow-lg shadow-pink-200 disabled:opacity-40 transition-all"
-                      [disabled]="liquidating()" (click)="confirmLiquidate()">
-                {{ liquidating() ? '⏳ Procesando...' : '✅ Confirmar' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- ═══════════════════════════════════════════════════
            MODAL: PEDIDOS NO INCLUIDOS (Informativo post-creación)
            ═══════════════════════════════════════════════════ -->
       @if (skippedOrdersModal(); as modal) {
@@ -1174,11 +1094,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
     ]
   };
   baseMarkerOpts: google.maps.MarkerOptions = { title: 'Base' };
-
-  // Corte Modal
-  showCorteModal = signal(false);
-  corteRoute = signal<RouteDto | null>(null);
-  liquidating = signal(false);
 
   // Admin Chat Modal
   showAdminChatModal = signal(false);
@@ -2288,53 +2203,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
     } catch {
       return false;
     }
-  }
-
-  // ═══ CORTE / LIQUIDACIÓN ═══
-  openCorteModal(route: RouteDto): void {
-    this.corteRoute.set(route);
-    this.showCorteModal.set(true);
-  }
-
-  closeCorte(): void {
-    this.corteRoute.set(null);
-    this.showCorteModal.set(false);
-  }
-
-  corteData(): { totalCash: number; totalTransfer: number; totalExpenses: number; totalToDeliver: number } {
-    const route = this.corteRoute();
-    if (!route) return { totalCash: 0, totalTransfer: 0, totalExpenses: 0, totalToDeliver: 0 };
-
-    let totalCash = 0, totalTransfer = 0;
-    route.deliveries.forEach(d => {
-      if (d.payments?.length) {
-        d.payments.forEach(p => {
-          if (p.method === 'Efectivo') totalCash += p.amount;
-          else totalTransfer += p.amount;
-        });
-      }
-    });
-
-    const totalExpenses = route.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
-    return { totalCash, totalTransfer, totalExpenses, totalToDeliver: totalCash - totalExpenses };
-  }
-
-  confirmLiquidate(): void {
-    const route = this.corteRoute();
-    if (!route) return;
-    this.liquidating.set(true);
-    this.api.liquidateRoute(route.id).subscribe({
-      next: () => {
-        this.liquidating.set(false);
-        this.toast.success('✅ Ruta liquidada correctamente');
-        this.closeCorte();
-        this.loadRoutes();
-      },
-      error: () => {
-        this.liquidating.set(false);
-        this.toast.error('Error al liquidar la ruta');
-      }
-    });
   }
 
   // ═══ GEOCODING ═══

@@ -7,7 +7,7 @@ import { Capacitor } from '@capacitor/core';
 import { Printer } from '@capgo/capacitor-printer';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { OrderSummaryDto, ORDER_STATUS_CSS, SalesPeriodDto, ORDER_STATUS_LABELS, OrderPackageDto, OrderStatus, LoyaltyRewardDto } from '../../../core/models';
+import { OrderSummaryDto, ORDER_STATUS_CSS, ORDER_STATUS_LABELS, OrderPackageDto, OrderStatus, LoyaltyRewardDto } from '../../../core/models';
 import { gsap } from 'gsap';
 import { BirthdayCouponComponent } from '../../../shared/components/birthday-coupon/birthday-coupon.component';
 import { LabelEditorComponent, LabelPrintRequest } from '../../../shared/components/label-editor/label-editor.component';
@@ -301,7 +301,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               </div>
             </div>
 
-            <!-- Delivery & Period Toggles -->
+            <!-- Delivery Toggle -->
             <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-pink-100/50 shadow-sm grid grid-cols-2 gap-5">
               <div>
                 <label class="block text-xs font-bold text-pink-900 mb-2 uppercase">Tipo de Entrega</label>
@@ -315,15 +315,6 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 </div>
               </div>
               
-              <div>
-                <label class="block text-xs font-bold text-pink-900 mb-2 uppercase">Corte de Venta</label>
-                <select class="input-coquette h-[42px] py-1 shadow-sm border-pink-100" [ngModel]="selectedOrder()!.salesPeriodId || 'null'" (change)="changeSalesPeriod($event)">
-                  <option value="null">— Sin asignar —</option>
-                  @for (p of salesPeriods(); track p.id) {
-                    <option [value]="p.id">{{ p.isActive ? '🟢 ' : '' }}{{ p.name }}</option>
-                  }
-                </select>
-              </div>
             </div>
 
             <!-- Scheduled Delivery Date -->
@@ -602,7 +593,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
           [order]="order"
           [packageData]="labelEditorPackage()!"
           [packages]="packages()"
-          [businessName]="theme.name() || 'Regi Bazar'"
+          [businessName]="theme.name() || 'Neni’s App'"
           [logoUrl]="theme.logoUrl()"
           (closed)="closeLabelEditor()"
           (printRequested)="handleLabelPrint($event)" />
@@ -690,7 +681,6 @@ export class OrdersComponent implements OnInit {
   newItemQty = 1;
   newItemPrice = 0;
   isProcessingItem = signal(false);
-  salesPeriods = signal<SalesPeriodDto[]>([]);
   totalPages = signal(1);
 
   // Quick Client Edit
@@ -718,9 +708,6 @@ export class OrdersComponent implements OnInit {
   ngOnInit(): void {
     this.loadOrders();
     this.initSignalR();
-    this.api.getSalesPeriods().subscribe({
-      next: (periods) => this.salesPeriods.set(periods)
-    });
     this.api.getLoyaltyRewards().subscribe({
       next: (r) => this.rewards.set(r),
       error: () => { /* el catálogo es opcional; no bloquea el panel */ }
@@ -891,22 +878,6 @@ export class OrdersComponent implements OnInit {
         this.reloadSelectedOrder();
         this.loadOrders();
       }
-    });
-  }
-
-  changeSalesPeriod(event: any): void {
-    const order = this.selectedOrder();
-    const periodId = event.target.value;
-    if (!order) return;
-
-    this.api.updateOrderDetails(order.id, {
-      salesPeriodId: periodId === 'null' ? undefined : Number(periodId)
-    }).subscribe({
-      next: () => {
-        this.toast.success('Corte de venta asignado 📊');
-        this.loadOrders();
-      },
-      error: () => this.toast.error('Error al asignar corte')
     });
   }
 

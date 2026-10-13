@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Alice&family=Great+Vibes&family=Quicksand:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -13,12 +13,12 @@
   --color-pink-800: #9d174d;
   --color-pink-900: #831843;
 
-  --font-headings: 'Alice', serif;
-  --font-body: 'Quicksand', sans-serif;
+  --font-headings: 'Poppins', sans-serif;
+  --font-body: 'Poppins', sans-serif;
   --font-accent: 'Great Vibes', cursive;
 
-  --shadow-coquette: 0 10px 30px -5px rgba(255, 133, 162, 0.2);
-  --shadow-glow: 0 0 20px rgba(255, 133, 162, 0.4);
+  --shadow-coquette: 0 18px 50px -20px rgba(91, 15, 64, 0.24);
+  --shadow-glow: 0 0 26px rgba(255, 0, 114, 0.28);
 }
 
 /* ── Base ── */
@@ -34,9 +34,12 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: linear-gradient(135deg, #fff5f7 0%, #fffcfd 100%);
+  background:
+    radial-gradient(circle at 8% 5%, rgba(255, 0, 114, .08), transparent 24rem),
+    radial-gradient(circle at 92% 16%, rgba(157, 102, 255, .08), transparent 24rem),
+    linear-gradient(135deg, #fff8fb 0%, #fffdfd 48%, #faf7ff 100%);
   background-attachment: fixed;
-  color: #831843;
+  color: #3f1734;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;

@@ -504,7 +504,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
     protected planTagline(): string {
         switch (this.plan()) {
             case 'Básico': return 'Para empezar a vender y entregar.';
-            case 'Pro': return `El plan que usa ${this.theme.name() || 'Regi Bazar'}. Todo lo importante.`;
+            case 'Pro': return `El plan que usa ${this.theme.name() || "Neni's App"}. Todo lo importante.`;
             case 'Elite': return 'C.A.M.I. y rutas con tráfico en vivo.';
             default: return '';
         }

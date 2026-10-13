@@ -144,8 +144,6 @@ export interface OrderSummaryDto {
     advancePayment: number;
     packageCount?: number;
     paymentMethod?: string;
-    salesPeriodId?: number;
-    salesPeriodName?: string;
     clientId?: number;
     tags?: string[];
     deliveryInstructions?: string;
@@ -258,9 +256,7 @@ export type ClientAliasSource =
     | 'Unknown'
     | 'ManualConfirm'
     | 'Merge'
-    | 'Import'
-    | 'LiveOcr'
-    | 'LiveAudio';
+    | 'Import';
 
 export interface ClientAliasDto {
     id: number;
@@ -303,72 +299,6 @@ export interface ClientMergeAuditDto {
     ordersMoved: number;
     aliasesMoved: number;
     mergedAt: string;
-}
-
-// Captura asistida por video de lives
-export type LiveSessionStatus =
-    | 'Queued'
-    | 'Downloading'
-    | 'Transcribing'
-    | 'Parsing'
-    | 'Scanning'
-    | 'Combining'
-    | 'Ready'
-    | 'Failed';
-
-export type LiveCandidateStatus = 'Pending' | 'Confirmed' | 'Ignored';
-export type LiveCandidateSource = 'Spoken' | 'CommentOnly' | 'SpokenAndComment';
-
-export interface LiveSessionDto {
-    id: number;
-    title?: string | null;
-    status: LiveSessionStatus | string;
-    statusDetail?: string | null;
-    importedAt: string;
-    processedAt?: string | null;
-    durationSeconds?: number | null;
-    productCount: number;
-    candidateCount: number;
-    pendingCount: number;
-    transcript?: string | null;
-}
-
-export interface LiveProductDto {
-    id: number;
-    keyword: string;
-    description?: string | null;
-    price: number;
-    announcedAtSeconds?: number | null;
-    candidateCount: number;
-}
-
-export interface LiveCandidateDto {
-    id: number;
-    keyword: string;
-    liveProductId?: number | null;
-    clientNameSpoken?: string | null;
-    commentDisplayName?: string | null;
-    resolvedClientId?: number | null;
-    resolvedClientName?: string | null;
-    proposedAliasPairJson?: string | null;
-    source: LiveCandidateSource | string;
-    status: LiveCandidateStatus | string;
-    spokenAtSeconds?: number | null;
-}
-
-export interface ConfirmLiveCandidateRequest {
-    clientId?: number | null;
-    clientName?: string | null;
-    productOverride?: string;
-    priceOverride?: number;
-    acceptAlias?: boolean;
-}
-
-export interface LiveReviewDto {
-    session: LiveSessionDto;
-    products: LiveProductDto[];
-    candidatesByProduct: Record<number, LiveCandidateDto[]>;
-    unmatchedCandidates: LiveCandidateDto[];
 }
 
 export interface MonthlySalesDto {
@@ -633,29 +563,6 @@ export interface InvestmentDto {
     currency: string;
     exchangeRate: number;
     totalMXN: number;
-    salesPeriodId?: number;
-    salesPeriodName?: string;
-}
-
-export interface SalesPeriodDto {
-    id: number;
-    name: string;
-    startDate: string;
-    endDate: string;
-    isActive: boolean;
-    createdAt: string;
-}
-
-export interface PeriodReportDto {
-    periodId: number;
-    periodName: string;
-    totalSales: number;        // Billed
-    totalCollected: number;    // Actually paid
-    totalInvestments: number;
-    totalExpenses: number;     // Driver expenses
-    netProfit: number;         // Billed - Inv - Exp
-    cashBalance: number;       // Collected - Inv - Exp
-    investmentsBySupplier: { supplierName: string; totalInvested: number; investmentCount: number }[];
 }
 
 export interface FinancialReportDto {
@@ -872,13 +779,6 @@ export interface CreateInvestmentRequest {
     notes?: string;
     currency: string;
     exchangeRate?: number;
-    salesPeriodId?: number;
-}
-
-export interface CreateSalesPeriodRequest {
-    name: string;
-    startDate: string;
-    endDate: string;
 }
 
 export interface UpdateOrderDetailsRequest {
@@ -895,7 +795,6 @@ export interface UpdateOrderDetailsRequest {
     pickupDate?: string;
     shippingCost?: number;
     advancePayment?: number;
-    salesPeriodId?: number;
     deliveryInstructions?: string;
     alternativeAddress?: string;
     scheduledDeliveryDate?: string;
@@ -1029,17 +928,21 @@ export interface CreateLabelPrintJobRequest {
     output?: string;
 }
 
+export interface AvailableLabelPackageDto {
+    id: string;
+    orderId: number;
+    clientName: string;
+    packageNumber: number;
+    totalPackages: number;
+    status: string;
+    mediaSize: string;
+    createdAt: string;
+}
+
 export interface UpdateLabelPrintJobStatusRequest {
     status: string;
     failureReason?: string;
     output?: string;
-}
-
-export interface AiParsedOrder {
-    clientName: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
 }
 
 export interface AiInsight {
@@ -1389,3 +1292,85 @@ export interface TandaShuffleResultDto {
     shuffleDate: string;
 }
 
+// ── Inventario y etiquetas ──
+
+export interface InventoryBoxSummaryDto {
+    id: string;
+    code: string;
+    name: string;
+    location?: string | null;
+    isNfcBound: boolean;
+    articleTypesCount: number;
+    totalUnits: number;
+    updatedAt: string;
+}
+
+export interface InventoryItemDto {
+    id: string;
+    name: string;
+    variant?: string | null;
+    barcode?: string | null;
+    labelCode: string;
+    quantity: number;
+    updatedAt: string;
+}
+
+export interface InventoryMovementDto {
+    id: string;
+    inventoryItemId?: string | null;
+    itemName?: string | null;
+    type: string;
+    quantityDelta: number;
+    quantityAfter: number;
+    note?: string | null;
+    performedBy: string;
+    occurredAt: string;
+}
+
+export interface InventoryMovementPageDto {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+    items: InventoryMovementDto[];
+}
+
+export interface InventoryBoxDto extends InventoryBoxSummaryDto {
+    nfcTagUid?: string | null;
+    nfcUrl: string;
+    movementCount: number;
+    items: InventoryItemDto[];
+    movements: InventoryMovementDto[];
+    createdAt: string;
+}
+
+export interface InventoryLabelPrintDto {
+    id: string;
+    kind: string;
+    targetId: string;
+    status: string;
+    mediaSize: string;
+    output: string;
+    copies: number;
+    requestedAt: string;
+    handedOffAt?: string | null;
+    failureReason?: string | null;
+    templateVersion: unknown;
+    assets: unknown[];
+    data: Record<string, string>;
+}
+
+export interface BuyerNotificationDto {
+    id: string;
+    businessId: number;
+    businessName: string;
+    brandPrimaryColor: string;
+    title: string;
+    message: string;
+    tag: string;
+    url?: string | null;
+    orderId?: number | null;
+    createdAt: string;
+    readAt?: string | null;
+    audience?: 'Buyer' | 'Seller' | string;
+}

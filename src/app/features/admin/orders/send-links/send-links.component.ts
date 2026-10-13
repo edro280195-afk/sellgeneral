@@ -4,7 +4,7 @@ import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { OrderSummaryDto, SalesPeriodDto } from '../../../../core/models';
+import { OrderSummaryDto } from '../../../../core/models';
 import { buildOrderMessage } from '../../../../core/utils/order-message.util';
 
 @Component({
@@ -17,7 +17,7 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
       <div class="flex flex-wrap items-center justify-between gap-4 animate-slide-down">
         <div>
           <h1 class="text-2xl font-bold text-pink-900">💌 Centro de Envíos</h1>
-          <p class="text-sm text-pink-400 font-medium mt-1">Manda los enlaces de todo el live, uno por uno, sin perder el hilo.</p>
+          <p class="text-sm text-pink-400 font-medium mt-1">Comparte los enlaces de tus pedidos, uno por uno y sin perder el hilo.</p>
         </div>
         <div class="flex gap-2">
           <a routerLink="/admin/orders" class="btn-coquette btn-outline-pink text-center align-middle inline-block">← Pedidos</a>
@@ -27,15 +27,6 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
       <!-- Controls -->
       <div class="card-coquette p-4 animate-slide-up" style="opacity:0">
         <div class="flex flex-wrap gap-3 items-end">
-          <div class="min-w-[220px]">
-            <label class="label-coquette">📋 Corte de venta</label>
-            <select class="input-coquette" [(ngModel)]="selectedPeriodId" (change)="loadOrders()">
-              <option [ngValue]="null">Todos los cortes</option>
-              @for (p of salesPeriods(); track p.id) {
-                <option [ngValue]="p.id">{{ p.name }} {{ p.isActive ? '• activo' : '' }}</option>
-              }
-            </select>
-          </div>
           <div class="flex-1 min-w-[200px]">
             <label class="label-coquette">🔍 Buscar clienta</label>
             <input class="input-coquette" placeholder="Nombre de clienta..." [(ngModel)]="search" />
@@ -141,10 +132,8 @@ export class SendLinksComponent implements OnInit {
   private toast = inject(ToastService);
 
   orders = signal<OrderSummaryDto[]>([]);
-  salesPeriods = signal<SalesPeriodDto[]>([]);
   loading = signal(true);
 
-  selectedPeriodId: number | null = null;
   search = '';
   hideNotified = false;
   hideClosed = true;
@@ -171,22 +160,12 @@ export class SendLinksComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.getSalesPeriods().subscribe({
-      next: (periods) => {
-        this.salesPeriods.set(periods);
-        // Por defecto seleccionamos el corte activo (típicamente el live actual)
-        const active = periods.find(p => p.isActive);
-        this.selectedPeriodId = active ? active.id : null;
-        this.loadOrders();
-      },
-      error: () => this.loadOrders()
-    });
+    this.loadOrders();
   }
 
   loadOrders(): void {
     this.loading.set(true);
-    // pageSize alto: queremos todos los pedidos del corte de un jalón
-    this.api.getOrdersPaged(1, 500, '', '', '', undefined, undefined, '', this.selectedPeriodId ?? undefined).subscribe({
+    this.api.getOrdersPaged(1, 500, '', '', '', undefined, undefined, '').subscribe({
       next: (res) => {
         this.orders.set(res.items);
         this.loading.set(false);

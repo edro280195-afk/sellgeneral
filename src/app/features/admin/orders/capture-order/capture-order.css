@@ -39,29 +39,6 @@
     transform: scale(1.02);
 }
 
-.tab-switch button.live-tab.active {
-    background: linear-gradient(135deg, #8b5cf6, #6366f1);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-/* ═══ AI Result Row ═══ */
-.ai-result-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: white;
-    border: 1px solid rgba(139, 92, 246, 0.15);
-    border-radius: 0.75rem;
-    padding: 0.6rem 0.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s;
-}
-.ai-result-row:hover {
-    border-color: rgba(139, 92, 246, 0.35);
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
-}
-
 /* ═══ Turbo Mode ═══ */
 .turbo-type-btn {
     padding: 0.4rem 1rem;

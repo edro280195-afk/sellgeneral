@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CurrencyPipe, DatePipe, CommonModule } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { FinancialReportDto, SalesPeriodDto, PeriodReportDto, DriverExpenseDto } from '../../../core/models';
+import { FinancialReportDto, DriverExpenseDto } from '../../../core/models';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 
@@ -48,16 +48,6 @@ import { EChartsOption } from 'echarts';
             </div>
           </div>
           
-          <div class="min-w-[240px]">
-            <label class="label-coquette text-pink-800 font-bold mb-2 block text-xs tracking-widest uppercase">✂️ Por Corte de Venta</label>
-            <select class="input-coquette w-full bg-white/50 border-pink-50" (change)="onPeriodChange($any($event.target).value)">
-              <option value="">Selecciona un corte...</option>
-              @for (p of periods(); track p.id) {
-                <option [value]="p.id">{{ p.name }} ({{ p.startDate | date:'dd MMM' }})</option>
-              }
-            </select>
-          </div>
-
           <div class="flex gap-2">
             <button class="btn-coquette btn-pink h-[42px] px-8 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg active:shadow-inner" 
                     [disabled]="loading()"
@@ -348,7 +338,6 @@ export class FinancialsComponent implements OnInit {
   private toast = inject(ToastService);
 
   report = signal<FinancialReportDto | null>(null);
-  periods = signal<SalesPeriodDto[]>([]);
   loading = signal(false);
   activeTab = signal<'dashboard' | 'audit'>('dashboard');
 
@@ -382,27 +371,7 @@ export class FinancialsComponent implements OnInit {
     this.startDate = firstDay.toISOString().split('T')[0];
     this.endDate = now.toISOString().split('T')[0];
 
-    this.loadPeriods();
     this.loadReport();
-  }
-
-  loadPeriods(): void {
-    this.api.getSalesPeriods().subscribe({
-      next: (p) => this.periods.set(p),
-      error: () => this.toast.error('Error al cargar cortes')
-    });
-  }
-
-  onPeriodChange(periodId: any): void {
-    const id = periodId;
-    if (!id) return;
-
-    const period = this.periods().find(p => p.id === parseInt(id));
-    if (period) {
-      this.startDate = period.startDate.toString().split('T')[0];
-      this.endDate = period.endDate.toString().split('T')[0];
-      this.loadReport();
-    }
   }
 
   onDateChange(): void {

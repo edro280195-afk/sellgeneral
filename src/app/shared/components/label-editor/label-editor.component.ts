@@ -112,7 +112,7 @@ export class LabelEditorComponent implements OnInit {
     readonly order = input.required<OrderSummaryDto>();
     readonly packageData = input.required<OrderPackageDto>();
     readonly packages = input.required<OrderPackageDto[]>();
-    readonly businessName = input('Regi Bazar');
+    readonly businessName = input("Neni's App");
     readonly logoUrl = input<string | null>(null);
     readonly mediaSize = input('Shipping4x6');
 

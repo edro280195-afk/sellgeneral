@@ -574,7 +574,7 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
     customTitle = input<string | undefined>();
     
     private theme = inject(ThemeService);
-    businessName = computed(() => this.theme.name() || 'REGI BAZAR');
+    businessName = computed(() => this.theme.name() || "Neni's App");
     
     close = output<void>();
     startRequested = output<void>();
@@ -776,7 +776,7 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         // Draw particles
         this.drawParticles(ctx);
 
-        // Center piece with REGI BAZAR
+        // Center piece with Neni's App
         ctx.beginPath();
         ctx.arc(center, center, 45, 0, Math.PI * 2);
         const centerGrad = ctx.createRadialGradient(center, center, 0, center, center, 45);

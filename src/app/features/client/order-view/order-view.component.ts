@@ -64,7 +64,7 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
               <div id="gift-emoji" class="text-9xl relative z-10 drop-shadow-[0_20px_40px_rgba(236,72,153,0.4)] mb-8">🎁</div>
               
               <div id="gift-text-container">
-                <h2 class="text-3xl font-black text-pink-600 font-display px-6 mb-3">¡Tienes un envío de {{ order()?.businessName || 'Regi Bazar' }}!</h2>
+                <h2 class="text-3xl font-black text-pink-600 font-display px-6 mb-3">¡Tienes un envío de {{ order()?.businessName || "Neni's App" }}!</h2>
                 <p class="text-pink-500 font-medium bg-white/50 inline-block px-5 py-2 rounded-full shadow-sm border border-pink-200">Toca el regalito para abrir 🎀</p>
               </div>
             </div>

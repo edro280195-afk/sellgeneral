@@ -3,7 +3,7 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { SupplierDto, InvestmentDto, SalesPeriodDto, CreateInvestmentRequest } from '../../../core/models';
+import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../core/models';
 
 @Component({
   selector: 'app-suppliers',
@@ -151,15 +151,6 @@ import { SupplierDto, InvestmentDto, SalesPeriodDto, CreateInvestmentRequest } f
                       <label class="text-[10px] font-black text-pink-400 uppercase ml-2">Fecha</label>
                       <input type="date" class="input-coquette bg-white" [(ngModel)]="newInv.date" />
                     </div>
-                    <div class="space-y-1">
-                      <label class="text-[10px] font-black text-pink-400 uppercase ml-2">Corte de Venta</label>
-                      <select class="input-coquette bg-white" [(ngModel)]="newInv.salesPeriodId">
-                        <option [ngValue]="null">Sin corte</option>
-                        @for (p of salesPeriods(); track p.id) {
-                          <option [ngValue]="p.id">{{ p.isActive ? '🟢 ' : '' }}{{ p.name }}</option>
-                        }
-                      </select>
-                    </div>
                   </div>
 
                   <div class="space-y-1">
@@ -208,11 +199,6 @@ import { SupplierDto, InvestmentDto, SalesPeriodDto, CreateInvestmentRequest } f
                           <p class="text-xs text-pink-400 italic truncate">{{ inv.notes || 'Sin descripción' }}</p>
                         </div>
                         <div class="text-right flex flex-col items-end gap-1">
-                          @if (inv.salesPeriodName) {
-                            <span class="text-[9px] font-black tracking-wider bg-white border border-pink-100 text-pink-400 px-2 py-1 rounded-lg uppercase">
-                              {{ inv.salesPeriodName }}
-                            </span>
-                          }
                           <button class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-all text-xs p-2" 
                                   (click)="deleteInvestment(selectedSupplier()!.id, inv.id)">🗑️</button>
                         </div>
@@ -285,7 +271,6 @@ export class SuppliersComponent implements OnInit {
 
   suppliers = signal<SupplierDto[]>([]);
   investments = signal<InvestmentDto[]>([]);
-  salesPeriods = signal<SalesPeriodDto[]>([]);
 
   loading = signal(true);
   loadingInvestments = signal(false);
@@ -302,7 +287,6 @@ export class SuppliersComponent implements OnInit {
     date: new Date().toISOString().split('T')[0],
     notes: '',
     exchangeRate: 17.50,
-    salesPeriodId: null as number | null
   };
 
   totalInvestedInDrawer = computed(() => {
@@ -315,7 +299,6 @@ export class SuppliersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSuppliers();
-    this.loadSalesPeriods();
   }
 
   loadSuppliers(): void {
@@ -326,30 +309,17 @@ export class SuppliersComponent implements OnInit {
     });
   }
 
-  loadSalesPeriods(): void {
-    this.api.getSalesPeriods().subscribe({
-      next: (periods) => {
-        this.salesPeriods.set(periods);
-        // Auto-select active period
-        const active = periods.find(p => p.isActive);
-        if (active) this.newInv.salesPeriodId = active.id;
-      }
-    });
-  }
-
   openDetails(s: SupplierDto): void {
     this.selectedSupplier.set(s);
     this.loadInvestments(s.id);
 
-    // Reset investment form for new supplier, but keep active period if possible
-    const activePeriod = this.salesPeriods().find(p => p.isActive);
+    // Reset investment form for a new supplier.
     this.newInv = {
       amount: 0,
       currency: 'MXN',
       date: new Date().toISOString().split('T')[0],
       notes: '',
-      exchangeRate: 17.50,
-      salesPeriodId: activePeriod?.id || null
+      exchangeRate: 17.50
     };
   }
 
@@ -378,8 +348,7 @@ export class SuppliersComponent implements OnInit {
       date: this.newInv.date,
       notes: this.newInv.notes || undefined,
       currency: this.newInv.currency,
-      exchangeRate: this.newInv.currency === 'USD' ? this.newInv.exchangeRate : undefined,
-      salesPeriodId: this.newInv.salesPeriodId || undefined
+      exchangeRate: this.newInv.currency === 'USD' ? this.newInv.exchangeRate : undefined
     };
 
     this.api.addInvestment(supplierId, req).subscribe({

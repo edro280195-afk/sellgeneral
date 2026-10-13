@@ -37,7 +37,7 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
         tagline: 'El favorito de las vendedoras. Todo lo importante.',
         bullets: [
             'Todo lo de Básico',
-            'Lives con captura de pedidos',
+            'Pedidos, entregas y clientas en un solo lugar',
             'Finanzas, tandas y sorteos',
             'Punto de venta y lanzamientos VIP',
         ],

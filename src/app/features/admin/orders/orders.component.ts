@@ -12,6 +12,7 @@ import { gsap } from 'gsap';
 import { BirthdayCouponComponent } from '../../../shared/components/birthday-coupon/birthday-coupon.component';
 import { LabelEditorComponent, LabelPrintRequest } from '../../../shared/components/label-editor/label-editor.component';
 import { CouponService } from '../../../core/services/coupon.service';
+import { NenisLabelPrinterService } from '../../../core/services/nenis-label-printer.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { GoogleAutocompleteDirective } from '../../../shared/directives/google-autocomplete.directive';
@@ -645,6 +646,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
 })
 export class OrdersComponent implements OnInit {
   private api = inject(ApiService);
+  private labelPrinter = inject(NenisLabelPrinterService);
   private toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private couponService = inject(CouponService);
@@ -1178,9 +1180,21 @@ export class OrdersComponent implements OnInit {
     this.labelEditorPackage.set(null);
   }
 
-  handleLabelPrint(request: LabelPrintRequest): void {
+  async handleLabelPrint(request: LabelPrintRequest): Promise<void> {
     this.closeLabelEditor();
     this.pendingLabelPrintJobId.set(request.jobId);
+    if (Capacitor.getPlatform() === 'android') {
+      try {
+        await this.labelPrinter.printHtml(request.html);
+        this.markLabelPrintJob('SentToSystem', undefined, 'BluetoothDirect');
+        this.toast.success('Etiqueta enviada a la impresora E40 🖨️');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'No se pudo conectar con la impresora E40.';
+        this.markLabelPrintJob('Failed', message, 'BluetoothDirect');
+        this.toast.error(message);
+      }
+      return;
+    }
     this.openPrintWindow(request.html, request.title);
   }
 
@@ -1250,13 +1264,17 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  private markLabelPrintJob(status: 'SentToSystem' | 'Failed', failureReason?: string): void {
+  private markLabelPrintJob(
+    status: 'SentToSystem' | 'Failed',
+    failureReason?: string,
+    output?: string
+  ): void {
     const jobId = this.pendingLabelPrintJobId();
     if (!jobId) return;
 
     this.api.updateLabelPrintJobStatus(jobId, {
       status,
-      output: 'SystemPrint',
+      output: output ?? 'SystemPrint',
       ...(failureReason ? { failureReason } : {})
     }).subscribe({
       error: error => console.error('No se pudo actualizar el estado de impresión:', error)

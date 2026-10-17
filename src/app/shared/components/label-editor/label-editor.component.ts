@@ -20,6 +20,7 @@ import {
     OrderSummaryDto
 } from '../../../core/models';
 import { ApiService } from '../../../core/services/api.service';
+import JsBarcode from 'jsbarcode';
 
 export type LabelElementType =
     | 'frame'
@@ -28,6 +29,7 @@ export type LabelElementType =
     | 'text'
     | 'clientName'
     | 'qr'
+    | 'barcode'
     | 'packageCounter'
     | 'divider'
     | 'decoration'
@@ -55,7 +57,7 @@ export interface LabelPrintRequest {
 interface LabelElementOption {
     type: LabelElementType;
     label: string;
-    icon: 'brand' | 'type' | 'qr' | 'counter' | 'divider' | 'decoration' | 'message';
+    icon: 'brand' | 'type' | 'qr' | 'barcode' | 'counter' | 'divider' | 'decoration' | 'message';
 }
 
 type BackendLabelElementType = 'text' | 'data' | 'image' | 'qr' | 'barcode' | 'shape' | 'line';
@@ -92,6 +94,7 @@ const DEFAULT_ELEMENTS: LabelElement[] = [
     { id: 'client-name', type: 'clientName', label: 'Nombre de la clienta', enabled: true, fontSize: 25, bold: true, align: 'center' },
     { id: 'client-divider', type: 'divider', label: 'Separador del pedido', enabled: true },
     { id: 'qr', type: 'qr', label: 'Código QR de la bolsa', enabled: true },
+    { id: 'barcode', type: 'barcode', label: 'Código de barras de la bolsa', enabled: false },
     { id: 'package-counter', type: 'packageCounter', label: 'Contador de bolsas', enabled: true },
     { id: 'bottom-divider', type: 'divider', label: 'Separador inferior', enabled: true },
     { id: 'footer-message', type: 'footerMessage', label: 'Mensaje de llegada', enabled: true, text: '¡Llegó tu pedido! ♡', fontSize: 19, align: 'center' },
@@ -126,6 +129,7 @@ export class LabelEditorComponent implements OnInit {
         { type: 'text', label: 'Texto libre', icon: 'type' },
         { type: 'clientName', label: 'Nombre de clienta', icon: 'type' },
         { type: 'qr', label: 'Código QR', icon: 'qr' },
+        { type: 'barcode', label: 'Código de barras', icon: 'barcode' },
         { type: 'packageCounter', label: 'Bolsa x de y', icon: 'counter' },
         { type: 'divider', label: 'Línea separadora', icon: 'divider' },
         { type: 'decoration', label: 'Decoración', icon: 'decoration' },
@@ -146,6 +150,7 @@ export class LabelEditorComponent implements OnInit {
     readonly statusMessage = signal('');
     readonly errorMessage = signal('');
     readonly qrPreviewUrl = signal('');
+    readonly barcodePreviewUrl = signal('');
 
     readonly selectedElement = computed(() =>
         this.elements().find(element => element.id === this.selectedElementId()) ?? null
@@ -160,6 +165,14 @@ export class LabelEditorComponent implements OnInit {
             void QRCode.toDataURL(qrValue, { errorCorrectionLevel: 'M', width: 280, margin: 1 })
                 .then(url => this.qrPreviewUrl.set(url))
                 .catch(() => this.qrPreviewUrl.set(''));
+            if (typeof document === 'undefined') return;
+            try {
+                const canvas = document.createElement('canvas');
+                JsBarcode(canvas, qrValue, { format: 'CODE128', displayValue: false, margin: 0, width: 2, height: 96 });
+                this.barcodePreviewUrl.set(canvas.toDataURL('image/png'));
+            } catch {
+                this.barcodePreviewUrl.set('');
+            }
         });
     }
 
@@ -428,7 +441,11 @@ export class LabelEditorComponent implements OnInit {
         add(this.textElement('deliver-to', this.textValue('deliver-to', 'PEDIDO PARA:'), 13, 47, 75.6, 7, 12, 700, 'center', visible('deliver-to')));
         add(this.dataElement('client-name', 'order.clientName', 7, 55, 87.6, 13, 25, 900, 'center', true));
         add(this.lineElement('client-divider', 10, 70, 81.6, visible('client-divider'), false));
-        add(this.qrElement('package-qr', 'package.qrCodeValue', 7, 75, 55, true));
+        const barcodeEnabled = this.isEnabled('barcode');
+        add(this.qrElement('package-qr', 'package.qrCodeValue', 7, 75, barcodeEnabled ? 38 : 55, true));
+        if (barcodeEnabled) {
+            add(this.barcodeElement('package-barcode', 'package.qrCodeValue', 7, 116, 55, 10, true));
+        }
         add(this.textElement('package-label', 'BOLSA', 68, 76, 28, 7, 13, 900, 'center', visible('package-counter')));
         add(this.dataElement('package-number', 'package.number', 68, 85, 28, 15, 27, 900, 'center', true));
         add(this.dataElement('package-total', 'package.total', 68, 102, 28, 8, 13, 700, 'center', true, 'DE '));
@@ -546,6 +563,29 @@ export class LabelEditorComponent implements OnInit {
             visible,
             zIndex: 5,
             properties: { binding, errorCorrection: 'M' }
+        };
+    }
+
+    private barcodeElement(
+        id: string,
+        binding: string,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        visible: boolean
+    ): BackendLabelElement {
+        return {
+            id,
+            type: 'barcode',
+            x,
+            y,
+            width,
+            height,
+            rotation: 0,
+            visible,
+            zIndex: 5,
+            properties: { binding, format: 'CODE128', displayValue: false }
         };
     }
 
@@ -685,6 +725,7 @@ export class LabelEditorComponent implements OnInit {
         applyVisibility('client-name');
         applyVisibility('client-divider');
         applyVisibility('qr', 'package-qr');
+        applyVisibility('barcode', 'package-barcode');
         applyVisibility('package-counter', 'package-number');
         applyVisibility('top-divider');
         applyVisibility('bottom-divider');
@@ -769,6 +810,19 @@ export class LabelEditorComponent implements OnInit {
             const qrValue = this.resolveBinding(binding, payload);
             const qrUrl = await QRCode.toDataURL(qrValue, { errorCorrectionLevel: 'M', width: 700, margin: 1 });
             return '<img src="' + qrUrl + '" alt="Código QR de la bolsa" style="' + position + 'object-fit:contain;">';
+        }
+
+        if (element.type === 'barcode') {
+            const binding = this.propertyString(props, 'binding') || '';
+            const value = this.resolveBinding(binding, payload);
+            if (!value) return '';
+            try {
+                const canvas = document.createElement('canvas');
+                JsBarcode(canvas, value, { format: 'CODE128', displayValue: false, margin: 0, width: 2, height: 120 });
+                return '<img src="' + canvas.toDataURL('image/png') + '" alt="Código de barras de la bolsa" style="' + position + 'object-fit:fill;image-rendering:pixelated;">';
+            } catch {
+                return '';
+            }
         }
 
         const value = element.type === 'data'

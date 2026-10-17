@@ -21,6 +21,7 @@
                                 <span class="tool-icon" [class]="'tool-icon-' + option.icon" aria-hidden="true">
                                     @switch (option.icon) {
                                         @case ('qr') { ◈ }
+                                        @case ('barcode') { ||| }
                                         @case ('counter') { 1/4 }
                                         @case ('divider') { ─ }
                                         @case ('decoration') { ✦ }
@@ -110,7 +111,7 @@
                         @if (isEnabled('client-name')) { <div class="label-client" [style.font-size.px]="elements().find(e => e.id === 'client-name')?.fontSize" (click)="selectElement('client-name')" [class.selected-preview]="selectedElementId() === 'client-name'">{{ order().clientName }}</div> }
                         @if (isEnabled('client-divider')) { <div class="label-divider" (click)="selectElement('client-divider')"></div> }
                         <div class="label-qr-row">
-                            @if (isEnabled('qr')) { <div class="label-qr-box" (click)="selectElement('qr')" [class.selected-preview]="selectedElementId() === 'qr'"><div class="qr-placeholder">@if (qrPreviewUrl()) { <img [src]="qrPreviewUrl()" alt="Código QR de la bolsa"> } @else { <span>QR</span><small>{{ packageData().qrCodeValue.slice(0, 12) }}…</small> }</div></div> }
+                            @if (isEnabled('qr')) { <div class="label-qr-box" [class.with-barcode]="isEnabled('barcode')" (click)="selectElement('qr')" [class.selected-preview]="selectedElementId() === 'qr' || selectedElementId() === 'barcode'"><div class="qr-placeholder">@if (qrPreviewUrl()) { <img [src]="qrPreviewUrl()" alt="Código QR de la bolsa"> } @else { <span>QR</span><small>{{ packageData().qrCodeValue.slice(0, 12) }}…</small> }</div>@if (isEnabled('barcode') && barcodePreviewUrl()) { <img class="barcode-preview" [src]="barcodePreviewUrl()" alt="Código de barras CODE128 de la bolsa"> }</div> }
                             @if (isEnabled('package-counter')) { <div class="label-package-counter" (click)="selectElement('package-counter')" [class.selected-preview]="selectedElementId() === 'package-counter'"><span class="counter-ribbon">BOLSA</span><strong>{{ packageData().packageNumber }}</strong><span>DE</span><strong>{{ packages().length }}</strong><span class="bag-mark" aria-hidden="true">♡</span></div> }
                         </div>
                         @for (element of elements(); track element.id) {

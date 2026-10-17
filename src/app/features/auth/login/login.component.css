@@ -351,12 +351,6 @@
     line-height: 1.65;
 }
 
-.form-intro strong {
-    color: var(--login-ink);
-    font-weight: 600;
-    overflow-wrap: anywhere;
-}
-
 .login-methods {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -481,11 +475,6 @@
     box-shadow: inset 4px 4px 9px rgba(207, 137, 171, 0.1), inset -4px -4px 9px var(--login-highlight), 0 0 0 4px var(--login-focus);
 }
 
-.otp-input {
-    letter-spacing: 0.42em;
-    text-align: center;
-}
-
 .field-hint {
     margin: 1px 0 0;
     color: var(--login-faint);
@@ -493,8 +482,60 @@
     line-height: 1.5;
 }
 
-.dev-hint {
-    color: #8a6a2c;
+.legal-consents {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 13px 14px 14px;
+    border: 1px solid rgba(243, 202, 222, 0.9);
+    border-radius: 16px;
+    background: #fff8fc;
+    box-shadow: inset 3px 3px 7px rgba(207, 137, 171, 0.1), inset -3px -3px 7px var(--login-highlight);
+}
+
+.legal-consents legend {
+    padding: 0 6px;
+    color: var(--login-ink);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.consent-option {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 9px;
+    color: var(--login-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.55;
+    cursor: pointer;
+}
+
+.consent-option input {
+    width: 17px;
+    height: 17px;
+    margin: 1px 0 0;
+    accent-color: var(--login-pink-deep);
+    cursor: pointer;
+}
+
+.consent-option a {
+    color: var(--login-pink-deep);
+    font-weight: 800;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+.consent-option a:hover {
+    color: #a72e5e;
+}
+
+.consent-option input:focus-visible,
+.consent-option a:focus-visible {
+    outline: 3px solid var(--login-focus);
+    outline-offset: 3px;
 }
 
 .password-input {
@@ -645,17 +686,6 @@
     box-shadow: inset 2px 2px 5px rgba(207, 137, 171, 0.14), inset -2px -2px 5px var(--login-highlight);
 }
 
-.change-phone {
-    justify-self: center;
-    margin-top: -8px;
-    text-decoration: none;
-}
-
-.change-phone svg {
-    width: 17px;
-    height: 17px;
-}
-
 .form-footer {
     display: flex;
     align-items: center;
@@ -672,17 +702,6 @@
     width: 14px;
     height: 14px;
     color: var(--login-pink);
-}
-
-.login-page button,
-.login-page a {
-    -webkit-tap-highlight-color: transparent;
-}
-
-.login-page button:active,
-.login-page a:active {
-    transform: none;
-    transition: none;
 }
 
 .login-page .submit-button:active {

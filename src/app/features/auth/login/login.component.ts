@@ -5,6 +5,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 type LoginMethod = 'phone' | 'email';
+type AccountMode = 'login' | 'register';
+
+const CURRENT_LEGAL_VERSION = '2026-08-17';
 
 @Component({
     selector: 'app-login',
@@ -19,15 +22,15 @@ export class LoginComponent {
     private toast = inject(ToastService);
 
     method = signal<LoginMethod>('phone');
-    phoneStep = signal<'enter' | 'verify'>('enter');
-    emailMode = signal<'login' | 'register'>('login');
-    otpDevMode = signal(false);
+    accountMode = signal<AccountMode>('login');
 
     name = '';
     email = '';
     password = '';
+    confirmPassword = '';
     phone = '';
-    otpCode = '';
+    acceptedTerms = false;
+    acceptedPrivacy = false;
 
     loading = signal(false);
     errorMsg = signal('');
@@ -38,47 +41,89 @@ export class LoginComponent {
         this.errorMsg.set('');
     }
 
-    setEmailMode(mode: 'login' | 'register'): void {
-        this.emailMode.set(mode);
+    setAccountMode(mode: AccountMode): void {
+        this.accountMode.set(mode);
         this.errorMsg.set('');
+        if (mode === 'login') {
+            this.acceptedTerms = false;
+            this.acceptedPrivacy = false;
+        }
     }
 
-    openRegistration(): void {
-        this.method.set('email');
-        this.setEmailMode('register');
-    }
+    submit(): void {
+        const isRegistering = this.accountMode() === 'register';
+        this.errorMsg.set('');
 
-    submitEmail(): void {
-        if (!this.email || !this.password) {
-            this.errorMsg.set('Completa tu correo y contraseña.');
+        if (isRegistering && !this.name.trim()) {
+            this.errorMsg.set('Escribe tu nombre para crear la cuenta.');
             return;
         }
 
-        if (this.emailMode() === 'register' && !this.name.trim()) {
-            this.errorMsg.set('Captura tu nombre.');
+        if (this.method() === 'phone') {
+            const digits = this.phone.replace(/\D/g, '');
+            const nationalPhone = digits.length === 12 && digits.startsWith('52')
+                ? digits.slice(2)
+                : digits;
+            if (!/^\d{10}$/.test(nationalPhone)) {
+                this.errorMsg.set('Escribe un teléfono mexicano de 10 dígitos con lada.');
+                return;
+            }
+        } else if (!this.email.trim()) {
+            this.errorMsg.set('Escribe tu correo electrónico.');
             return;
         }
 
-        if (this.emailMode() === 'register' && this.password.length < 8) {
-            this.errorMsg.set('La contraseña debe tener al menos 8 caracteres.');
+        if (!this.password) {
+            this.errorMsg.set('Escribe tu contraseña.');
             return;
+        }
+
+        if (isRegistering) {
+            if (this.password.length < 8 || this.password.length > 128) {
+                this.errorMsg.set('La contraseña debe tener entre 8 y 128 caracteres.');
+                return;
+            }
+
+            if (this.password !== this.confirmPassword) {
+                this.errorMsg.set('Las contraseñas no coinciden.');
+                return;
+            }
+
+            if (!this.acceptedTerms || !this.acceptedPrivacy) {
+                this.errorMsg.set('Acepta los Términos de servicio y el Aviso de privacidad para continuar.');
+                return;
+            }
         }
 
         this.loading.set(true);
-        this.errorMsg.set('');
 
-        const request = this.emailMode() === 'register'
-            ? this.auth.register({
-                name: this.name.trim(),
-                email: this.email,
-                password: this.password,
-            })
-            : this.auth.login({ email: this.email, password: this.password });
+        const request = this.method() === 'phone'
+            ? isRegistering
+                ? this.auth.registerWithPhone({
+                    name: this.name.trim(),
+                    phone: this.phone.trim(),
+                    password: this.password,
+                    acceptedLegal: this.acceptedTerms && this.acceptedPrivacy,
+                    legalVersion: CURRENT_LEGAL_VERSION,
+                })
+                : this.auth.loginWithPhonePassword({ phone: this.phone.trim(), password: this.password })
+            : isRegistering
+                ? this.auth.register({
+                    name: this.name.trim(),
+                    email: this.email.trim(),
+                    password: this.password,
+                    acceptedLegal: this.acceptedTerms && this.acceptedPrivacy,
+                    legalVersion: CURRENT_LEGAL_VERSION,
+                })
+                : this.auth.login({ email: this.email.trim(), password: this.password });
 
         request.subscribe({
             next: () => {
-                if (this.emailMode() === 'register') {
+                this.loading.set(false);
+                if (isRegistering) {
                     this.toast.success('Cuenta creada. Ahora registra tu tienda.');
+                } else {
+                    this.toast.success('¡Bienvenida a Neni’s!');
                 }
                 this.afterAuth();
             },
@@ -86,71 +131,12 @@ export class LoginComponent {
                 this.loading.set(false);
                 this.errorMsg.set(
                     error?.error?.message ||
-                    error?.error ||
-                    (this.emailMode() === 'register'
+                    (isRegistering
                         ? 'No se pudo crear la cuenta.'
-                        : 'El correo o la contraseña no coinciden.'),
+                        : 'El teléfono/correo o la contraseña no coinciden.'),
                 );
             },
         });
-    }
-
-    requestOtp(): void {
-        if (!this.phone) {
-            this.errorMsg.set('Captura tu número de teléfono.');
-            return;
-        }
-
-        this.loading.set(true);
-        this.errorMsg.set('');
-
-        this.auth.requestPhoneOtp({ phone: this.phone }).subscribe({
-            next: (response) => {
-                this.loading.set(false);
-                if (response.otpRequired) {
-                    this.otpDevMode.set(response.devMode);
-                    this.phoneStep.set('verify');
-                } else {
-                    this.errorMsg.set('No se pudo enviar el código. Intenta con correo.');
-                }
-            },
-            error: (error) => {
-                this.loading.set(false);
-                this.errorMsg.set(error?.error?.message || 'No se pudo enviar el código.');
-            },
-        });
-    }
-
-    verifyOtp(): void {
-        if (!this.otpCode || this.otpCode.length !== 6) {
-            this.errorMsg.set('El código debe tener 6 dígitos.');
-            return;
-        }
-
-        this.loading.set(true);
-        this.errorMsg.set('');
-
-        this.auth.verifyPhoneOtp({ phone: this.phone, code: this.otpCode }).subscribe({
-            next: () => {
-                this.toast.success('¡Bienvenida a Neni’s!');
-                this.afterAuth();
-            },
-            error: (error) => {
-                this.loading.set(false);
-                if (error?.status === 501) {
-                    this.errorMsg.set('El envío de SMS aún no está disponible. Usa el acceso por correo.');
-                } else {
-                    this.errorMsg.set(error?.error?.message || 'El código no es válido o ya venció.');
-                }
-            },
-        });
-    }
-
-    resetPhoneFlow(): void {
-        this.phoneStep.set('enter');
-        this.otpDevMode.set(false);
-        this.otpCode = '';
-        this.errorMsg.set('');
     }
 
     private afterAuth(): void {

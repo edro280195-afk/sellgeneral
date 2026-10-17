@@ -618,6 +618,21 @@ export interface RegisterRequest {
     name: string;
     email: string;
     password: string;
+    acceptedLegal: boolean;
+    legalVersion: string;
+}
+
+export interface WebPhoneRegisterRequest {
+    name: string;
+    phone: string;
+    password: string;
+    acceptedLegal: boolean;
+    legalVersion: string;
+}
+
+export interface PhonePasswordLoginRequest {
+    phone: string;
+    password: string;
 }
 
 export interface PhoneOtpRequest {

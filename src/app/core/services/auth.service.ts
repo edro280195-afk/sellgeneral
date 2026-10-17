@@ -10,6 +10,8 @@ import {
     PhoneOtpRequest,
     PhoneOtpResponse,
     PhoneOtpVerifyRequest,
+    PhonePasswordLoginRequest,
+    WebPhoneRegisterRequest,
     AuthMembershipDto,
 } from '../models';
 
@@ -76,6 +78,16 @@ export class AuthService {
 
     register(req: RegisterRequest): Observable<LoginResponse> {
         return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/register`, req)
+            .pipe(tap(res => this.handleLoginSuccess(res)));
+    }
+
+    loginWithPhonePassword(req: PhonePasswordLoginRequest): Observable<LoginResponse> {
+        return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/web/phone/login`, req)
+            .pipe(tap(res => this.handleLoginSuccess(res)));
+    }
+
+    registerWithPhone(req: WebPhoneRegisterRequest): Observable<LoginResponse> {
+        return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/web/phone/register`, req)
             .pipe(tap(res => this.handleLoginSuccess(res)));
     }
 

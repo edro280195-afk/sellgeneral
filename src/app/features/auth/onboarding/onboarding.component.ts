@@ -1,62 +1,19 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandService } from '../../../core/services/brand.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { SubscriptionService } from '../../../core/services/subscription.service';
 import {
     AuthMembershipDto,
-    PlanTierName,
-    SubscriptionPricingDto,
+    BusinessOnboardingResponse,
     SubscriptionSummaryDto,
 } from '../../../core/models';
 
 type WizardStep = 'datos' | 'listo';
 
-interface PlanHighlight {
-    icon: string;
-    bullets: string[];
-    tagline: string;
-}
-
-const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
-    'Básico': {
-        icon: '🌱',
-        tagline: 'Para empezar a vender y entregar.',
-        bullets: [
-            'Pedidos manuales y directorio de clientas',
-            'Link público de rastreo',
-            'Notificaciones push de pedido',
-            'Cuenta para la clienta y RegiPuntos',
-        ],
-    },
-    'Pro': {
-        icon: '💖',
-        tagline: 'El favorito de las vendedoras. Todo lo importante.',
-        bullets: [
-            'Todo lo de Básico',
-            'Pedidos, entregas y clientas en un solo lugar',
-            'Finanzas, tandas y sorteos',
-            'Punto de venta y lanzamientos VIP',
-        ],
-    },
-    'Elite': {
-        icon: '👑',
-        tagline: 'Máximo poder: C.A.M.I. y rutas con tráfico.',
-        bullets: [
-            'Todo lo de Pro',
-            'Asistente C.A.M.I.',
-            'Optimización de rutas con tráfico',
-            'Exportar reportes y soporte prioritario',
-        ],
-    },
-};
-
 @Component({
     selector: 'app-onboarding',
-    imports: [FormsModule, RouterLink, DecimalPipe],
+    imports: [FormsModule],
     template: `
         <div class="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-6 px-4">
             <div class="max-w-5xl mx-auto">
@@ -144,7 +101,7 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                         </div>
                     </div>
                 } @else {
-                    <!-- ═══════════ PASO FINAL: ¡TIENDA LISTA + PLANES ═══════════ -->
+                    <!-- ═══════════ PASO FINAL: PRUEBA ACTIVA ═══════════ -->
                     <div class="done-wrap animate-slide-up">
                         <!-- Celebración -->
                         <section class="done-hero">
@@ -161,19 +118,19 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                                 ya quedó creada. Puedes configurar tu tienda después.
                             </p>
 
-                            @if (subscription()?.trialEndsAt) {
+                            @if (isTrialActive()) {
                                 <div class="done-trial">
                                     <span class="done-trial-icon">🎁</span>
                                     <div>
-                                        <strong>Tienes {{ daysLeft() }} {{ daysLeft() === 1 ? 'día' : 'días' }} de prueba Pro gratis.</strong>
-                                        <p>Sin tarjeta, sin costo. Tus pedidos y clientas ya funcionan.</p>
+                                        <strong>Tu prueba Pro de 14 días ya está activa.</strong>
+                                        <p>Te quedan {{ daysLeft() }} {{ daysLeft() === 1 ? 'día' : 'días' }} para usar todas las herramientas, sin costo ni tarjeta.</p>
                                     </div>
                                 </div>
                             } @else if (subscription()?.isLocked === false) {
                                 <div class="done-trial">
                                     <span class="done-trial-icon">💖</span>
                                     <div>
-                                        <strong>Tu plan Pro está activo.</strong>
+                                        <strong>Tu tienda ya está activa.</strong>
                                         <p>Puedes empezar a capturar pedidos de inmediato.</p>
                                     </div>
                                 </div>
@@ -181,87 +138,38 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                                 <div class="done-trial">
                                     <span class="done-trial-icon">🌸</span>
                                     <div>
-                                        <strong>Tu tienda está lista para activarse.</strong>
-                                        <p>Elige un plan para comenzar a usar Neni’s App.</p>
+                                        <strong>No pudimos activar la prueba en esta cuenta.</strong>
+                                        <p>Tu tienda se creó, pero necesita una revisión antes de empezar a usarse.</p>
                                     </div>
                                 </div>
                             }
-                        </section>
 
-                        <!-- Planes -->
-                        <section class="done-plans">
-                            <div class="done-plans-head">
-                                <h2>Elige el plan que quieres usar</h2>
-                                <p>Lo cambias o cancelas cuando quieras. Los precios son en MXN y los fija la plataforma.</p>
-                            </div>
-
-                            @if (pricing(); as p) {
-                                <div class="done-grid">
-                                    @for (plan of p.plans; track plan.planTier) {
-                                        <article
-                                            class="done-plan"
-                                            [class.done-plan-rec]="plan.planTier === 'Pro'"
-                                            [style.--plan-accent]="planAccent(plan.planTier)">
-                                            @if (plan.planTier === 'Pro') {
-                                                <span class="done-plan-flag">Más popular</span>
-                                            }
-                                            <header class="done-plan-head">
-                                                <span class="done-plan-icon">{{ planIcon(plan.planTier) }}</span>
-                                                <h3>{{ plan.planTier }}</h3>
-                                                <p>{{ planTagline(plan.planTier) }}</p>
-                                            </header>
-
-                                            <div class="done-price">
-                                                <strong>&#36;{{ plan.monthlyPrice | number: '1.2-2' }}</strong>
-                                                <span>/mes</span>
-                                            </div>
-
-                                            <ul class="done-feats">
-                                                @for (b of planBullets(plan.planTier); track b) {
-                                                    <li><span class="done-check">✓</span>{{ b }}</li>
-                                                }
-                                            </ul>
-
-                                            <a
-                                                [routerLink]="['/admin/subscription/checkout']"
-                                                [queryParams]="{ plan: plan.planTier, periodicity: 'monthly' }"
-                                                class="done-btn"
-                                                [class.done-btn-rec]="plan.planTier === 'Pro'">
-                                                Elegir {{ plan.planTier }}
-                                            </a>
-                                        </article>
-                                    }
-                                </div>
-                            } @else if (loadingPlans()) {
-                                <div class="done-grid">
-                                    @for (i of [1,2,3]; track i) {
-                                        <div class="shimmer done-plan h-96 rounded-3xl"></div>
-                                    }
-                                </div>
-                            } @else if (plansError(); as err) {
-                                <div class="bg-white rounded-2xl p-5 text-center text-pink-700">
-                                    <p>😿 No pudimos cargar los precios.</p>
-                                    <p class="text-sm opacity-70 mt-1">{{ err }}</p>
-                                    <button class="btn-coquette btn-pink mt-3 px-5" (click)="loadPlans()">Reintentar</button>
-                                </div>
+                            @if (isTrialActive()) {
+                                <p class="done-note">
+                                    Al terminar la prueba, si no contratas un plan, se bloqueará el acceso a tu tienda y a los enlaces que compartiste.
+                                </p>
                             }
                         </section>
 
                         <!-- Acciones -->
                         <section class="done-actions">
-                            <button
-                                type="button"
-                                class="done-primary"
-                                (click)="goToPanel()">
-                                Entrar al panel
-                                <span>→</span>
-                            </button>
-                            <a routerLink="/admin/subscription" class="done-secondary">
-                                Comparar todos los planes
-                            </a>
-                            <p class="done-note">
-                                Si aún no eliges plan, sigues en prueba sin bloquearte.
-                            </p>
+                            @if (subscription()?.isLocked === false) {
+                                <button
+                                    type="button"
+                                    class="done-primary"
+                                    (click)="goToCapture()">
+                                    Empezar a capturar
+                                    <span>→</span>
+                                </button>
+                            } @else {
+                                <button
+                                    type="button"
+                                    class="done-primary"
+                                    (click)="goToSubscription()">
+                                    Revisar opciones de activación
+                                    <span>→</span>
+                                </button>
+                            }
                         </section>
                     </div>
                 }
@@ -273,7 +181,7 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
 
         /* ═══════ PASO FINAL ═══════ */
         .done-wrap {
-            max-width: 960px;
+            max-width: 680px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -370,171 +278,6 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
         .done-trial strong { color: #be185d; font-size: 0.95rem; }
         .done-trial p { color: #9d174d; font-size: 0.82rem; margin: 0; }
 
-        /* ── Planes ── */
-        .done-plans-head { text-align: center; margin-bottom: 1.25rem; }
-        .done-plans-head h2 {
-            font-family: var(--font-headings);
-            color: #831843;
-            font-size: 1.7rem;
-            margin: 0 0 0.25rem;
-        }
-        .done-plans-head p { color: #9d174d; font-size: 0.9rem; margin: 0; }
-
-        .done-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.1rem;
-            align-items: stretch;
-        }
-        @media (max-width: 860px) {
-            .done-grid { grid-template-columns: 1fr; }
-        }
-
-        .done-plan {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            background: rgba(255,255,255,0.92);
-            border: 1.5px solid #fce7f3;
-            border-radius: 1.5rem;
-            padding: 1.5rem 1.4rem;
-            box-shadow: 0 10px 30px -14px rgba(236,72,153,0.18);
-            transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275), box-shadow 0.3s ease;
-        }
-        .done-plan:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 22px 44px -18px rgba(236,72,153,0.3);
-        }
-
-        .done-plan-rec {
-            border: 2px solid #ec4899;
-            background: linear-gradient(180deg, #fff5f7, rgba(255,255,255,0.96));
-            box-shadow: 0 0 0 5px rgba(236,72,153,0.1), 0 24px 50px -18px rgba(236,72,153,0.4);
-            transform: translateY(-4px);
-        }
-        @media (max-width: 860px) {
-            .done-plan-rec { transform: none; }
-        }
-
-        .done-plan-flag {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #ec4899, #be185d);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            padding: 0.3rem 0.85rem;
-            border-radius: 999px;
-            white-space: nowrap;
-            box-shadow: 0 8px 18px -6px rgba(190,24,93,0.5);
-        }
-
-        .done-plan-head { text-align: left; }
-        .done-plan-icon {
-            display: inline-flex;
-            width: 46px;
-            height: 46px;
-            align-items: center;
-            justify-content: center;
-            border-radius: 1rem;
-            font-size: 1.5rem;
-            background: color-mix(in srgb, var(--plan-accent) 14%, white);
-            border: 1px solid color-mix(in srgb, var(--plan-accent) 30%, white);
-        }
-        .done-plan-head h3 {
-            font-family: var(--font-headings);
-            color: #831843;
-            font-size: 1.35rem;
-            margin: 0.6rem 0 0.15rem;
-        }
-        .done-plan-head p {
-            color: #9d174d;
-            font-size: 0.82rem;
-            line-height: 1.45;
-            margin: 0;
-            min-height: 2.3rem;
-        }
-
-        .done-price {
-            display: flex;
-            align-items: baseline;
-            gap: 0.3rem;
-            margin: 1rem 0 0.9rem;
-            padding: 0.7rem 0;
-            border-top: 1px dashed #fbcfe8;
-            border-bottom: 1px dashed #fbcfe8;
-        }
-        .done-price strong {
-            font-family: var(--font-headings);
-            font-size: 2.2rem;
-            color: var(--plan-accent, #831843);
-            line-height: 1;
-        }
-        .done-price span { color: #9d174d; font-weight: 600; font-size: 0.85rem; }
-
-        .done-feats {
-            list-style: none;
-            margin: 0 0 1.25rem;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .done-feats li {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            color: #831843;
-            font-size: 0.84rem;
-            line-height: 1.4;
-        }
-        .done-check {
-            flex-shrink: 0;
-            width: 18px;
-            height: 18px;
-            border-radius: 999px;
-            background: color-mix(in srgb, var(--plan-accent) 18%, white);
-            color: var(--plan-accent, #be185d);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            font-weight: 900;
-            margin-top: 0.05rem;
-        }
-
-        .done-btn {
-            margin-top: auto;
-            text-align: center;
-            display: block;
-            padding: 0.8rem 1rem;
-            border-radius: 1rem;
-            border: 1.5px solid #f9a8d4;
-            color: #831843;
-            font-weight: 800;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.25s ease;
-        }
-        .done-btn:hover {
-            background: #fdf2f8;
-            transform: translateY(-1px);
-        }
-        .done-btn-rec {
-            background: linear-gradient(135deg, #ec4899, #be185d);
-            border: none;
-            color: white;
-            box-shadow: 0 12px 24px -10px rgba(190,24,93,0.5);
-        }
-        .done-btn-rec:hover {
-            background: linear-gradient(135deg, #db2777, #9d174d);
-            box-shadow: 0 16px 30px -10px rgba(190,24,93,0.6);
-        }
-
         /* ── Acciones ── */
         .done-actions {
             display: flex;
@@ -562,13 +305,6 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
             transform: translateY(-2px);
             box-shadow: 0 20px 42px -12px rgba(190,24,93,0.65);
         }
-        .done-secondary {
-            color: #be185d;
-            font-weight: 700;
-            font-size: 0.92rem;
-            text-decoration: none;
-        }
-        .done-secondary:hover { text-decoration: underline; }
         .done-note {
             color: #9d174d;
             font-size: 0.8rem;
@@ -580,8 +316,6 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
 export class OnboardingComponent {
     private auth = inject(AuthService);
     private brand = inject(BrandService);
-    private toast = inject(ToastService);
-    private subs = inject(SubscriptionService);
     private router = inject(Router);
 
     readonly steps: { id: WizardStep; label: string }[] = [
@@ -600,11 +334,13 @@ export class OnboardingComponent {
     subscription = signal<SubscriptionSummaryDto | null>(null);
     creating = signal(false);
     errorMsg = signal<string>('');
-    pricing = signal<SubscriptionPricingDto | null>(null);
-    loadingPlans = signal(false);
-    plansError = signal<string | null>(null);
-
     readonly daysLeft = computed(() => this.subscription()?.daysLeft ?? 0);
+    readonly isTrialActive = computed(() => {
+        const subscription = this.subscription();
+        return subscription?.subscriptionStatus === 'Trialing' &&
+            subscription.isLocked === false &&
+            subscription.trialEndsAt !== null;
+    });
 
     // ── Step navigation ──
 
@@ -649,7 +385,7 @@ export class OnboardingComponent {
             });
     }
 
-    private finishBusinessCreation(created: { businessId: number; name: string; slug: string; role: string }): void {
+    private finishBusinessCreation(created: BusinessOnboardingResponse): void {
         // Refrescar memberships + active business localmente (no tenemos
         // endpoint de refresh de JWT todavia; el panel funciona porque el
         // backend valida la membership contra la DB, no contra el JWT).
@@ -667,68 +403,25 @@ export class OnboardingComponent {
             localStorage.setItem('rb_memberships', JSON.stringify(updated));
         } catch { /* ignore */ }
 
-        this.loadSuccessAndAdvance();
-    }
-
-    private loadSuccessAndAdvance(): void {
-        this.brand.getMe().subscribe({
-            next: (me) => {
-                this.subscription.set(me.subscription);
-                this.creating.set(false);
-                this.currentStep.set('listo');
-                this.loadPlans();
-            },
-            error: () => {
-                // /me puede fallar si el X-Business-Id no esta en el JWT;
-                // igual dejamos al usuario entrar al panel.
-                this.creating.set(false);
-                this.currentStep.set('listo');
-                this.loadPlans();
-            },
+        const trial = created.subscription;
+        this.subscription.set({
+            effectivePlan: trial.effectivePlan,
+            subscriptionStatus: trial.subscriptionStatus,
+            trialEndsAt: trial.trialEndsAt,
+            currentPeriodEndsAt: trial.currentPeriodEndsAt,
+            isLocked: trial.isLocked,
+            daysLeft: trial.daysLeft,
+            pastDueGraceDays: trial.pastDueGraceDays,
         });
+        this.creating.set(false);
+        this.currentStep.set('listo');
     }
 
-    loadPlans(): void {
-        this.loadingPlans.set(true);
-        this.plansError.set(null);
-        this.subs.getPricing().subscribe({
-            next: pricing => {
-                this.pricing.set(pricing);
-                this.loadingPlans.set(false);
-            },
-            error: err => {
-                this.loadingPlans.set(false);
-                this.plansError.set(
-                    err?.error?.message || 'Error desconocido al cargar precios.',
-                );
-            },
-        });
+    goToCapture(): void {
+        this.router.navigate(['/admin/capture']);
     }
 
-    // ── Helpers visuales de planes ──
-
-    protected planIcon(plan: PlanTierName): string {
-        return PLAN_HIGHLIGHTS[plan]?.icon ?? '✨';
-    }
-
-    protected planTagline(plan: PlanTierName): string {
-        return PLAN_HIGHLIGHTS[plan]?.tagline ?? '';
-    }
-
-    protected planBullets(plan: PlanTierName): string[] {
-        return PLAN_HIGHLIGHTS[plan]?.bullets ?? [];
-    }
-
-    protected planAccent(plan: PlanTierName): string {
-        switch (plan) {
-            case 'Básico': return '#7c3aed';
-            case 'Pro': return '#db2777';
-            case 'Elite': return '#b45309';
-            default: return '#831843';
-        }
-    }
-
-    goToPanel(): void {
-        this.router.navigate(['/admin']);
+    goToSubscription(): void {
+        this.router.navigate(['/admin/subscription']);
     }
 }

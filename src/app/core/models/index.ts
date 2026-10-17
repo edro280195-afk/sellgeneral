@@ -722,6 +722,14 @@ export interface SubscriptionAccountStateDto {
     pastDueGraceDays: number;
 }
 
+export interface BusinessOnboardingResponse {
+    businessId: number;
+    name: string;
+    slug: string;
+    role: string;
+    subscription: SubscriptionAccountStateDto;
+}
+
 export interface SubscriptionPlanPriceDto {
     planTier: PlanTierName;
     monthlyPrice: number;

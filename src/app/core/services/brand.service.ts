@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
     BrandDto,
+    BusinessOnboardingResponse,
     BusinessMeDto,
     MercadoPagoPaymentSettingsDto,
     UpdateMercadoPagoPaymentSettingsRequest,
@@ -18,13 +19,8 @@ export class BrandService {
         return this.http.get<BusinessMeDto>(`${this.base}/business/me`);
     }
 
-    createBusiness(req: { name: string; city?: string }): Observable<{
-        businessId: number;
-        name: string;
-        slug: string;
-        role: string;
-    }> {
-        return this.http.post<{ businessId: number; name: string; slug: string; role: string }>(
+    createBusiness(req: { name: string; city?: string }): Observable<BusinessOnboardingResponse> {
+        return this.http.post<BusinessOnboardingResponse>(
             `${this.base}/business/web`,
             req,
             { headers: { 'X-Device-Id': this.getWebDeviceId() } },

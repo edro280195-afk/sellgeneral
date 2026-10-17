@@ -133,7 +133,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                   }
                 </div>
 
-                <!-- Financials & Progress -->
+                <!-- Total del pedido y avance -->
                 <div class="bg-gradient-to-br from-pink-50/70 via-rose-50/40 to-purple-50/30 rounded-2xl p-4 mb-5 border border-pink-100/40 group-hover:border-pink-200/60 transition-colors shadow-inner shadow-pink-100/20">
                   <div class="flex justify-between items-end mb-2.5">
                     <div>

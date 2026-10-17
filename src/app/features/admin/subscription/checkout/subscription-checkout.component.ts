@@ -505,7 +505,7 @@ export class SubscriptionCheckoutComponent implements OnInit, OnDestroy {
         switch (this.plan()) {
             case 'Básico': return 'Para empezar a vender y entregar.';
             case 'Pro': return `El plan que usa ${this.theme.name() || "Neni's App"}. Todo lo importante.`;
-            case 'Elite': return 'C.A.M.I. y rutas con tráfico en vivo.';
+            case 'Elite': return 'Herramientas avanzadas para tus rutas y soporte prioritario.';
             default: return '';
         }
     }

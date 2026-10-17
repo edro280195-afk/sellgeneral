@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TandaService } from '../../../core/services/tanda.service';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TandaDto, TandaParticipantDto, ClientDto, CLIENT_TAG_LABELS, CamiChatResponse } from '../../../core/models';
+import { TandaDto, TandaParticipantDto, ClientDto, CLIENT_TAG_LABELS } from '../../../core/models';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-animation.component';
@@ -1161,13 +1161,6 @@ export class TandaDetailComponent implements OnInit {
         this.toastService.success('¡Entrega confirmada con éxito! ✨');
         this.loadTanda(p.tandaId);
 
-        // FEATURE: CAMI Audio Announcement
-        this.apiService.getAICamiMessage(`Anuncia con mucha alegría que la clienta ${p.customerName} ha recibido su producto de la tanda hoy.`).subscribe((res: CamiChatResponse) => {
-          if (res.audioBase64) {
-            const audio = new Audio('data:audio/mp3;base64,' + res.audioBase64);
-            audio.play();
-          }
-        });
       },
       error: (err) => this.toastService.error(err.error?.message || 'Error al confirmar entrega')
     });

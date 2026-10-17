@@ -1,5 +1,4 @@
-<div class="h-[100dvh] bg-black text-white relative overflow-hidden select-none transition-all duration-500"
-     [class.shadow-[inset_0_0_60px_rgba(236,72,153,0.6)]]="isCamiListening()">
+<div class="h-[100dvh] bg-black text-white relative overflow-hidden select-none transition-all duration-500">
 
     @if (loading()) {
     <div class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl">
@@ -19,36 +18,18 @@
 
     @if (route(); as r) {
         
-    <!-- DYNAMIC ISLAND (KPIs & CAMI) -->
-    <div class="absolute top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ease-out flex justify-center"
-         [class.w-full]="isCamiListening()" 
-         [class.w-48]="!isCamiListening()">
+    <!-- Indicadores de la ruta -->
+    <div class="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-48 flex justify-center">
         
-        <div class="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-4 py-2 flex items-center justify-between shadow-2xl transition-all duration-500"
-             [class.h-16]="isCamiListening()" [class.h-10]="!isCamiListening()"
-             [style.width]="isCamiListening() ? '90%' : 'auto'" 
-             [style.max-width]="isCamiListening() ? '448px' : 'none'">
+        <div class="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-4 py-2 flex items-center justify-between shadow-2xl h-10">
             
-            @if (!isCamiListening()) {
-                <div class="flex items-center space-x-3 w-full justify-center">
-                    <span class="text-xs font-bold text-pink-500">{{ deliveredCount() }}/{{ r.deliveries.length }}</span>
-                    <div class="h-1 w-8 bg-white/20 rounded-full overflow-hidden">
-                        <div class="h-full bg-pink-500 transition-all duration-1000" [style.width.%]="progressPercent()"></div>
-                    </div>
-                    <span class="text-xs font-bold text-emerald-400">${{ totalCobrado() | number:'1.0-0' }}</span>
+            <div class="flex items-center space-x-3 w-full justify-center">
+                <span class="text-xs font-bold text-pink-500">{{ deliveredCount() }}/{{ r.deliveries.length }}</span>
+                <div class="h-1 w-8 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-pink-500 transition-all duration-1000" [style.width.%]="progressPercent()"></div>
                 </div>
-            } @else {
-                <div class="flex items-center space-x-4 w-full px-2">
-                    <div class="flex items-end space-x-1 h-6">
-                        <div class="w-1.5 bg-pink-500 animate-[bounce_0.6s_infinite_0.1s] rounded-full" style="height: 60%"></div>
-                        <div class="w-1.5 bg-pink-400 animate-[bounce_0.6s_infinite_0.2s] rounded-full" style="height: 100%"></div>
-                        <div class="w-1.5 bg-pink-600 animate-[bounce_0.6s_infinite_0.3s] rounded-full" style="height: 40%"></div>
-                        <div class="w-1.5 bg-pink-500 animate-[bounce_0.6s_infinite_0.4s] rounded-full" style="height: 80%"></div>
-                        <div class="w-1.5 bg-pink-400 animate-[bounce_0.6s_infinite_0.5s] rounded-full" style="height: 30%"></div>
-                    </div>
-                    <span class="text-sm font-semibold text-pink-100 italic">Habla ahora...</span>
-                </div>
-            }
+                <span class="text-xs font-bold text-emerald-400">${{ totalCobrado() | number:'1.0-0' }}</span>
+            </div>
         </div>
     </div>
 
@@ -77,17 +58,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
         </button>
 
-        <!-- CAMI -->
-        <button (click)="toggleCami()"
-                class="w-10 h-10 backdrop-blur-xl border rounded-full flex items-center justify-center text-base shadow-lg active:scale-95 transition-all"
-                [class.bg-pink-600]="isCamiListening()"
-                [class.border-pink-500]="isCamiListening()"
-                [class.animate-pulse]="isCamiListening()"
-                [class.bg-white/10]="!isCamiListening()"
-                [class.border-white/20]="!isCamiListening()">
-            ✦
-        </button>
-
         @if (gpsActive()) {
             <!-- Reordenar -->
             <button (click)="openReorderModal()"
@@ -102,14 +72,6 @@
         }
 
     </div>
-
-    <!-- Burbuja de respuesta CAMI (sale a la izquierda del grupo) -->
-    @if (camiResponse()) {
-        <div class="absolute top-[188px] right-16 z-50 max-w-[200px] bg-black/80 border border-pink-500/40 backdrop-blur-xl rounded-2xl rounded-tr-none p-3 shadow-xl animate-slide-up">
-            <p class="text-[11px] text-pink-100 leading-relaxed">{{ camiResponse() }}</p>
-            <button (click)="camiResponse.set('')" class="absolute -top-2 -right-2 w-5 h-5 bg-white/20 rounded-full text-[9px] flex items-center justify-center">✕</button>
-        </div>
-    }
 
     <!-- ACTIVE CARD (BOTTOM SHEET REINVENTED) -->
     <div class="absolute bottom-0 left-0 w-full z-40 px-4 pb-safe transition-all duration-500 ease-in-out pointer-events-none"

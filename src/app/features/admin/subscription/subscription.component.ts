@@ -64,7 +64,7 @@ const PLAN_THEMES: Record<string, PlanTheme> = {
         icon: '👑',
         accent: '#b45309',
         soft: '#fffbeb',
-        tagline: 'C.A.M.I., tráfico en vivo y soporte prioritario.',
+        tagline: 'Más herramientas para rutas y soporte prioritario.',
     },
 };
 

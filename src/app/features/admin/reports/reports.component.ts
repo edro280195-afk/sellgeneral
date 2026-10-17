@@ -188,58 +188,6 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
               </div>
             </div>
 
-            <!-- Glow Up Card -->
-            <div class="card-coquette p-10 bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 text-white relative overflow-hidden group shadow-2xl">
-               <div class="absolute -right-20 -top-20 text-[20rem] opacity-10 rotate-12 group-hover:rotate-45 transition-transform duration-1000 select-none">🎀</div>
-               <div class="relative z-10 flex flex-col md:flex-row gap-10 items-center">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                       <span class="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Meta del Mes</span>
-                       <span class="text-xs font-bold text-pink-200 animate-pulse">✨ Alcanzando el brillo</span>
-                    </div>
-                    <h3 class="text-5xl font-black italic tracking-tighter leading-none mb-6">GLOW UP<br>MOMENT</h3>
-                    
-                    <!-- Meta Thermometer -->
-                    <div class="max-w-xs mb-8">
-                       <div class="flex justify-between items-end mb-2">
-                          <span class="text-[10px] font-black uppercase">Progreso Real</span>
-                          <span class="text-xl font-black">{{ salesProgress() | number:'1.0-0' }}%</span>
-                       </div>
-                       <div class="h-3 bg-white/20 rounded-full overflow-hidden p-0.5 border border-white/30">
-                          <div class="h-full bg-white rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(255,255,255,0.8)]" 
-                               [style.width.%]="salesProgress() > 100 ? 100 : salesProgress()"></div>
-                       </div>
-                       <p class="text-[10px] mt-2 opacity-80 italic font-medium">Meta: MX$100,000.00</p>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-4">
-                      <div class="metric-pill">
-                        <span class="text-[10px] opacity-70 uppercase tracking-widest font-black block">Best Seller</span>
-                        <span class="font-black text-xl leading-none text-pink-900">{{ data()!.topProducts[0]?.name || 'N/A' }}</span>
-                      </div>
-                      <div class="metric-pill">
-                        <span class="text-[10px] opacity-70 uppercase tracking-widest font-black block">Efectividad</span>
-                        <span class="font-black text-2xl leading-none text-pink-900">{{ data()!.successRate }}%</span>
-                      </div>
-                    </div>
-                 </div>
-
-                 <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
-                    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-3xl border border-white/20 text-center">
-                       <p class="text-4xl font-black">{{ data()!.newClients }}</p>
-                       <p class="text-[10px] font-black uppercase tracking-tighter opacity-80 mt-1">Clientas Nuevas</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-3xl border border-white/20 text-center">
-                       <p class="text-4xl font-black">{{ data()!.completedRoutes }}</p>
-                       <p class="text-[10px] font-black uppercase tracking-tighter opacity-80 mt-1">Rutas Listas</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-xl p-6 rounded-3xl border border-white/20 text-center col-span-2">
-                       <p class="text-2xl font-black">{{ data()!.avgTicket | currency:'MXN' }}</p>
-                       <p class="text-[10px] font-black uppercase tracking-tighter opacity-80 mt-1">Venta Promedio por Clienta</p>
-                    </div>
-                 </div>
-               </div>
-            </div>
           </div>
         }
 
@@ -807,14 +755,7 @@ export class ReportsComponent implements OnInit {
   startDate = '';
   endDate = '';
 
-  // Metas y Growth
-  revenueGoal = 100000;
-  salesProgress = computed(() => {
-    const d = this.data();
-    if (!d) return 0;
-    return (d.totalRevenue / this.revenueGoal) * 100;
-  });
-
+  // Indicadores de crecimiento
   revenueGrowth = computed(() => {
     const d = this.data() as any;
     if (!d) return 0;

@@ -5,13 +5,12 @@ import { environment } from '../../../environments/environment';
 import {
     DashboardDto, OrderSummaryDto, PagedResult, ReportDto, ClientDto,
     RouteDto, SupplierDto, InvestmentDto,
-    FinancialReportDto, DriverExpenseDto, ManualOrderRequest, OrderStatsDto,
+    DriverExpenseDto, ManualOrderRequest, OrderStatsDto,
     AddPaymentRequest, CreateSupplierRequest, CreateInvestmentRequest,
     UpdateOrderDetailsRequest, CreateAdminExpenseRequest,
-    CommonProductDto, GlowUpReportDto, OrderPaymentDto, OrderPackageDto, GeneratePackagesRequest,
+    CommonProductDto, OrderPaymentDto, OrderPackageDto, GeneratePackagesRequest,
     AiInsight,
-    CamiMessage, CamiChatRequest, CamiChatResponse, CamiProactiveSuggestionDto,
-    AiRouteSelectionRequest, AiRouteSelectionResponse, CamiGreetingResponse,
+    AiRouteSelectionRequest, AiRouteSelectionResponse,
     AvailableTandaDto, CreateRouteResponse, PreviewRouteResponse, BulkGeocodeResultDto,
     RecomposeRouteResponse,
     ResolveClientRequest, ResolveClientResponse,
@@ -181,10 +180,6 @@ export class ApiService {
         return this.http.post<AiInsight[]>(`${this.base}/reports/ai-insights`, report);
     }
 
-    getGlowUp(): Observable<GlowUpReportDto> {
-        return this.http.get<GlowUpReportDto>(`${this.base}/reports/glow-up-current-month`);
-    }
-
     // ── Clients ──
     getClients(): Observable<ClientDto[]> {
         return this.http.get<ClientDto[]>(`${this.base}/clients`);
@@ -320,13 +315,6 @@ export class ApiService {
         return this.http.delete(`${this.base}/suppliers/${supplierId}/investments/${investmentId}`);
     }
 
-    // ── Financials ──
-    getFinancials(startDate: string, endDate: string): Observable<FinancialReportDto> {
-        return this.http.get<FinancialReportDto>(`${this.base}/admin/financials`, {
-            params: new HttpParams().set('startDate', startDate).set('endDate', endDate)
-        });
-    }
-
     getExpenses(period?: string): Observable<DriverExpenseDto[]> {
         let params = new HttpParams();
         if (period) params = params.set('period', period);
@@ -383,10 +371,6 @@ export class ApiService {
         return this.http.patch(`${this.base}/pedido/${accessToken}/instructions`, { instructions });
     }
 
-    publicGetCamiGreeting(accessToken: string): Observable<CamiGreetingResponse> {
-        return this.http.get<CamiGreetingResponse>(`${this.base}/pedido/${accessToken}/cami-greeting`);
-    }
-
     publicCardPayment(accessToken: string, body: {
         cardToken: string;
         paymentMethodId: string;
@@ -413,36 +397,6 @@ export class ApiService {
             voiceCommand,
             availableOrders
         });
-    }
-
-    // ── C.A.M.I. ──
-    camiChat(history: CamiMessage[], newMessage: string): Observable<CamiChatResponse> {
-        const body: CamiChatRequest = { history, newMessage };
-        return this.http.post<CamiChatResponse>(`${this.base}/cami/chat`, body);
-    }
-
-    getAICamiMessage(prompt: string): Observable<CamiChatResponse> {
-        return this.camiChat([], prompt);
-    }
-
-    getDashboardInsight(data: { revenueToday: number; revenueMonth: number; pendingOrders: number; deliveredOrders: number; activeRoutes: number; pendingAmount: number; totalClients: number }): Observable<CamiChatResponse> {
-        return this.http.post<CamiChatResponse>(`${this.base}/cami/dashboard-insight`, data);
-    }
-
-    getClientInsight(clientId: number): Observable<CamiChatResponse> {
-        return this.http.get<CamiChatResponse>(`${this.base}/cami/client-insight/${clientId}`);
-    }
-
-    getRouteBriefing(routeId: number): Observable<{ text: string; audioBase64?: string }> {
-        return this.http.get<{ text: string; audioBase64?: string }>(`${this.base}/cami/route-briefing/${routeId}`);
-    }
-
-    getCamiAlerts(): Observable<Array<{ type: string; message: string; icon: string; relatedId?: number }>> {
-        return this.http.get<Array<{ type: string; message: string; icon: string; relatedId?: number }>>(`${this.base}/cami/alerts`);
-    }
-
-    getCamiProactiveSuggestions(): Observable<CamiProactiveSuggestionDto[]> {
-        return this.http.get<CamiProactiveSuggestionDto[]>(`${this.base}/cami/proactive-suggestions`);
     }
 
     // ── Driver (Repartidor) ──

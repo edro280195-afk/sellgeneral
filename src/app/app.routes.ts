@@ -91,24 +91,9 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/admin/suppliers/suppliers.component').then(m => m.SuppliersComponent)
             },
             {
-                path: 'financials',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/financials/financials.component').then(m => m.FinancialsComponent)
-            },
-            {
                 path: 'reports',
                 canActivate: [subscriptionGuard],
                 loadComponent: () => import('./features/admin/reports/reports.component').then(m => m.ReportsComponent)
-            },
-            {
-                path: 'cami',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/cami/cami-panel.component').then(m => m.CamiPanelComponent)
-            },
-            {
-                path: 'glow-up',
-                canActivate: [subscriptionGuard],
-                loadComponent: () => import('./features/admin/glow-up/glow-up.component').then(m => m.GlowUpComponent)
             },
             {
                 path: 'notifications',
@@ -143,10 +128,6 @@ export const routes: Routes = [
                 path: 'subscription/checkout',
                 loadComponent: () => import('./features/admin/subscription/checkout/subscription-checkout.component').then(m => m.SubscriptionCheckoutComponent)
             },
-            {
-                path: 'brand',
-                loadComponent: () => import('./features/admin/brand/brand.component').then(m => m.BrandComponent)
-            }
         ]
     },
 

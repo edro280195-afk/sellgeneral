@@ -265,32 +265,6 @@ Chart.register(...registerables);
           </div>
         </div>
 
-        <!-- CAMI AI Insight Card -->
-        <div class="insight-card card-coquette p-6 opacity-0 translate-y-10" style="background: linear-gradient(135deg, rgba(238,242,255,0.95), rgba(253,242,248,0.95)); border: 1px solid rgba(139,92,246,0.15);">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-xl shrink-0">✦</div>
-              <div>
-                <h3 class="text-sm font-bold text-indigo-900">Insight del día — C.A.M.I.</h3>
-                <p class="text-[10px] text-indigo-400 uppercase tracking-widest font-semibold">Análisis con IA</p>
-              </div>
-            </div>
-            <button class="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
-                    (click)="loadAiInsight()" [disabled]="loadingInsight()">
-              @if (loadingInsight()) {
-                <span class="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></span>
-              } @else {
-                <span>✦</span>
-              }
-              {{ aiInsight() ? 'Actualizar' : 'Generar' }}
-            </button>
-          </div>
-          @if (aiInsight()) {
-            <p class="mt-4 text-sm text-indigo-800 leading-relaxed italic">{{ aiInsight() }}</p>
-          } @else if (!loadingInsight()) {
-            <p class="mt-4 text-xs text-indigo-400 leading-relaxed">Presiona "Generar" para obtener un análisis inteligente del negocio basado en los datos de hoy.</p>
-          }
-        </div>
       }
     </div>
   `,
@@ -362,8 +336,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   data = signal<DashboardDto | null>(null);
   loading = signal(true);
-  aiInsight = signal<string | null>(null);
-  loadingInsight = signal(false);
 
   private chartInstance: Chart | null = null;
 
@@ -393,24 +365,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       case 'Canceled': return 'bg-red-100 text-red-600';
       default: return 'bg-gray-100 text-gray-600';
     }
-  }
-
-  loadAiInsight(): void {
-    const d = this.data();
-    if (!d || this.loadingInsight()) return;
-    this.loadingInsight.set(true);
-    this.api.getDashboardInsight({
-      revenueToday: d.revenueToday,
-      revenueMonth: d.revenueMonth,
-      pendingOrders: d.pendingOrders,
-      deliveredOrders: d.deliveredOrders,
-      activeRoutes: d.activeRoutes,
-      pendingAmount: d.pendingAmount,
-      totalClients: d.totalClients
-    }).subscribe({
-      next: (res) => { this.aiInsight.set(res.text); this.loadingInsight.set(false); },
-      error: () => { this.aiInsight.set(null); this.loadingInsight.set(false); }
-    });
   }
 
   loadDashboard(): void {

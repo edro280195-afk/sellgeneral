@@ -10,7 +10,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { PushNotificationService } from '../../../core/services/push-notification.service';
 import { GpsService } from '../../../core/services/gps.service';
-import { OrderStatus, ORDER_STATUS_LABELS, CamiMessage } from '../../../core/models';
+import { OrderStatus, ORDER_STATUS_LABELS } from '../../../core/models';
 import { effect } from '@angular/core';
 
 declare const google: any;
@@ -58,11 +58,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     clientChatMessages = signal<any[]>([]);
     newClientMessage = '';
 
-    isCamiListening = signal(false);
     isDelivering = signal(false);
-    camiResponse = signal('');
-    camiHistory: CamiMessage[] = [];
-    private speechRecognition: any = null;
 
     isCardExpanded = signal(true);
 
@@ -155,71 +151,6 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         // No desconectar SignalR aquí — GpsService sigue corriendo en background
         // y necesita SignalR para reportar ubicación. GpsService.stop() lo maneja.
-    }
-
-    // ═══ CAMI ═══
-    toggleCami(): void {
-        if (this.isCamiListening()) {
-            this.stopListening();
-        } else {
-            this.startListening();
-        }
-    }
-
-    private startListening(): void {
-        const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SR) {
-            this.showToast('Micrófono no disponible en este dispositivo');
-            return;
-        }
-        if ('vibrate' in navigator) navigator.vibrate(50);
-        this.isCamiListening.set(true);
-        this.camiResponse.set('');
-
-        const recognition = new SR();
-        recognition.lang = 'es-MX';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        this.speechRecognition = recognition;
-
-        recognition.onresult = (event: any) => {
-            const transcript = event.results[0][0].transcript;
-            this.isCamiListening.set(false);
-            this.sendCamiVoice(transcript);
-        };
-        recognition.onerror = (event: any) => {
-            this.isCamiListening.set(false);
-            if (event.error !== 'aborted') this.showToast('No te escuché 😿 Intenta de nuevo');
-        };
-        recognition.onend = () => {
-            this.isCamiListening.set(false);
-        };
-        recognition.start();
-    }
-
-    private stopListening(): void {
-        this.speechRecognition?.stop();
-        this.speechRecognition = null;
-        this.isCamiListening.set(false);
-    }
-
-    private sendCamiVoice(transcript: string): void {
-        this.showToast(`"${transcript}"`);
-        const d = this.nextDelivery();
-        const address = d ? (d.alternativeAddress || d.address || d.clientAddress) : '';
-        const context = d ? `[Repartidor en ruta. Entrega activa: ${d.clientName}, ${address}. Total: $${d.total}] ` : '';
-        this.api.camiChat(this.camiHistory, context + transcript).subscribe({
-            next: res => {
-                this.camiResponse.set(res.text);
-                this.camiHistory = [...this.camiHistory, { role: 'user' as const, text: transcript }, { role: 'model' as const, text: res.text }].slice(-10);
-                if (res.audioBase64) {
-                    const audio = new Audio(`data:audio/mp3;base64,${res.audioBase64}`);
-                    audio.play().catch(() => {});
-                }
-            },
-            error: () => this.showToast('C.A.M.I. no está disponible ahora')
-        });
     }
 
     // ═══ REORDER (↑/↓ buttons — mobile friendly) ═══

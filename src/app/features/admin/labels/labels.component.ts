@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AvailableLabelPackageDto } from '../../../core/models';
@@ -9,10 +8,10 @@ import { AvailableLabelPackageDto } from '../../../core/models';
 @Component({
     selector: 'app-labels',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule],
     template: `
         <div class="labels-page">
-            <header class="page-header"><div><span class="eyebrow">Operación · Presentación</span><h1>Etiquetas bonitas, pedidos claros <span>✦</span></h1><p>Prepara las bolsas listas para entregar y conserva la identidad de Neni's App en cada paquete.</p></div><a routerLink="/admin/brand" class="secondary-button">Editar diseño</a></header>
+            <header class="page-header"><div><span class="eyebrow">Operación · Presentación</span><h1>Etiquetas bonitas, pedidos claros <span>✦</span></h1><p>Prepara las bolsas listas para entregar y conserva la identidad de Neni's App en cada paquete.</p></div></header>
             <section class="labels-layout">
                 <div class="packages-card card">
                     <div class="panel-heading"><div><span class="section-kicker">Bolsas disponibles</span><h2>Selecciona qué quieres imprimir</h2></div><button class="text-button" type="button" (click)="toggleAll()">{{ allSelected() ? 'Quitar selección' : 'Seleccionar todo' }}</button></div>

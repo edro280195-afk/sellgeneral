@@ -565,24 +565,6 @@ export interface InvestmentDto {
     totalMXN: number;
 }
 
-export interface FinancialReportDto {
-    period: string;
-    startDate: string;
-    endDate: string;
-    totalBilled: number;    // Lo facturado
-    totalCollected: number; // Lo cobrado real
-    totalPending: number;   // Pendiente (Billed - Collected)
-    totalInvestment: number;
-    totalExpenses: number;
-    netProfit: number;      // Utilidad teórica (Billed - Inv - Exp)
-    cashBalance: number;    // Dinero real en mano (Collected - Inv - Exp)
-    details: {
-        investments: { id: number; supplierName: string; amount: number; date: string; notes?: string }[];
-        incomes: { id: number; clientName: string; total: number; orderType: string; createdAt: string }[];
-        expenses: { id: number; driverRouteId?: number; routeName?: string; driverName?: string; amount: number; expenseType: string; date: string; notes?: string; evidenceUrl?: string }[];
-    };
-}
-
 export interface OrderStatsDto {
     total: number;
     pending: number;
@@ -831,13 +813,6 @@ export interface CreateAdminExpenseRequest {
     deliveryRouteId?: number;
 }
 
-export interface GlowUpReportDto {
-    monthName: string;
-    totalDeliveries: number;
-    topProduct: string;
-    newClients: number;
-}
-
 export interface OrderPackageDto {
     id: string; // Guid
     packageNumber: number;
@@ -976,22 +951,6 @@ export interface AiInsight {
     icon: string;
 }
 
-// ── C.A.M.I. ──
-export interface CamiMessage {
-    role: 'user' | 'model';
-    text: string;
-}
-
-export interface CamiChatRequest {
-    history: CamiMessage[];
-    newMessage: string;
-}
-
-export interface CamiChatResponse {
-    text: string;
-    audioBase64?: string;
-}
-
 export interface AiRouteSelectionRequest {
     voiceCommand: string;
     availableOrders: OrderSummaryDto[];
@@ -1001,21 +960,6 @@ export interface AiRouteSelectionResponse {
     selectedOrderIds: number[];
     aiConfirmationMessage: string;
     audioBase64?: string;
-}
-
-export interface CamiGreetingResponse {
-    message: string;
-    audioBase64?: string;
-}
-
-export interface CamiProactiveSuggestionDto {
-    kind: string;
-    icon: string;
-    title: string;
-    detail: string;
-    actionLabel: string;
-    actionRoute: string;
-    priority: number;
 }
 
 // ── Tandas ──

@@ -362,32 +362,11 @@ interface GeocodedOrder extends OrderSummaryDto {
                         (click)="shareWhatsApp(route)">
                   📱 <span class="hidden sm:inline">WhatsApp</span>
                 </button>
-                <button class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100 hover:bg-indigo-100 active:scale-95 transition-all"
-                        (click)="loadRouteBriefing(route.id)"
-                        [disabled]="loadingBriefing() === route.id">
-                  @if (loadingBriefing() === route.id) {
-                    <span class="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></span>
-                  } @else {
-                    ✦
-                  }
-                  <span class="hidden sm:inline">Briefing</span>
-                </button>
                 <button class="sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-red-50 text-red-500 text-xs font-bold border border-red-100 hover:bg-red-100 active:scale-95 transition-all sm:ml-auto"
                         (click)="deleteRoute(route.id)">
                   🗑️
                 </button>
               </div>
-
-              <!-- Briefing Panel -->
-              @if (routeBriefing() && loadingBriefing() !== route.id) {
-                <div class="mx-4 mb-3 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 animate-fade-in-down">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="text-sm font-black text-indigo-700">✦ Briefing C.A.M.I.</span>
-                    <button class="ml-auto text-indigo-300 hover:text-indigo-500 text-xs" (click)="routeBriefing.set(null)">✕</button>
-                  </div>
-                  <p class="text-xs text-indigo-800 leading-relaxed italic">{{ routeBriefing()!.text }}</p>
-                </div>
-              }
 
               <!-- Deliveries List (Collapsible) -->
               @if (expandedRouteIds().has(route.id)) {
@@ -1105,11 +1084,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
   loadingChat = signal(false);
   unreadChatsIds = signal<Set<number>>(new Set());
 
-  // Route Briefing (C.A.M.I.)
-  routeBriefing = signal<{ text: string, audioBase64?: string } | null>(null);
-  loadingBriefing = signal<number | null>(null);
-  private briefingAudio = new Audio();
-
   // Geocode Cache
   private geocodeCache = new Map<string, { lat: number; lng: number } | null>();
 
@@ -1372,23 +1346,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
     return orders.filter(o => {
       const addr = ((o.clientAddress || '') + ' ' + (o.alternativeAddress || '')).toLowerCase();
       return keywords.some(kw => addr.includes(kw));
-    });
-  }
-
-  loadRouteBriefing(routeId: number): void {
-    if (this.loadingBriefing() === routeId) return;
-    this.loadingBriefing.set(routeId);
-    this.routeBriefing.set(null);
-    this.api.getRouteBriefing(routeId).subscribe({
-      next: (res) => {
-        this.routeBriefing.set(res);
-        this.loadingBriefing.set(null);
-        if (res.audioBase64) {
-          this.briefingAudio.src = `data:audio/mp3;base64,${res.audioBase64}`;
-          this.briefingAudio.play().catch(() => { });
-        }
-      },
-      error: () => { this.loadingBriefing.set(null); }
     });
   }
 
@@ -1928,7 +1885,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Detección de zona antes de enviar a C.A.M.I.
+    // Detectar la zona antes de solicitar la selección de pedidos.
     const zone = this.detectZoneFromCommand(command);
     if (zone) {
       const zoneOrders = this.filterOrdersByZone(orders, zone);
@@ -1967,7 +1924,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
 
   private async runOrchestrationSequence(response: AiRouteSelectionResponse) {
     this.isOrchestrating.set(true);
-    this.orchestrationFeed.set(["🛰️ Iniciando sistema de orquestación...", "🧠 CAMI analizando coincidencias..."]);
+    this.orchestrationFeed.set(["🛰️ Iniciando sistema de orquestación...", "🧭 Analizando las paradas de la ruta..."]);
 
     // 1. Reproducir audio si existe
     if (response.audioBase64) {

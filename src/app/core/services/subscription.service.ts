@@ -17,7 +17,7 @@ export class SubscriptionService {
     private base = environment.apiUrl;
 
     getAccountStatus(): Observable<SubscriptionAccountStateDto> {
-        return this.http.get<SubscriptionAccountStateDto>(`${this.base}/business/account-status`);
+        return this.http.get<SubscriptionAccountStateDto>(`${this.base}/business/web/account-status`);
     }
 
     getPricing(): Observable<SubscriptionPricingDto> {

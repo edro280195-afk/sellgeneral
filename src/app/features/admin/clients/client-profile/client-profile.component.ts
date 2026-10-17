@@ -165,30 +165,6 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
                 </div>
             </div>
 
-            <!-- ── AI Client Analysis ── -->
-            <div class="card-coquette p-6 animate-slide-up"
-                 style="border: 1px solid rgba(139,92,246,0.2); background: linear-gradient(135deg, rgba(245,243,255,0.9), rgba(253,242,248,0.9));">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-purple-900 flex items-center gap-2">
-                        <span class="text-lg">✦</span> Análisis C.A.M.I.
-                    </h3>
-                    <button class="btn-coquette btn-outline-pink text-xs flex items-center gap-2"
-                            (click)="loadInsight()" [disabled]="loadingInsight()">
-                        @if (loadingInsight()) {
-                            <span class="w-3 h-3 border-2 border-pink-400/30 border-t-pink-500 rounded-full animate-spin"></span>
-                            Analizando...
-                        } @else {
-                            <span>✦</span> {{ clientInsight() ? 'Actualizar' : 'Ver análisis' }}
-                        }
-                    </button>
-                </div>
-                @if (clientInsight()) {
-                    <p class="text-sm text-purple-800 leading-relaxed italic">{{ clientInsight() }}</p>
-                } @else if (!loadingInsight()) {
-                    <p class="text-xs text-purple-400">Presiona "Ver análisis" para obtener un perfil de comportamiento generado por IA.</p>
-                }
-            </div>
-
             <!-- ── Loyalty ── -->
             @if (loyalty()) {
                 <div class="card-coquette p-6 animate-slide-up delay-200 relative overflow-hidden isolate" style="opacity:0; animation-fill-mode: forwards;">
@@ -274,9 +250,6 @@ export class ClientProfileComponent implements OnInit {
     isSavingInstructions = signal(false);
     instructionsText = '';
 
-    // CAMI
-    clientInsight = signal<string | null>(null);
-    loadingInsight = signal(false);
 
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -400,17 +373,6 @@ export class ClientProfileComponent implements OnInit {
         if (c.latitude != null) return 'bg-emerald-100 text-emerald-700';
         if (c.address) return 'bg-amber-100 text-amber-700';
         return 'bg-gray-100 text-gray-500';
-    }
-
-    // ── CAMI ──
-
-    loadInsight(): void {
-        if (this.loadingInsight()) return;
-        this.loadingInsight.set(true);
-        this.api.getClientInsight(this.client()!.id).subscribe({
-            next: (res) => { this.clientInsight.set(res.text); this.loadingInsight.set(false); },
-            error: () => { this.clientInsight.set('No pude generar el análisis.'); this.loadingInsight.set(false); }
-        });
     }
 
     // ── Loyalty helpers ──

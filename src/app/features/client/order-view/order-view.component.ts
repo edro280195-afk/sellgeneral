@@ -197,8 +197,6 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
             <!-- ════════════ TAB: ESTADO ════════════ -->
             <div class="animate-fade-in-up space-y-6">
               
-              <!-- C.A.M.I. AI Greeting (Movida a Widget Flotante) -->
-
               <!-- Map View (Only if InRoute) -->
               @if ((o.status === 'InRoute' || o.status === 'InTransit') && o.deliveriesAhead === 0 && (o.clientLatitude || clientCoords()?.lat)) {
                 <div class="rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative h-[420px] bg-gray-100 group">
@@ -764,11 +762,16 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
             </div>
           }
 
-          <!-- ✦ C.A.M.I. Floating Assistant Widget (Z-40) ✦ -->
+          <!-- Chat de pedido -->
           @if (order()) {
-            <div id="cami-fab" class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-none">
-              
-              <!-- Chat Floating Bubble (New) -->
+            <div id="support-chat-fab" class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-none">
+              @if (isUnboxed()) {
+                <button id="order-tour-button" (click)="startTour()"
+                        class="pointer-events-auto w-12 h-12 rounded-full bg-gradient-to-br from-pink-100 to-rose-200 text-pink-700 text-lg font-black shadow-lg border-2 border-white hover:scale-105 active:scale-95 transition-all relative group">
+                  i
+                  <span class="absolute right-full mr-3 bg-gray-900 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Ver guía del pedido</span>
+                </button>
+              }
               <button id="chat-fab" (click)="isChatOpen.set(true); unreadMessages.set(false)" 
                       class="pointer-events-auto w-14 h-14 bg-white rounded-full flex items-center justify-center text-2xl shadow-xl border-2 border-pink-100 hover:scale-110 active:scale-95 transition-all relative group animate-float">
                 💬
@@ -780,55 +783,10 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                   Chat de Ayuda 💬
                 </span>
               </button>
-
-              @if (isUnboxed()) {
-                <!-- Speech Bubble (existing) -->
-                @if (!isLoadingCami() && camiMessage() && showCamiBubble()) {
-                  <div class="bg-white/95 backdrop-blur-2xl rounded-[1.5rem] p-4 shadow-2xl border border-pink-100 max-w-[250px] pointer-events-auto animate-fade-in-up origin-bottom-right relative transition-all group/bubble">
-                    <!-- Close Button -->
-                    <button (click)="showCamiBubble.set(false)" 
-                            class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-pink-500 shadow-lg border border-pink-50 flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all z-30 active:scale-90" 
-                            title="Cerrar mensaje">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-
-                    <!-- Tail of the speech bubble -->
-                    <div class="absolute -right-1 bottom-4 w-4 h-4 bg-white border-b border-r border-pink-100 rotate-[-45deg] transform origin-center"></div>
-                    
-                    <div class="flex items-center gap-2 mb-1.5 relative z-10">
-                      <span class="text-[9px] font-black text-pink-500 uppercase tracking-widest leading-none">C.A.M.I. AI</span>
-                      <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    </div>
-                    <p class="text-xs text-pink-900 font-medium leading-relaxed italic relative z-10 pr-6">"{{ camiMessage() }}"</p>
-                    
-                    @if (camiAudioUrl()) {
-                      <button (click)="playCamiAudio()" class="mt-3 bg-pink-50 hover:bg-pink-100 text-pink-600 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
-                         {{ isPlayingCami() ? '🔊 Escuchando...' : '▶️ Escuchar' }}
-                      </button>
-                    }
-                  </div>
-                }
-
-                <!-- The Avatar Interactive Button -->
-                <button (click)="startTour()" class="shrink-0 w-16 h-16 bg-gradient-to-br from-pink-100 to-rose-200 rounded-full flex items-center justify-center text-4xl shadow-[0_15px_30px_rgba(244,114,182,0.4)] border-4 border-white pointer-events-auto hover:scale-110 active:scale-95 transition-all relative animate-bounce-subtle z-20 group">
-                  👩🏻‍💻
-                  <!-- Status Dots -->
-                  @if (isLoadingCami()) {
-                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-pink-400 rounded-full border-2 border-white animate-pulse"></span>
-                  } @else if (camiMessage()) {
-                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white shadow-sm"></span>
-                  }
-                  
-                  <!-- Hover Tooltip -->
-                  <span class="absolute -top-8 right-0 bg-gray-900 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
-                    Ver Tour ✨
-                  </span>
-                </button>
-              }
             </div>
           }
 
-          <!-- ✦ C.A.M.I. TOUR OVERLAY ✦ -->
+          <!-- Guía rápida del pedido -->
           @if (tourActive()) {
             <div class="fixed inset-0 z-[100] pointer-events-none overflow-hidden animate-fade-in">
               <!-- Spotlight Path Overlay (Even-Odd logic for robust masking) -->
@@ -845,10 +803,10 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                 <div class="w-full max-w-[380px] bg-white rounded-[2.5rem] p-6 shadow-[0_20px_50px_rgba(244,114,182,0.4)] border-4 border-pink-300 relative">
                    
                    <div class="flex items-center gap-4 mb-4">
-                     <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-100 to-rose-200 flex items-center justify-center text-4xl border-4 border-white shadow-md animate-bounce-subtle shrink-0">👩🏻‍💻</div>
+                      <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-100 to-rose-200 flex items-center justify-center text-4xl border-4 border-white shadow-md animate-bounce-subtle shrink-0">💖</div>
                      <div>
                        <div class="flex items-center gap-2 mb-1">
-                         <span class="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em] leading-none">C.A.M.I. Guía</span>
+                          <span class="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em] leading-none">Guía de tu pedido</span>
                          <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                        </div>
                        <p class="font-black text-pink-950 leading-none font-display text-lg">Paso {{ currentTourStep() + 1 }} de {{ dynamicTourSteps().length }}</p>
@@ -1077,7 +1035,7 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!o) return [];
 
     const steps: { target: string, msg: string, tab?: 'status' | 'payment' | 'details', modal?: boolean }[] = [
-      { target: '#view-header', msg: '¡Hola hermosa! Soy C.A.M.I. ✨ He diseñado este panel para que tengas todo a la mano. ¡Déjame enseñarte!' },
+      { target: '#view-header', msg: '¡Hola! Aquí puedes consultar tu pedido, tus métodos de pago y el seguimiento de la entrega.' },
       { target: '#nav-tabs', msg: 'Aquí tienes tus 3 pestañas principales: Detalle de Pedido, Métodos de Pago y Rastreo en Vivo. 🛍️💸🏠' },
       { target: '#ticket-content', msg: 'En "Pedido" tienes tu ticket detallado. ¡Revisa que todo esté perfecto! 🧾', tab: 'details' }
     ];
@@ -1099,9 +1057,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Chat Step (New FAB)
     steps.push({ target: '#chat-fab', msg: 'Si tienes alguna duda, usa esta burbuja para chatear directamente con nosotros o el repartidor. 💬' });
-
-    // Final
-    steps.push({ target: '#cami-fab', msg: '¡Eso es todo! Estaré aquí flotando por si necesitas algo más. ¡Que disfrutes tu compra! 👩🏻‍💻✨' });
 
     return steps;
   });
@@ -1131,11 +1086,11 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   closeTour() {
     this.tourActive.set(false);
-    localStorage.setItem('cami_tour_done', 'true');
+    localStorage.setItem('nenis_order_tour_done', 'true');
   }
 
   private checkAndStartTour() {
-    const done = localStorage.getItem('cami_tour_done');
+    const done = localStorage.getItem('nenis_order_tour_done');
     if (!done && this.order() && this.isUnboxed()) {
       // Small delay to let the 'unboxing' fade-out finish and elements settle in DOM
       setTimeout(() => {
@@ -1207,17 +1162,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // Señales para C.A.M.I.
-  camiMessage = signal<string>('');
-  camiAudioUrl = signal<string>('');
-  isPlayingCami = signal(false);
-  isLoadingCami = signal(true);
-  showCamiBubble = signal(true);
-  /** Llave de localStorage para no repetir el saludo genérico de CAMI en
-   *  visitas subsecuentes al mismo pedido. Una vez por pedido. */
-  private get camiGreetedKey(): string {
-    return `cami_greeted_${this.accessToken}`;
-  }
   // Stratospheric features
   regiPuntos = computed(() => {
     const o = this.order();
@@ -1231,7 +1175,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
   // Countdown State
   countdownText = signal<string>('');
   private countdownInterval: any;
-  private bubbleTimeout: any;
 
   // --- MAP STEROIDS ---
   private mapInitialized = false;
@@ -1408,25 +1351,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       this.scrollToBottomChat();
     });
 
-    // Feature #9 — CAMI greeting pushed when driver marks InTransit
-    this.signalr.camiGreeting$.subscribe((greeting) => {
-      this.displayCamiMessage(greeting.message, greeting.audioBase64);
-      this.showToast('¡C.A.M.I. tiene un mensaje para ti! 💌');
-    });
-  }
-
-  displayCamiMessage(text: string, audioBase64?: string) {
-    this.camiMessage.set(text);
-    if (audioBase64) {
-      this.camiAudioUrl.set('data:audio/mp3;base64,' + audioBase64);
-    }
-    this.isLoadingCami.set(false);
-    this.showCamiBubble.set(true);
-
-    if (this.bubbleTimeout) clearTimeout(this.bubbleTimeout);
-    this.bubbleTimeout = setTimeout(() => {
-      this.showCamiBubble.set(false);
-    }, 8000); // 8 seconds for better readability, but can be closed manually
   }
 
   // Generate Greeting based on time
@@ -1518,24 +1442,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // CAMI: solo saludamos la primera vez por pedido para minimizar costos
-    // de Gemini. Si ya se saludó en este dispositivo, omitimos la llamada y
-    // ocultamos el indicador de carga. Los saludos proactivos por SignalR
-    // (cuando el repartidor marca InTransit) sí se muestran siempre.
-    const alreadyGreeted = (() => {
-      try { return !!localStorage.getItem(this.camiGreetedKey); } catch { return false; }
-    })();
-    if (alreadyGreeted) {
-      this.isLoadingCami.set(false);
-    } else {
-      this.api.publicGetCamiGreeting(this.accessToken).subscribe({
-        next: (res) => {
-          this.displayCamiMessage(res.message, res.audioBase64);
-          try { localStorage.setItem(this.camiGreetedKey, new Date().toISOString()); } catch { }
-        },
-        error: () => this.isLoadingCami.set(false)
-      });
-    }
   }
 
   loadChat() {
@@ -2342,21 +2248,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
   }
-  playCamiAudio() {
-    if (this.isPlayingCami() || !this.camiAudioUrl()) return;
-
-    const audio = new Audio(this.camiAudioUrl());
-    this.isPlayingCami.set(true);
-
-    audio.onended = () => this.isPlayingCami.set(false);
-    audio.onerror = () => {
-      this.isPlayingCami.set(false);
-      this.showToast('No se pudo reproducir el audio 💔');
-    };
-
-    audio.play();
-  }
-
   private startCountdown(expiresAt: string) {
     if (this.countdownInterval) clearInterval(this.countdownInterval);
 

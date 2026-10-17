@@ -143,9 +143,6 @@ interface NavItem {
           <div class="top-right">
             <app-business-switcher />
             <app-pwa-install />
-            <a routerLink="/admin/brand" class="brand-shortcut" title="Mi marca">
-              🎨
-            </a>
             <div class="user-chip">
               <div class="user-avatar">{{ userInitial() }}</div>
               <div class="user-info">
@@ -734,12 +731,8 @@ export class LayoutComponent implements OnInit {
       { label: 'Tandas', icon: '🔄', route: '/admin/tandas', featureKey: 'TandasRaffles', showLocked: true },
       { label: 'Sorteos', icon: '🎉', route: '/admin/raffles', featureKey: 'TandasRaffles', showLocked: true },
       { label: 'Proveedores', icon: '🏭', route: '/admin/suppliers' },
-      { label: 'Finanzas', icon: '💰', route: '/admin/financials', featureKey: 'Financials', showLocked: true },
       { label: 'Reportes', icon: '📊', route: '/admin/reports', featureKey: 'Exports', showLocked: true },
-      { label: 'C.A.M.I.', icon: '✦', route: '/admin/cami', featureKey: 'CamiAssistant', showLocked: true },
-      { label: 'Glow Up', icon: '✨', route: '/admin/glow-up' },
       { label: 'Notificaciones', icon: '🔔', route: '/admin/notifications' },
-      { label: 'Mi Marca', icon: '🎨', route: '/admin/brand' },
       { label: 'Mi Plan', icon: '💎', route: '/admin/subscription' }
     ];
 

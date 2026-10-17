@@ -13,7 +13,7 @@ import {
     SubscriptionSummaryDto,
 } from '../../../core/models';
 
-type WizardStep = 'datos' | 'marca' | 'listo';
+type WizardStep = 'datos' | 'listo';
 
 interface PlanHighlight {
     icon: string;
@@ -87,7 +87,7 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                 </div>
 
                 @if (currentStep() !== 'listo') {
-                    <div class="grid lg:grid-cols-2 gap-6">
+                    <div class="max-w-2xl mx-auto">
                         <!-- Form column -->
                         <div class="bg-white rounded-3xl shadow-xl p-6 sm:p-8">
                             @switch (currentStep()) {
@@ -128,154 +128,19 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
 
                                         <button
                                             type="submit"
-                                            class="btn-coquette btn-pink w-full justify-center py-3">
-                                            Siguiente
-                                            <span>→</span>
+                                            class="btn-coquette btn-pink w-full justify-center py-3"
+                                            [disabled]="creating()">
+                                            @if (creating()) {
+                                                <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                                <span>Creando tu tienda…</span>
+                                            } @else {
+                                                <span>Crear mi tienda</span>
+                                                <span>✨</span>
+                                            }
                                         </button>
                                     </form>
                                 }
-
-                                @case ('marca') {
-                                    <h1 class="text-2xl font-bold text-gray-800 mb-1">Tu marca</h1>
-                                    <p class="text-gray-500 text-sm mb-6">Elige un color y, si quieres, sube tu logo. Puedes cambiarlo después.</p>
-
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="label-coquette">🎨 Color principal</label>
-                                            <div class="flex items-center gap-3">
-                                                <input
-                                                    type="color"
-                                                    class="w-14 h-14 rounded-xl border-2 border-pink-200 cursor-pointer"
-                                                    [value]="primaryColor()"
-                                                    (input)="onColorChange($event)" />
-                                                <input
-                                                    type="text"
-                                                    class="input-coquette flex-1 font-mono"
-                                                    [value]="primaryColor()"
-                                                    (change)="onColorTextChange($event)"
-                                                    maxlength="7"
-                                                    placeholder="#6C4AE0" />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label class="label-coquette">🖼️ Logo (opcional)</label>
-                                            <input
-                                                #logoInput
-                                                type="file"
-                                                accept="image/png,image/jpeg,image/webp"
-                                                class="hidden"
-                                                (change)="onLogoSelected($event)" />
-                                            <button
-                                                type="button"
-                                                class="w-full py-3 rounded-xl border-2 border-dashed border-pink-200 text-pink-600 hover:bg-pink-50 transition flex items-center justify-center gap-2"
-                                                (click)="logoInput.click()"
-                                                [disabled]="uploading()">
-                                                @if (uploading() && uploadingKind() === 'logo') {
-                                                    <span class="inline-block w-4 h-4 border-2 border-pink-300 border-t-pink-600 rounded-full animate-spin"></span>
-                                                    <span>Subiendo…</span>
-                                                } @else if (logoUrl()) {
-                                                    <span>✓ Logo listo · cambiar</span>
-                                                } @else {
-                                                    <span>Subir logo (png/jpg/webp, max 2MB)</span>
-                                                }
-                                            </button>
-                                        </div>
-
-                                        <div>
-                                            <label class="label-coquette">🌅 Banner (opcional)</label>
-                                            <input
-                                                #bannerInput
-                                                type="file"
-                                                accept="image/png,image/jpeg,image/webp"
-                                                class="hidden"
-                                                (change)="onBannerSelected($event)" />
-                                            <button
-                                                type="button"
-                                                class="w-full py-3 rounded-xl border-2 border-dashed border-pink-200 text-pink-600 hover:bg-pink-50 transition flex items-center justify-center gap-2"
-                                                (click)="bannerInput.click()"
-                                                [disabled]="uploading()">
-                                                @if (uploading() && uploadingKind() === 'banner') {
-                                                    <span class="inline-block w-4 h-4 border-2 border-pink-300 border-t-pink-600 rounded-full animate-spin"></span>
-                                                    <span>Subiendo…</span>
-                                                } @else if (bannerUrl()) {
-                                                    <span>✓ Banner listo · cambiar</span>
-                                                } @else {
-                                                    <span>Subir banner (png/jpg/webp, max 5MB)</span>
-                                                }
-                                            </button>
-                                        </div>
-
-                                        @if (errorMsg()) {
-                                            <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
-                                                {{ errorMsg() }}
-                                            </div>
-                                        }
-
-                                        <div class="flex gap-3 pt-2">
-                                            <button
-                                                type="button"
-                                                class="flex-1 py-3 rounded-xl border-2 border-pink-200 text-pink-600 hover:bg-pink-50 transition"
-                                                (click)="back()">
-                                                ← Atrás
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="flex-1 btn-coquette btn-pink justify-center py-3"
-                                                [disabled]="creating()"
-                                                (click)="createBusiness()">
-                                                @if (creating()) {
-                                                    <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                                    <span>Creando…</span>
-                                                } @else {
-                                                    <span>Crear mi tienda</span>
-                                                    <span>✨</span>
-                                                }
-                                            </button>
-                                        </div>
-                                    </div>
-                                }
                             }
-                        </div>
-
-                        <!-- Preview column -->
-                        <div class="hidden lg:block">
-                            <div class="sticky top-6">
-                                <p class="text-xs uppercase tracking-wider text-pink-500 font-semibold mb-3 text-center">Vista previa</p>
-                                <div class="rounded-3xl shadow-xl overflow-hidden bg-white">
-                                    <div
-                                        class="h-32 bg-cover bg-center"
-                                        [style.background-image]="bannerUrl() ? 'url(' + bannerUrl() + ')' : 'linear-gradient(135deg, ' + primaryColor() + ', ' + primaryColor() + 'cc)'">
-                                    </div>
-                                    <div class="p-4">
-                                        <div class="flex items-center gap-3 -mt-12 mb-3">
-                                            <div
-                                                class="w-16 h-16 rounded-2xl border-4 border-white shadow-md flex items-center justify-center text-white text-xl font-bold"
-                                                [style.background-color]="primaryColor()">
-                                                @if (logoUrl()) {
-                                                    <img [src]="logoUrl()" alt="logo" class="w-full h-full rounded-xl object-cover" />
-                                                } @else {
-                                                    {{ initials() }}
-                                                }
-                                            </div>
-                                            <div class="pt-10">
-                                                <h3 class="font-bold text-gray-800">{{ name || 'Tu tienda' }}</h3>
-                                                @if (city) {
-                                                    <p class="text-sm text-gray-500">📍 {{ city }}</p>
-                                                }
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="rounded-xl p-3 text-white text-sm font-medium"
-                                            [style.background-color]="primaryColor()">
-                                            Botón principal (color de tu marca)
-                                        </div>
-                                    </div>
-                                    <div class="px-4 pb-4">
-                                        <p class="text-xs text-gray-400 text-center">Así se verá la cabecera de tu panel con la marca que elijas.</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 } @else {
@@ -293,7 +158,7 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                             <h1 class="done-title">¡Bienvenida a Neni's App!</h1>
                             <p class="done-store">
                                 <span class="done-store-name">{{ createdName() }}</span>
-                                ya está activa y puede recibir pedidos.
+                                ya quedó creada. Puedes configurar tu tienda después.
                             </p>
 
                             @if (subscription()?.trialEndsAt) {
@@ -304,12 +169,20 @@ const PLAN_HIGHLIGHTS: Record<string, PlanHighlight> = {
                                         <p>Sin tarjeta, sin costo. Tus pedidos y clientas ya funcionan.</p>
                                     </div>
                                 </div>
-                            } @else {
+                            } @else if (subscription()?.isLocked === false) {
                                 <div class="done-trial">
                                     <span class="done-trial-icon">💖</span>
                                     <div>
                                         <strong>Tu plan Pro está activo.</strong>
                                         <p>Puedes empezar a capturar pedidos de inmediato.</p>
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="done-trial">
+                                    <span class="done-trial-icon">🌸</span>
+                                    <div>
+                                        <strong>Tu tienda está lista para activarse.</strong>
+                                        <p>Elige un plan para comenzar a usar Neni’s App.</p>
                                     </div>
                                 </div>
                             }
@@ -713,7 +586,6 @@ export class OnboardingComponent {
 
     readonly steps: { id: WizardStep; label: string }[] = [
         { id: 'datos', label: 'Datos' },
-        { id: 'marca', label: 'Marca' },
         { id: 'listo', label: 'Listo' },
     ];
 
@@ -723,14 +595,7 @@ export class OnboardingComponent {
     name = '';
     city = '';
 
-    // Step 2
-    primaryColor = signal<string>('#6C4AE0');
-    logoUrl = signal<string | null>(null);
-    bannerUrl = signal<string | null>(null);
-    uploading = signal(false);
-    uploadingKind = signal<'logo' | 'banner' | null>(null);
-
-    // Step 3
+    // Final step
     createdName = signal<string>('');
     subscription = signal<SubscriptionSummaryDto | null>(null);
     creating = signal(false);
@@ -738,13 +603,6 @@ export class OnboardingComponent {
     pricing = signal<SubscriptionPricingDto | null>(null);
     loadingPlans = signal(false);
     plansError = signal<string | null>(null);
-
-    readonly initials = computed(() => {
-        const n = this.name.trim();
-        if (!n) return '✨';
-        const parts = n.split(/\s+/).slice(0, 2);
-        return parts.map(p => p[0]?.toUpperCase() ?? '').join('') || '✨';
-    });
 
     readonly daysLeft = computed(() => this.subscription()?.daysLeft ?? 0);
 
@@ -760,84 +618,21 @@ export class OnboardingComponent {
             this.errorMsg.set('El nombre no puede exceder 150 caracteres');
             return;
         }
-        this.errorMsg.set('');
-        this.currentStep.set('marca');
-    }
-
-    back(): void {
-        this.currentStep.set('datos');
-        this.errorMsg.set('');
+        this.createBusiness();
     }
 
     isStepReached(id: WizardStep): boolean {
-        const order: WizardStep[] = ['datos', 'marca', 'listo'];
+        const order: WizardStep[] = ['datos', 'listo'];
         const current = order.indexOf(this.currentStep());
         const target = order.indexOf(id);
         return target <= current;
     }
 
-    // ── Color picker ──
-
-    onColorChange(ev: Event): void {
-        const input = ev.target as HTMLInputElement;
-        this.primaryColor.set(input.value);
-    }
-
-    onColorTextChange(ev: Event): void {
-        const input = ev.target as HTMLInputElement;
-        const value = input.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-            this.primaryColor.set(value.toUpperCase());
-        }
-    }
-
-    // ── Uploads ──
-
-    onLogoSelected(ev: Event): void {
-        const input = ev.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-        this.uploading.set(true);
-        this.uploadingKind.set('logo');
-        this.errorMsg.set('');
-        this.brand.uploadLogo(file).subscribe({
-            next: (res) => {
-                this.logoUrl.set(res.url);
-                this.uploading.set(false);
-                this.uploadingKind.set(null);
-            },
-            error: (err) => {
-                this.uploading.set(false);
-                this.uploadingKind.set(null);
-                this.errorMsg.set(err?.error?.message || 'No se pudo subir el logo');
-            },
-        });
-    }
-
-    onBannerSelected(ev: Event): void {
-        const input = ev.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-        this.uploading.set(true);
-        this.uploadingKind.set('banner');
-        this.errorMsg.set('');
-        this.brand.uploadBanner(file).subscribe({
-            next: (res) => {
-                this.bannerUrl.set(res.url);
-                this.uploading.set(false);
-                this.uploadingKind.set(null);
-            },
-            error: (err) => {
-                this.uploading.set(false);
-                this.uploadingKind.set(null);
-                this.errorMsg.set(err?.error?.message || 'No se pudo subir el banner');
-            },
-        });
-    }
-
     // ── Create business + finalize ──
 
     createBusiness(): void {
+        if (this.creating()) return;
+
         this.creating.set(true);
         this.errorMsg.set('');
 
@@ -845,10 +640,7 @@ export class OnboardingComponent {
             .subscribe({
                 next: (created) => {
                     this.createdName.set(created.name);
-
-                    // Si subio logo/banner/color, los guardamos ahora. Si no,
-                    // saltamos directo al paso 3 igual.
-                    this.applyBrandThenShowSuccess(created);
+                    this.finishBusinessCreation(created);
                 },
                 error: (err) => {
                     this.creating.set(false);
@@ -857,7 +649,7 @@ export class OnboardingComponent {
             });
     }
 
-    private applyBrandThenShowSuccess(created: { businessId: number; name: string; slug: string; role: string }): void {
+    private finishBusinessCreation(created: { businessId: number; name: string; slug: string; role: string }): void {
         // Refrescar memberships + active business localmente (no tenemos
         // endpoint de refresh de JWT todavia; el panel funciona porque el
         // backend valida la membership contra la DB, no contra el JWT).
@@ -875,23 +667,7 @@ export class OnboardingComponent {
             localStorage.setItem('rb_memberships', JSON.stringify(updated));
         } catch { /* ignore */ }
 
-        const color = this.primaryColor();
-        const hasAnyBrand = !!this.logoUrl() || !!this.bannerUrl() || color !== '#6C4AE0';
-
-        if (!hasAnyBrand) {
-            this.loadSuccessAndAdvance();
-            return;
-        }
-
-        // PUT con la marca. Si falla (ej. tenant no ready), no bloqueamos
-        // el alta: el panel llega igual y la marca se puede editar despues.
-        this.brand.updateBrand({
-            name: this.name.trim(),
-            brandPrimaryColor: color,
-        }).subscribe({
-            next: () => this.loadSuccessAndAdvance(),
-            error: () => this.loadSuccessAndAdvance(),
-        });
+        this.loadSuccessAndAdvance();
     }
 
     private loadSuccessAndAdvance(): void {

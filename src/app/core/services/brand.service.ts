@@ -25,9 +25,27 @@ export class BrandService {
         role: string;
     }> {
         return this.http.post<{ businessId: number; name: string; slug: string; role: string }>(
-            `${this.base}/business`,
+            `${this.base}/business/web`,
             req,
+            { headers: { 'X-Device-Id': this.getWebDeviceId() } },
         );
+    }
+
+    private getWebDeviceId(): string {
+        const storageKey = 'nenis-web-trial-device-id';
+
+        try {
+            const savedDeviceId = localStorage.getItem(storageKey);
+            if (savedDeviceId && /^[A-Za-z0-9._-]{32,128}$/.test(savedDeviceId)) {
+                return savedDeviceId;
+            }
+
+            const deviceId = globalThis.crypto.randomUUID();
+            localStorage.setItem(storageKey, deviceId);
+            return deviceId;
+        } catch {
+            return globalThis.crypto.randomUUID();
+        }
     }
 
     updateBrand(req: {

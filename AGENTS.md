@@ -90,3 +90,17 @@ ng serve
 # Android
 # Abrir android/ en Android Studio → Run
 ```
+
+## Publicación web de Neni’s App en producción
+
+`https://app.nenisapp.com` se sirve desde `sellgeneral-api/wwwroot` en el servicio `sellgeneral-api` de Render. Un deploy correcto de Vercel, por sí solo, **no actualiza ese dominio**. Render tiene activación manual y no despliega automáticamente cada push.
+
+Para publicar cambios del frontend web/PWA:
+
+1. Desde `sellgeneral`, generar el build de producción con `npm run build`.
+2. Copiar el contenido de `dist/regibazar-store/browser` a `../sellgeneral-api/wwwroot` (por ejemplo, `robocopy .\dist\regibazar-store\browser ..\sellgeneral-api\wwwroot /E`). No usar `/MIR` ni borrar el destino: `wwwroot/uploads` contiene archivos runtime y debe conservarse.
+3. En `sellgeneral-api`, incluir en el commit los archivos web generados bajo `wwwroot`, hacer push a `main` y abrir el servicio `sellgeneral-api` en Render.
+4. En Render elegir **Manual Deploy → Deploy latest commit**. Esperar a que el commit muestre **Deploy succeeded | Live**.
+5. Confirmar el resultado en `https://app.nenisapp.com` desde una pestaña nueva o con recarga forzada, porque la PWA puede conservar recursos anteriores en caché.
+
+Limitar estos cambios a la web/PWA y al backend estrictamente necesario. No editar el proyecto móvil separado `nenis-app`.

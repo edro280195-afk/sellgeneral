@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,217 +9,9 @@ type LoginMethod = 'phone' | 'email';
 @Component({
     selector: 'app-login',
     imports: [FormsModule],
-    template: `
-        <div class="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
-            <div class="absolute inset-0 bg-gradient-to-br from-pink-100 via-rose-50 to-purple-100">
-                <div class="absolute top-10 left-10 w-72 h-72 bg-pink-300/30 rounded-full blur-3xl animate-float"></div>
-                <div class="absolute bottom-10 right-10 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-float" style="animation-delay: 1s"></div>
-                <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-rose-300/20 rounded-full blur-3xl animate-float" style="animation-delay: 2s"></div>
-            </div>
-
-            <div class="relative z-10 w-full max-w-md mx-4 animate-scale-in">
-                <div class="glass-strong rounded-3xl p-8 shadow-2xl" style="box-shadow: 0 25px 60px rgba(236, 72, 153, 0.15)">
-                    <div class="text-center mb-8 animate-slide-down">
-                        <div class="inline-flex items-center justify-center w-full max-w-[280px] mb-2">
-                            <img
-                                src="assets/brand/nenis-logo.png"
-                                alt="Neni's"
-                                class="w-full h-auto object-contain">
-                        </div>
-                        <p class="text-pink-400 mt-2 text-sm font-medium">✨ La plataforma de tu tienda ✨</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 mb-6 bg-pink-50/60 rounded-2xl p-1.5">
-                        <button
-                            type="button"
-                            (click)="setMethod('phone')"
-                            class="py-2 rounded-xl text-sm font-medium transition"
-                            [class.bg-white]="method() === 'phone'"
-                            [class.shadow]="method() === 'phone'"
-                            [class.text-pink-600]="method() === 'phone'"
-                            [class.text-pink-400]="method() !== 'phone'">
-                            📱 Teléfono
-                        </button>
-                        <button
-                            type="button"
-                            (click)="setMethod('email')"
-                            class="py-2 rounded-xl text-sm font-medium transition"
-                            [class.bg-white]="method() === 'email'"
-                            [class.shadow]="method() === 'email'"
-                            [class.text-pink-600]="method() === 'email'"
-                            [class.text-pink-400]="method() !== 'email'">
-                            ✉️ Correo
-                        </button>
-                    </div>
-
-                    @if (method() === 'phone') {
-                        @if (phoneStep() === 'enter') {
-                            <form (ngSubmit)="requestOtp()" class="space-y-4">
-                                <div>
-                                    <label class="label-coquette">📱 Tu número (con lada)</label>
-                                    <input
-                                        type="tel"
-                                        class="input-coquette"
-                                        placeholder="+52 868 ..."
-                                        [(ngModel)]="phone"
-                                        name="phone"
-                                        required
-                                        autocomplete="tel" />
-                                </div>
-
-                                @if (errorMsg()) {
-                                    <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm text-center">
-                                        😿 {{ errorMsg() }}
-                                    </div>
-                                }
-
-                                <button
-                                    type="submit"
-                                    class="btn-coquette btn-pink w-full justify-center py-3.5 text-base"
-                                    [disabled]="loading()">
-                                    @if (loading()) {
-                                        <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                        <span>Enviando…</span>
-                                    } @else {
-                                        <span>Enviar código</span>
-                                        <span>💌</span>
-                                    }
-                                </button>
-                            </form>
-                        } @else {
-                            <form (ngSubmit)="verifyOtp()" class="space-y-4">
-                                <div>
-                                    <label class="label-coquette">🔐 Código de 6 dígitos</label>
-                                    <input
-                                        type="text"
-                                        inputmode="numeric"
-                                        maxlength="6"
-                                        class="input-coquette text-center tracking-[0.5em] text-lg"
-                                        placeholder="••••••"
-                                        [(ngModel)]="otpCode"
-                                        name="otpCode"
-                                        required
-                                        autocomplete="one-time-code" />
-                                </div>
-                                @if (otpDevMode()) {
-                                    <p class="text-xs text-pink-500 text-center">
-                                        Modo prueba: usa el código 000000.
-                                    </p>
-                                }
-
-                                @if (errorMsg()) {
-                                    <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm text-center">
-                                        😿 {{ errorMsg() }}
-                                    </div>
-                                }
-
-                                <button
-                                    type="submit"
-                                    class="btn-coquette btn-pink w-full justify-center py-3.5 text-base"
-                                    [disabled]="loading()">
-                                    @if (loading()) {
-                                        <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                        <span>Verificando…</span>
-                                    } @else {
-                                        <span>Entrar</span>
-                                        <span>💖</span>
-                                    }
-                                </button>
-                                <button
-                                    type="button"
-                                    class="text-xs text-pink-400 hover:text-pink-600"
-                                    (click)="resetPhoneFlow()">
-                                    Cambiar número
-                                </button>
-                            </form>
-                        }
-                    } @else {
-                        <form (ngSubmit)="submitEmail()" class="space-y-4">
-                            @if (emailMode() === 'register') {
-                                <div>
-                                    <label class="label-coquette">Nombre</label>
-                                    <input
-                                        type="text"
-                                        class="input-coquette"
-                                        placeholder="Tu nombre"
-                                        [(ngModel)]="name"
-                                        name="name"
-                                        required
-                                        autocomplete="name" />
-                                </div>
-                            }
-                            <div>
-                                <label class="label-coquette">💌 Correo</label>
-                                <input
-                                    type="email"
-                                    class="input-coquette"
-                                    placeholder="tu@correo.com"
-                                    [(ngModel)]="email"
-                                    name="email"
-                                    required
-                                    autocomplete="email" />
-                            </div>
-                            <div>
-                                <label class="label-coquette">🔐 Contraseña</label>
-                                <div class="relative">
-                                    <input
-                                        [type]="showPassword() ? 'text' : 'password'"
-                                        class="input-coquette pr-12"
-                                        placeholder="••••••••"
-                                        [(ngModel)]="password"
-                                        name="password"
-                                        required
-                                        [autocomplete]="emailMode() === 'register'
-                                            ? 'new-password'
-                                            : 'current-password'" />
-                                    <button
-                                        type="button"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-pink-400 hover:text-pink-600 transition-colors"
-                                        (click)="showPassword.set(!showPassword())">
-                                        {{ showPassword() ? '🙈' : '👁️' }}
-                                    </button>
-                                </div>
-                            </div>
-                            @if (errorMsg()) {
-                                <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm text-center">
-                                    😿 {{ errorMsg() }}
-                                </div>
-                            }
-                            <button
-                                type="submit"
-                                class="btn-coquette btn-pink w-full justify-center py-3.5 text-base"
-                                [disabled]="loading()">
-                                @if (loading()) {
-                                    <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    <span>{{ emailMode() === 'register' ? 'Creando…' : 'Entrando…' }}</span>
-                                } @else {
-                                    <span>{{ emailMode() === 'register' ? 'Crear cuenta' : 'Entrar' }}</span>
-                                    <span>💖</span>
-                                }
-                            </button>
-                            <button
-                                type="button"
-                                class="w-full text-sm font-semibold text-pink-500 hover:text-pink-700"
-                                (click)="setEmailMode(emailMode() === 'register' ? 'login' : 'register')">
-                                {{ emailMode() === 'register'
-                                    ? 'Ya tengo cuenta'
-                                    : 'Crear una cuenta y registrar mi tienda' }}
-                            </button>
-                        </form>
-                    }
-
-                    @if (method() === 'phone') {
-                        <button
-                            type="button"
-                            class="w-full mt-6 text-sm font-semibold text-pink-500 hover:text-pink-700"
-                            (click)="openRegistration()">
-                            ¿Vas a registrar una tienda? Crear cuenta
-                        </button>
-                    }
-                </div>
-            </div>
-        </div>
-    `
+    templateUrl: './login.component.html',
+    styleUrl: './login.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
     private auth = inject(AuthService);
@@ -241,8 +33,8 @@ export class LoginComponent {
     errorMsg = signal('');
     showPassword = signal(false);
 
-    setMethod(m: LoginMethod): void {
-        this.method.set(m);
+    setMethod(method: LoginMethod): void {
+        this.method.set(method);
         this.errorMsg.set('');
     }
 
@@ -258,7 +50,7 @@ export class LoginComponent {
 
     submitEmail(): void {
         if (!this.email || !this.password) {
-            this.errorMsg.set('Por favor llena todos los campos 🌸');
+            this.errorMsg.set('Completa tu correo y contraseña.');
             return;
         }
 
@@ -290,66 +82,67 @@ export class LoginComponent {
                 }
                 this.afterAuth();
             },
-            error: (err) => {
+            error: (error) => {
                 this.loading.set(false);
                 this.errorMsg.set(
-                    err?.error?.message ||
-                    err?.error ||
+                    error?.error?.message ||
+                    error?.error ||
                     (this.emailMode() === 'register'
-                        ? 'No se pudo crear la cuenta'
-                        : 'Correo o contraseña incorrectos'),
+                        ? 'No se pudo crear la cuenta.'
+                        : 'El correo o la contraseña no coinciden.'),
                 );
-            }
+            },
         });
     }
 
     requestOtp(): void {
         if (!this.phone) {
-            this.errorMsg.set('Captura tu número 🌸');
+            this.errorMsg.set('Captura tu número de teléfono.');
             return;
         }
+
         this.loading.set(true);
         this.errorMsg.set('');
 
         this.auth.requestPhoneOtp({ phone: this.phone }).subscribe({
-            next: (res) => {
+            next: (response) => {
                 this.loading.set(false);
-                if (res.otpRequired) {
-                    this.otpDevMode.set(res.devMode);
+                if (response.otpRequired) {
+                    this.otpDevMode.set(response.devMode);
                     this.phoneStep.set('verify');
                 } else {
                     this.errorMsg.set('No se pudo enviar el código. Intenta con correo.');
                 }
             },
-            error: (err) => {
+            error: (error) => {
                 this.loading.set(false);
-                this.errorMsg.set(err?.error?.message || 'No se pudo enviar el código');
-            }
+                this.errorMsg.set(error?.error?.message || 'No se pudo enviar el código.');
+            },
         });
     }
 
     verifyOtp(): void {
         if (!this.otpCode || this.otpCode.length !== 6) {
-            this.errorMsg.set('El código tiene 6 dígitos 🌸');
+            this.errorMsg.set('El código debe tener 6 dígitos.');
             return;
         }
+
         this.loading.set(true);
         this.errorMsg.set('');
 
         this.auth.verifyPhoneOtp({ phone: this.phone, code: this.otpCode }).subscribe({
             next: () => {
-                this.toast.success('¡Bienvenida! 💖');
+                this.toast.success('¡Bienvenida a Neni’s!');
                 this.afterAuth();
             },
-            error: (err) => {
+            error: (error) => {
                 this.loading.set(false);
-                const code = err?.status;
-                if (code === 501) {
-                    this.errorMsg.set('El proveedor SMS aún no está conectado. Usa correo por ahora.');
+                if (error?.status === 501) {
+                    this.errorMsg.set('El envío de SMS aún no está disponible. Usa el acceso por correo.');
                 } else {
-                    this.errorMsg.set(err?.error?.message || 'Código inválido o expirado');
+                    this.errorMsg.set(error?.error?.message || 'El código no es válido o ya venció.');
                 }
-            }
+            },
         });
     }
 
@@ -361,9 +154,7 @@ export class LoginComponent {
     }
 
     private afterAuth(): void {
-        // Si el Account autenticado NO tiene memberships (caso FE-2
-        // onboarding), lo mandamos al wizard. Si ya es Owner/Admin/Driver,
-        // al panel.
+        // Las cuentas sin membresías deben completar primero el registro de su tienda.
         if (this.auth.memberships().length === 0) {
             this.router.navigate(['/onboarding']);
             return;

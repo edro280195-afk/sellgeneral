@@ -22,62 +22,69 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
   standalone: true,
   imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, BirthdayCouponComponent, LabelEditorComponent, GoogleAutocompleteDirective],
   template: `
-    <div class="space-y-6">
+    <div class="space-y-4 sm:space-y-6">
       <!-- Header -->
       <div class="flex flex-wrap items-center justify-between gap-4 animate-slide-down">
         <h1 class="text-2xl font-bold text-pink-900">📦 Pedidos</h1>
-        <div class="flex gap-2">
-          <label class="btn-coquette btn-outline-pink cursor-pointer">
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <label class="btn-coquette btn-outline-pink col-span-1 flex min-h-11 items-center justify-center whitespace-nowrap px-3 text-xs cursor-pointer sm:text-sm">
             📤 Excel
             <input type="file" accept=".xlsx,.xls" class="hidden" (change)="uploadExcel($event)" />
           </label>
-          <a routerLink="/admin/send-links" class="btn-coquette btn-outline-pink text-center align-middle inline-block">💌 Enviar Enlaces</a>
-          <a routerLink="/admin/capture" class="btn-coquette btn-pink text-center align-middle inline-block">✨ Nuevo Pedido</a>
+          <a routerLink="/admin/send-links" class="btn-coquette btn-outline-pink flex min-h-11 items-center justify-center whitespace-nowrap px-3 text-xs sm:text-sm">💌 Enviar Enlaces</a>
+          <a routerLink="/admin/capture" class="btn-coquette btn-pink col-span-2 flex min-h-11 items-center justify-center whitespace-nowrap px-3 text-xs sm:col-span-1 sm:text-sm">✨ Nuevo Pedido</a>
         </div>
       </div>
 
       <!-- Filters -->
-      <div class="card-coquette p-4 animate-slide-up delay-100" style="opacity:0">
+      <div class="card-coquette p-3 sm:p-4 animate-slide-up delay-100">
         <div class="flex flex-wrap gap-3 items-end">
           <div class="flex-1 min-w-[200px]">
-            <label class="label-coquette">🔍 Buscar</label>
-            <input class="input-coquette" placeholder="Clienta, artículo o #123..." [(ngModel)]="search" (input)="loadOrders()" />
+            <div class="mb-1 flex items-center justify-between gap-2">
+              <label class="label-coquette mb-0" for="orders-search">🔍 Buscar</label>
+              <button class="btn-coquette btn-ghost flex min-h-11 shrink-0 items-center justify-center px-3 text-xs sm:hidden" type="button" [attr.aria-expanded]="filtersOpen()" aria-controls="orders-advanced-filters" (click)="toggleFilters()">
+                {{ filtersOpen() ? 'Ocultar filtros' : 'Más filtros' }}
+              </button>
+            </div>
+            <input id="orders-search" class="input-coquette" placeholder="Clienta, artículo o #123..." [(ngModel)]="search" (input)="loadOrders()" />
           </div>
-          <div>
-            <label class="label-coquette">📋 Estado</label>
-            <select class="input-coquette" [(ngModel)]="statusFilter" (change)="loadOrders()">
-              <option value="">Todos</option>
-              <option value="Pending">⏳ Pendiente</option>
-              <option value="Confirmed">💖 Confirmado</option>
-              <option value="InRoute">🚗 En Ruta</option>
-              <option value="Delivered">✅ Entregado</option>
-              <option value="NotDelivered">❌ No Entregado</option>
-              <option value="Canceled">🚫 Cancelado</option>
-              <option value="Postponed">📅 Pospuesto</option>
-            </select>
-          </div>
-          <div>
-            <label class="label-coquette">🚗 Tipo</label>
-            <select class="input-coquette" [(ngModel)]="orderTypeFilter" (change)="loadOrders()">
-              <option value="">Todos</option>
-              <option value="Delivery">Domicilio</option>
-              <option value="PickUp">Recoger</option>
-            </select>
-          </div>
-          <div>
-            <label class="label-coquette">🎀 Clienta</label>
-            <select class="input-coquette" [(ngModel)]="typeFilter" (change)="loadOrders()">
-              <option value="">Todas</option>
-              <option value="Nueva">Nueva</option>
-              <option value="Frecuente">Frecuente</option>
-            </select>
+          <div id="orders-advanced-filters" class="orders-advanced-filters flex flex-wrap gap-3 items-end" [class.is-open]="filtersOpen()">
+            <div class="w-[calc(50%-0.375rem)] min-w-0 sm:w-auto">
+              <label class="label-coquette" for="orders-status">📋 Estado</label>
+              <select id="orders-status" class="input-coquette w-full" [(ngModel)]="statusFilter" (change)="loadOrders()">
+                <option value="">Todos</option>
+                <option value="Pending">⏳ Pendiente</option>
+                <option value="Confirmed">💖 Confirmado</option>
+                <option value="InRoute">🚗 En Ruta</option>
+                <option value="Delivered">✅ Entregado</option>
+                <option value="NotDelivered">❌ No Entregado</option>
+                <option value="Canceled">🚫 Cancelado</option>
+                <option value="Postponed">📅 Pospuesto</option>
+              </select>
+            </div>
+            <div class="w-[calc(50%-0.375rem)] min-w-0 sm:w-auto">
+              <label class="label-coquette" for="orders-type">🚗 Tipo</label>
+              <select id="orders-type" class="input-coquette w-full" [(ngModel)]="orderTypeFilter" (change)="loadOrders()">
+                <option value="">Todos</option>
+                <option value="Delivery">Domicilio</option>
+                <option value="PickUp">Recoger</option>
+              </select>
+            </div>
+            <div class="w-[calc(50%-0.375rem)] min-w-0 sm:w-auto">
+              <label class="label-coquette" for="orders-client-type">🎀 Clienta</label>
+              <select id="orders-client-type" class="input-coquette w-full" [(ngModel)]="typeFilter" (change)="loadOrders()">
+                <option value="">Todas</option>
+                <option value="Nueva">Nueva</option>
+                <option value="Frecuente">Frecuente</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Order Stats Bar -->
       @if (totalCount() > 0) {
-        <div class="text-sm text-pink-400 font-medium animate-fade-in">
+        <div class="text-sm text-pink-700 font-medium animate-fade-in">
           Mostrando {{ orders().length }} de {{ totalCount() }} pedidos 💕
         </div>
       }
@@ -92,38 +99,95 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7 pb-8">
           @for (order of orders(); track order.id; let i = $index) {
-            <div class="order-card-anim group relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500 opacity-0 translate-y-8">
-              <div class="relative bg-white/90 backdrop-blur-xl rounded-[1.7rem] p-6 flex flex-col h-full shadow-[0_8px_32px_rgba(244,114,182,0.08),0_2px_8px_rgba(0,0,0,0.04)] group-hover:shadow-[0_20px_50px_rgba(244,114,182,0.18),0_8px_20px_rgba(0,0,0,0.06)] transition-shadow duration-500">
+            <div class="order-card-anim group relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500">
+              <div class="md:hidden relative bg-white/95 rounded-[1.65rem] p-3 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex min-w-0 items-center gap-2">
+                    <span class="shrink-0 text-xs font-black text-pink-800">#{{ order.id }}</span>
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-pink-50 text-xs" [attr.aria-label]="order.orderType === 'Delivery' ? 'Domicilio' : 'Recoger'" [title]="order.orderType === 'Delivery' ? 'Domicilio' : 'Recoger'">
+                      {{ order.orderType === 'Delivery' ? '🚗' : '🏪' }}
+                    </span>
+                  </div>
+                  <div class="flex shrink-0 items-center gap-1">
+                    <span class="badge shadow-sm status-badge" [class]="getStatusClass(order.status)">
+                      {{ getStatusLabel(order.status) }}
+                    </span>
+                    <button class="flex h-11 min-h-[44px] w-11 min-w-[44px] items-center justify-center rounded-full bg-white text-rose-700 border border-pink-100 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" type="button" aria-label="Eliminar pedido" title="Eliminar pedido" (click)="deleteOrder(order.id)">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <p class="truncate text-base font-black leading-5 text-pink-900">{{ order.clientName }}</p>
+                    <span class="shrink-0 text-[11px] font-bold text-pink-800">{{ order.type === 'Frecuente' ? 'Frecuente' : 'Nueva' }}</span>
+                  </div>
+                  @if (order.clientAddress) {
+                    <p class="mt-0.5 truncate text-xs text-pink-700">📍 {{ order.clientAddress }}</p>
+                  }
+                  <p class="mt-0.5 truncate text-xs text-pink-700">
+                    @if (order.scheduledDeliveryDate) {
+                      🚚 Entrega: {{ order.scheduledDeliveryDate | date:'dd MMM yyyy' }}
+                    } @else {
+                      📅 {{ order.createdAt | date:'dd MMM yyyy, HH:mm' }}
+                    }
+                  </p>
+                </div>
+
+                <div class="flex min-h-8 items-center justify-between gap-2 border-t border-pink-100/70 pt-2">
+                  <p class="truncate text-sm font-black text-pink-900">
+                    {{ order.total | currency:'MXN':'symbol-narrow':'1.0-0' }}
+                    <span class="text-xs font-semibold text-pink-700">· {{ order.itemsCount }} arts</span>
+                  </p>
+                  @if (order.balanceDue > 0) {
+                    <span class="shrink-0 rounded-full bg-rose-50 px-2 py-1 text-xs font-bold text-rose-700">Resta {{ order.balanceDue | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                  } @else if (order.amountPaid > 0) {
+                    <span class="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800">Pagado</span>
+                  }
+                </div>
+
+                <button class="btn-coquette btn-pink flex min-h-11 w-full items-center justify-center gap-2 py-2.5 text-sm" type="button" (click)="selectOrder(order)">
+                  ✨ Administrar
+                </button>
+              </div>
+
+              <div class="relative hidden bg-white/90 backdrop-blur-xl rounded-[1.7rem] p-6 md:flex flex-col h-full shadow-[0_8px_32px_rgba(244,114,182,0.08),0_2px_8px_rgba(0,0,0,0.04)] group-hover:shadow-[0_20px_50px_rgba(244,114,182,0.18),0_8px_20px_rgba(0,0,0,0.06)] transition-shadow duration-500">
               
                 <!-- Card Header -->
                 <div class="flex justify-between items-start mb-4">
                   <div class="flex flex-col gap-1.5">
-                    <span class="text-[10px] font-black text-pink-400 tracking-[0.2em] uppercase">Pedido #{{ order.id }}</span>
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-gradient-to-r from-pink-50 to-rose-50 text-pink-600 border border-pink-100/60 shadow-sm">
+                    <span class="text-xs font-black text-pink-700 tracking-[0.12em] uppercase">Pedido #{{ order.id }}</span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 border border-pink-100/60 shadow-sm">
                       {{ order.orderType === 'Delivery' ? '🚗 Domicilio' : '🏪 Recoger' }}
                     </span>
                   </div>
-                  <span class="badge shadow-sm status-badge" [class]="getStatusClass(order.status)" [attr.data-id]="order.id">
-                    {{ getStatusLabel(order.status) }}
-                  </span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="badge shadow-sm status-badge" [class]="getStatusClass(order.status)" [attr.data-id]="order.id">
+                      {{ getStatusLabel(order.status) }}
+                    </span>
+                    <button class="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full bg-white text-rose-700 shadow-sm border border-pink-100/70 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" type="button" aria-label="Eliminar pedido" title="Eliminar pedido" (click)="deleteOrder(order.id)">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Main Info -->
                 <div class="flex-1 mb-5">
                   <p class="text-lg font-black text-pink-900 leading-tight">
                     {{ order.clientName }}
-                    <span class="ml-2 px-2.5 py-0.5 text-[9px] rounded-full font-black uppercase tracking-wider shadow-sm border"
+                    <span class="ml-2 px-2.5 py-0.5 text-[11px] rounded-full font-black uppercase tracking-wider shadow-sm border"
                           [class]="order.type === 'Frecuente' ? 'bg-gradient-to-r from-purple-50 to-violet-50 text-purple-600 border-purple-200' : 'bg-gradient-to-r from-sky-50 to-blue-50 text-blue-600 border-blue-200'">
                       {{ order.type === 'Frecuente' ? 'Frecuente' : 'Nueva' }}
                     </span>
                   </p>
                   @if (order.clientAddress) {
-                    <p class="text-xs text-pink-500/60 mt-1.5 flex items-start gap-1">
-                      <span class="text-pink-400 shrink-0">📍</span>
+                    <p class="text-xs text-pink-700 mt-1.5 flex items-start gap-1">
+                      <span class="text-pink-700 shrink-0">📍</span>
                       <span class="line-clamp-2" title="{{ order.clientAddress }}">{{ order.clientAddress }}</span>
                     </p>
                   }
-                  <p class="text-[10px] text-pink-300 mt-2.5 flex items-center gap-1 font-medium">
+                  <p class="text-xs text-pink-700 mt-2.5 flex items-center gap-1 font-medium">
                     📅 {{ order.createdAt | date:'dd MMM yyyy, HH:mm' }}
                   </p>
                   @if (order.scheduledDeliveryDate) {
@@ -137,7 +201,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 <div class="bg-gradient-to-br from-pink-50/70 via-rose-50/40 to-purple-50/30 rounded-2xl p-4 mb-5 border border-pink-100/40 group-hover:border-pink-200/60 transition-colors shadow-inner shadow-pink-100/20">
                   <div class="flex justify-between items-end mb-2.5">
                     <div>
-                      <p class="text-[10px] text-pink-400 font-bold mb-1 uppercase tracking-wider">Total <span class="text-pink-300">({{ order.itemsCount }} arts)</span></p>
+                      <p class="text-xs text-pink-700 font-bold mb-1 uppercase tracking-wider">Total <span class="text-pink-700">({{ order.itemsCount }} arts)</span></p>
                       <p class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-rose-500 to-purple-600">
                         {{ order.total | currency:'MXN':'symbol-narrow':'1.0-0' }}
                       </p>
@@ -165,7 +229,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
 
                   @if (search && getMatchingItems(order).length > 0) {
                     <div class="mt-3 pt-2 border-t border-pink-100/40">
-                      <p class="text-[9px] font-black text-pink-400 uppercase tracking-wider mb-1.5">🎯 Artículos encontrados</p>
+                      <p class="text-[9px] font-black text-pink-700 uppercase tracking-wider mb-1.5">🎯 Artículos encontrados</p>
                       <div class="flex flex-wrap gap-1">
                         @for (item of getMatchingItems(order).slice(0, 3); track item.id) {
                           <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-amber-50 to-orange-50 text-orange-700 border border-orange-200/60 shadow-sm">
@@ -198,11 +262,6 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 </div>
               </div>
               
-              <!-- Floating Delete Icon -->
-              <button class="absolute -top-2.5 -right-2.5 w-8 h-8 bg-white text-pink-300 hover:text-rose-500 hover:bg-rose-50 rounded-full shadow-lg shadow-pink-200/20 border border-pink-100/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10 scale-75 hover:scale-110 active:scale-90" 
-                      title="Eliminar pedido" (click)="deleteOrder(order.id)">
-                🗑️
-              </button>
             </div>
           }
         </div>
@@ -210,8 +269,8 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
         @if (orders().length === 0) {
           <div class="card-coquette p-12 text-center animate-bounce-in">
             <p class="text-4xl mb-3">🎀</p>
-            <p class="text-pink-400 font-medium">No se encontraron pedidos</p>
-            <p class="text-pink-300 text-sm mt-1">¡Crea uno nuevo o ajusta los filtros!</p>
+            <p class="text-pink-700 font-medium">No se encontraron pedidos</p>
+            <p class="text-pink-700 text-sm mt-1">¡Crea uno nuevo o ajusta los filtros!</p>
           </div>
         }
 
@@ -219,7 +278,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
         @if (totalPages() > 1) {
           <div class="flex items-center justify-center gap-2 mt-6">
             <button class="btn-coquette btn-ghost text-sm" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)">← Anterior</button>
-            <span class="text-sm text-pink-400 font-medium px-3">{{ currentPage() }} / {{ totalPages() }}</span>
+            <span class="text-sm text-pink-700 font-medium px-3">{{ currentPage() }} / {{ totalPages() }}</span>
             <button class="btn-coquette btn-ghost text-sm" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">Siguiente →</button>
           </div>
         }
@@ -242,7 +301,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 <div class="flex items-center gap-2 group cursor-pointer bg-white/60 backdrop-blur-sm rounded-xl px-3 py-2 border border-pink-100/50 shadow-sm hover:shadow-md hover:border-pink-200 transition-all" (click)="toggleClientEdit()" title="Click para editar datos de clienta">
                   <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-200 to-rose-300 flex items-center justify-center text-sm shadow-sm">👤</div>
                   <p class="text-sm text-pink-800 font-bold truncate flex-1">{{ selectedOrder()!.clientName }}</p>
-                  <span class="text-[10px] text-pink-300 opacity-0 group-hover:opacity-100 transition-opacity">✏️ editar</span>
+                  <span class="text-[10px] text-pink-700 opacity-0 group-hover:opacity-100 transition-opacity">✏️ editar</span>
                 </div>
                 
                 @if (showClientEdit()) {
@@ -259,14 +318,14 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                       <option value="Frecuente">Frecuente</option>
                     </select>
                     <div class="flex justify-end gap-2">
-                      <button class="text-[10px] font-bold text-pink-400 hover:text-pink-600" (click)="toggleClientEdit()">Cancelar</button>
+                      <button class="text-[10px] font-bold text-pink-700 hover:text-pink-600" (click)="toggleClientEdit()">Cancelar</button>
                       <button class="btn-coquette btn-pink py-1.5 px-4 text-[10px] shadow-sm" (click)="saveQuickClientEdit()">Guardar 💖</button>
                     </div>
                   </div>
                 }
               </div>
             </div>
-            <button class="w-11 h-11 min-w-[44px] min-h-[44px] flex shrink-0 items-center justify-center rounded-full bg-white/80 text-pink-400 hover:bg-pink-100 hover:text-pink-600 transition-all shadow-sm border border-pink-100/50 ml-3" aria-label="Cerrar pedido" (click)="closeDrawer()">✕</button>
+            <button class="w-11 h-11 min-w-[44px] min-h-[44px] flex shrink-0 items-center justify-center rounded-full bg-white/80 text-pink-700 hover:bg-pink-100 hover:text-pink-600 transition-all shadow-sm border border-pink-100/50 ml-3" aria-label="Cerrar pedido" (click)="closeDrawer()">✕</button>
           </div>
 
           <!-- Scrollable Body -->
@@ -277,27 +336,27 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               <h4 class="text-xs font-black text-pink-600 mb-3 uppercase tracking-widest flex items-center gap-2">🎀 Estatus del Pedido</h4>
               <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-hide py-1">
                 <button class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap hover:scale-105 active:scale-95 border"
-                        [class]="selectedOrder()!.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-md shadow-amber-100' : 'bg-white/60 text-pink-300 border-pink-100/50 hover:bg-amber-50 hover:text-amber-600'"
+                        [class]="selectedOrder()!.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-md shadow-amber-100' : 'bg-white/60 text-pink-700 border-pink-100/50 hover:bg-amber-50 hover:text-amber-600'"
                         (click)="updateStatus(selectedOrder()!.id, 'Pending')">{{ getStatusLabel('Pending') }}</button>
                 <div class="w-3 h-px bg-gradient-to-r from-pink-200 to-pink-100 shrink-0"></div>
                 
                 <button class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap hover:scale-105 active:scale-95 border"
-                        [class]="selectedOrder()!.status === 'Confirmed' ? 'bg-pink-50 text-pink-700 border-pink-200 shadow-md shadow-pink-100' : 'bg-white/60 text-pink-300 border-pink-100/50 hover:bg-pink-50 hover:text-pink-600'"
+                        [class]="selectedOrder()!.status === 'Confirmed' ? 'bg-pink-50 text-pink-700 border-pink-200 shadow-md shadow-pink-100' : 'bg-white/60 text-pink-700 border-pink-100/50 hover:bg-pink-50 hover:text-pink-600'"
                         (click)="updateStatus(selectedOrder()!.id, 'Confirmed')">{{ getStatusLabel('Confirmed') }}</button>
                 <div class="w-3 h-px bg-gradient-to-r from-pink-200 to-pink-100 shrink-0"></div>
                 
                 <button class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap hover:scale-105 active:scale-95 border"
-                        [class]="selectedOrder()!.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-md shadow-blue-100' : 'bg-white/60 text-pink-300 border-pink-100/50 hover:bg-blue-50 hover:text-blue-600'"
+                        [class]="selectedOrder()!.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-md shadow-blue-100' : 'bg-white/60 text-pink-700 border-pink-100/50 hover:bg-blue-50 hover:text-blue-600'"
                         (click)="updateStatus(selectedOrder()!.id, 'Shipped')">{{ getStatusLabel('Shipped') }}</button>
                 <div class="w-3 h-px bg-gradient-to-r from-pink-200 to-pink-100 shrink-0"></div>
 
                 <button class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap hover:scale-105 active:scale-95 border"
-                        [class]="selectedOrder()!.status === 'InRoute' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-md shadow-indigo-100' : 'bg-white/60 text-pink-300 border-pink-100/50 hover:bg-indigo-50 hover:text-indigo-600'"
+                        [class]="selectedOrder()!.status === 'InRoute' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-md shadow-indigo-100' : 'bg-white/60 text-pink-700 border-pink-100/50 hover:bg-indigo-50 hover:text-indigo-600'"
                         (click)="updateStatus(selectedOrder()!.id, 'InRoute')">{{ getStatusLabel('InRoute') }}</button>
                 <div class="w-3 h-px bg-gradient-to-r from-pink-200 to-pink-100 shrink-0"></div>
                 
                 <button class="px-3.5 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap hover:scale-105 active:scale-95 border"
-                        [class]="selectedOrder()!.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-md shadow-emerald-100' : 'bg-white/60 text-pink-300 border-pink-100/50 hover:bg-emerald-50 hover:text-emerald-600'"
+                        [class]="selectedOrder()!.status === 'Delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-md shadow-emerald-100' : 'bg-white/60 text-pink-700 border-pink-100/50 hover:bg-emerald-50 hover:text-emerald-600'"
                         (click)="updateStatus(selectedOrder()!.id, 'Delivered')">{{ getStatusLabel('Delivered') }}</button>
               </div>
             </div>
@@ -308,10 +367,10 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 <label class="block text-xs font-bold text-pink-900 mb-2 uppercase">Tipo de Entrega</label>
                 <div class="flex bg-pink-50/50 p-1 rounded-xl border border-pink-100 shadow-inner">
                   <button class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all hover:scale-[1.02] active:scale-95"
-                          [class]="selectedOrder()!.orderType === 'Delivery' ? 'bg-white text-pink-700 shadow-sm ring-1 ring-pink-200' : 'text-pink-400 hover:text-pink-600 focus:bg-pink-100/50'"
+                          [class]="selectedOrder()!.orderType === 'Delivery' ? 'bg-white text-pink-700 shadow-sm ring-1 ring-pink-200' : 'text-pink-700 hover:text-pink-600 focus:bg-pink-100/50'"
                           (click)="changeOrderType('Delivery')">🛵 A Domicilio</button>
                   <button class="flex-1 py-1.5 text-sm font-medium rounded-lg transition-all hover:scale-[1.02] active:scale-95"
-                          [class]="selectedOrder()!.orderType === 'PickUp' ? 'bg-white text-purple-700 shadow-sm ring-1 ring-purple-200' : 'text-pink-400 hover:text-purple-600 focus:bg-pink-100/50'"
+                          [class]="selectedOrder()!.orderType === 'PickUp' ? 'bg-white text-purple-700 shadow-sm ring-1 ring-purple-200' : 'text-pink-700 hover:text-purple-600 focus:bg-pink-100/50'"
                           (click)="changeOrderType('PickUp')">🛍️ Pick Up</button>
                 </div>
               </div>
@@ -326,10 +385,10 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                            [ngModel]="selectedOrder()!.scheduledDeliveryDate?.substring(0, 10)" 
                            (change)="updateScheduledDate($event)">
                     @if (selectedOrder()!.scheduledDeliveryDate) {
-                        <button class="text-pink-300 hover:text-rose-500 p-1" (click)="clearScheduledDate()" title="Quitar fecha programada">✕</button>
+                        <button class="text-pink-700 hover:text-rose-500 p-1" (click)="clearScheduledDate()" title="Quitar fecha programada">✕</button>
                     }
                 </div>
-                <p class="text-[9px] text-pink-400 mt-1">Si se asigna, el enlace vencerá 2 días después de esta fecha.</p>
+                <p class="text-[9px] text-pink-700 mt-1">Si se asigna, el enlace vencerá 2 días después de esta fecha.</p>
             </div>
 
             <!-- Delivery Instructions & Alternative Address -->
@@ -359,7 +418,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 <p class="text-sm font-bold text-pink-900 mt-1">Actual: {{ selectedOrder()!.shippingCost | currency:'MXN':'symbol-narrow' }}</p>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-pink-400 font-bold">$</span>
+                <span class="text-pink-700 font-bold">$</span>
                 <input type="number" class="input-coquette py-1.5 px-2 text-sm w-24 text-center" 
                        [ngModel]="selectedOrder()!.shippingCost" 
                        #shippingCostInput>
@@ -387,7 +446,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                                (change)="updateItemQty(item.id, item.quantity, item.productName, item.unitPrice)"
                                class="w-full bg-transparent border-b border-transparent hover:border-pink-200 focus:border-pink-400 focus:bg-pink-50/60 transition-all font-black text-pink-900 text-sm appearance-none outline-none ring-0 placeholder-pink-300 px-1 py-0.5 rounded-t-sm" 
                                placeholder="Nombre del producto...">
-                        <span class="text-[9px] text-pink-400 ml-1 opacity-0 group-focus-within/item:opacity-100 transition-opacity">✏️ Enter para guardar</span>
+                        <span class="text-[9px] text-pink-700 ml-1 opacity-0 group-focus-within/item:opacity-100 transition-opacity">✏️ Enter para guardar</span>
                       </div>
                       <button class="text-pink-200 hover:text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-90 transition-all shrink-0" (click)="removeItem(item.id)" title="Eliminar producto">🗑️</button>
                     </div>
@@ -404,7 +463,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                           <input type="number" [(ngModel)]="item.unitPrice" step="0.5"
                                  (change)="updateItemQty(item.id, item.quantity, item.productName, item.unitPrice)"
                                  class="w-20 bg-transparent border-b border-transparent hover:border-pink-200 focus:border-pink-400 focus:bg-white transition-all text-xs text-pink-500 font-bold text-right outline-none ring-0 p-0 m-0">
-                          <span class="text-[10px] text-pink-400 font-medium">c/u</span>
+                          <span class="text-[10px] text-pink-700 font-medium">c/u</span>
                         </div>
                         <p class="font-black text-pink-700 text-base leading-none">{{ item.lineTotal | currency:'MXN':'symbol-narrow' }}</p>
                       </div>
@@ -419,7 +478,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                     <input type="text" class="input-coquette py-2 text-sm" placeholder="Nombre completo del producto" [(ngModel)]="newItemName">
                     <div class="grid grid-cols-[1fr_70px_60px] gap-2 items-center">
                       <div class="relative min-w-0">
-                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-pink-400 font-bold">$</span>
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-pink-700 font-bold">$</span>
                         <input type="number" class="input-coquette py-2 pl-8 pr-2 text-sm w-full" placeholder="Precio" [(ngModel)]="newItemPrice" min="0">
                       </div>
                       <input type="number" class="input-coquette py-2 px-1 text-sm w-full text-center" placeholder="Cant." [(ngModel)]="newItemQty" min="1">
@@ -451,7 +510,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                         <span class="text-xl">🛍️</span>
                         <div>
                           <p class="text-xs font-bold text-pink-900">Bolsa {{ pkg.packageNumber }}</p>
-                          <p class="text-[9px] text-pink-400 font-medium font-mono truncate w-24">{{ pkg.qrCodeValue }}...</p>
+                          <p class="text-[9px] text-pink-700 font-medium font-mono truncate w-24">{{ pkg.qrCodeValue }}...</p>
                         </div>
                       </div>
                       <button class="bg-gradient-to-r from-pink-100 to-rose-100 text-pink-600 hover:from-pink-200 hover:to-rose-200 border border-pink-200 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1 shadow-sm transition-all" (click)="openLabelEditor(pkg)">
@@ -463,7 +522,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
 
                 <div class="flex items-center gap-2 bg-pink-50/50 p-3 rounded-xl border border-pink-100">
                   <div class="flex flex-col grow">
-                    <p class="text-[9px] font-black text-pink-400 uppercase mb-1">Deseas agregar más?</p>
+                    <p class="text-[9px] font-black text-pink-700 uppercase mb-1">Deseas agregar más?</p>
                     <div class="flex gap-2">
                        <input type="number" class="input-coquette py-1.5 px-3 w-20 text-sm text-center" [(ngModel)]="packagesToGenerate" min="1" />
                        <button class="btn-coquette btn-pink text-[10px] shadow-sm grow py-2 font-black" (click)="generatePackages(packagesToGenerate)">
@@ -487,7 +546,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-pink-400 font-bold text-lg">$</span>
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-pink-700 font-bold text-lg">$</span>
                   <input type="number" class="input-coquette w-full py-2.5 pl-11 pr-3 font-bold text-pink-800 bg-white/80 border-pink-200/50 focus:border-pink-400 focus:ring-pink-100" 
                          [(ngModel)]="paymentAmount" placeholder="Ej. 150" min="1" step="0.5">
                 </div>
@@ -496,21 +555,21 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                          [(ngModel)]="paymentDate" title="Fecha real del pago">
                 </div>
               </div>
-              <p class="text-[9px] text-pink-400 mt-1">📅 Cambia la fecha si el pago fue en otro día</p>
+              <p class="text-[9px] text-pink-700 mt-1">📅 Cambia la fecha si el pago fue en otro día</p>
               
               <div class="grid grid-cols-3 gap-2 mt-3">
                 <button class="py-2.5 rounded-2xl border font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
-                        [class]="paymentMethod === 'Efectivo' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-md shadow-emerald-100' : 'bg-white/60 border-pink-100/50 text-pink-400 hover:bg-emerald-50 hover:text-emerald-600'"
+                        [class]="paymentMethod === 'Efectivo' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-md shadow-emerald-100' : 'bg-white/60 border-pink-100/50 text-pink-700 hover:bg-emerald-50 hover:text-emerald-600'"
                         (click)="paymentMethod = 'Efectivo'; addPayment()">
                   <span class="text-xl">💵</span> <span class="text-[10px]">Efectivo</span>
                 </button>
                 <button class="py-2.5 rounded-2xl border font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
-                        [class]="paymentMethod === 'Transferencia' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-md shadow-blue-100' : 'bg-white/60 border-pink-100/50 text-pink-400 hover:bg-blue-50 hover:text-blue-600'"
+                        [class]="paymentMethod === 'Transferencia' ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-md shadow-blue-100' : 'bg-white/60 border-pink-100/50 text-pink-700 hover:bg-blue-50 hover:text-blue-600'"
                         (click)="paymentMethod = 'Transferencia'; addPayment()">
                   <span class="text-xl">🏦</span> <span class="text-[10px]">Transf.</span>
                 </button>
                 <button class="py-2.5 rounded-2xl border font-bold text-sm flex flex-col items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
-                        [class]="paymentMethod === 'Tarjeta' ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-md shadow-purple-100' : 'bg-white/60 border-pink-100/50 text-pink-400 hover:bg-purple-50 hover:text-purple-600'"
+                        [class]="paymentMethod === 'Tarjeta' ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-md shadow-purple-100' : 'bg-white/60 border-pink-100/50 text-pink-700 hover:bg-purple-50 hover:text-purple-600'"
                         (click)="paymentMethod = 'Tarjeta'; addPayment()">
                   <span class="text-xl">💳</span> <span class="text-[10px]">Tarjeta</span>
                 </button>
@@ -519,12 +578,12 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               <!-- Payment History Inline -->
               @if (selectedOrder()!.payments.length) {
                 <div class="mt-4 pt-3 border-t border-pink-100/50 space-y-2">
-                  <p class="text-[9px] font-black text-pink-400 uppercase tracking-widest">💕 Historial de Pagos</p>
+                  <p class="text-[9px] font-black text-pink-700 uppercase tracking-widest">💕 Historial de Pagos</p>
                   @for (p of selectedOrder()!.payments; track p.id) {
                     <div class="flex justify-between items-center text-sm bg-white/50 rounded-xl px-3 py-1.5">
                       <div class="flex flex-col">
                         <span class="text-pink-700 font-medium">{{ p.method }}</span>
-                        <span class="text-pink-400 text-[10px]">📅 {{ p.date | date:'dd MMM yyyy' }}</span>
+                        <span class="text-pink-700 text-[10px]">📅 {{ p.date | date:'dd MMM yyyy' }}</span>
                       </div>
                       <span class="font-black text-pink-800">{{ p.amount | currency:'MXN':'symbol-narrow' }}</span>
                     </div>
@@ -544,7 +603,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               </div>
 
               @if (rewards().length === 0) {
-                <p class="text-[11px] text-pink-400 font-medium">Cargando premios…</p>
+                <p class="text-[11px] text-pink-700 font-medium">Cargando premios…</p>
               } @else {
                 <div class="space-y-2">
                   @for (r of rewards(); track r.id) {
@@ -562,7 +621,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                     }
                   }
                   @if (!hasAnyAffordable()) {
-                    <p class="text-[11px] text-pink-400 font-medium text-center py-2">Aún no alcanza para ningún premio. ¡Sigue sumando puntos! ✨</p>
+                    <p class="text-[11px] text-pink-700 font-medium text-center py-2">Aún no alcanza para ningún premio. ¡Sigue sumando puntos! ✨</p>
                   }
                 </div>
                 <p class="text-[9px] text-violet-400/80 mt-2 text-center italic">El canje aplica un descuento al pedido y descuenta los puntos. Queda registrado en su historial.</p>
@@ -575,7 +634,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
           <!-- Quick WhatsApp Toolbar -->
           <div class="bg-white/90 backdrop-blur-xl border-t border-pink-100/50 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 flex items-center justify-between gap-2 shadow-[0_-4px_20px_rgba(236,72,153,0.08)]">
             <div class="flex flex-col">
-              <span class="text-[9px] text-pink-400 font-black uppercase tracking-widest">Total</span>
+              <span class="text-[9px] text-pink-700 font-black uppercase tracking-widest">Total</span>
               <span class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-700 to-rose-600">{{ selectedOrder()!.total | currency:'MXN':'symbol-narrow' }}</span>
             </div>
             
@@ -617,10 +676,10 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-sm border border-pink-100">🖨️</div>
                 <div>
                   <h3 class="text-xl font-black text-pink-900">Vista Previa</h3>
-                  <p class="text-[10px] text-pink-400 font-bold uppercase tracking-wider">Confirma la etiqueta antes de imprimir</p>
+                  <p class="text-[10px] text-pink-700 font-bold uppercase tracking-wider">Confirma la etiqueta antes de imprimir</p>
                 </div>
               </div>
-              <button class="w-10 h-10 rounded-full bg-white text-pink-300 hover:text-pink-600 hover:bg-pink-50 transition-all shadow-sm flex items-center justify-center border border-pink-100" (click)="closePrintPreview()">✕</button>
+              <button class="w-10 h-10 rounded-full bg-white text-pink-700 hover:text-pink-600 hover:bg-pink-50 transition-all shadow-sm flex items-center justify-center border border-pink-100" (click)="closePrintPreview()">✕</button>
             </div>
 
             <!-- Preview Body -->
@@ -642,7 +701,23 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
         </div>
       }
     </div>
-  `
+  `,
+  styles: [`
+    .orders-advanced-filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.75rem;
+    }
+    @media (max-width: 639px) {
+      .orders-advanced-filters:not(.is-open) {
+        display: none;
+      }
+      .orders-advanced-filters.is-open {
+        width: 100%;
+      }
+    }
+  `]
 })
 export class OrdersComponent implements OnInit {
   private api = inject(ApiService);
@@ -658,6 +733,7 @@ export class OrdersComponent implements OnInit {
   totalCount = signal(0);
   currentPage = signal(1);
   pageSize = 20;
+  filtersOpen = signal(false);
 
   search = '';
   statusFilter = '';
@@ -714,6 +790,10 @@ export class OrdersComponent implements OnInit {
       next: (r) => this.rewards.set(r),
       error: () => { /* el catálogo es opcional; no bloquea el panel */ }
     });
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen.update(isOpen => !isOpen);
   }
 
   /** ¿La clienta del pedido tiene puntos suficientes para este premio? */

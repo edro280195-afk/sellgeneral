@@ -37,6 +37,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
 
     route = signal<any>(null);
     loading = signal(true);
+    errorMessage = signal('');
     gpsActive = this.gps.active;
     expandedId = signal(0);
     toastMsg = signal('');
@@ -179,6 +180,8 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     }
 
     private loadRoute(): void {
+        this.loading.set(true);
+        this.errorMessage.set('');
         this.api.getDriverRoute(this.token).subscribe({
             next: (r: any) => {
                 r.deliveries.sort((a: any, b: any) => a.sortOrder - b.sortOrder);
@@ -188,8 +191,16 @@ export class RouteViewComponent implements OnInit, OnDestroy {
                 setTimeout(() => this.initMap(r), 150);
                 this.startGps();
             },
-            error: () => this.loading.set(false)
+            error: () => {
+                this.route.set(null);
+                this.errorMessage.set('No encontramos la ruta o el enlace ya no está activo. Revisa el enlace que recibiste de la tienda.');
+                this.loading.set(false);
+            }
         });
+    }
+
+    retryRoute(): void {
+        this.loadRoute();
     }
 
     // ═══ GPS ═══

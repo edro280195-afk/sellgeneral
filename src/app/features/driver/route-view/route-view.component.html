@@ -1,10 +1,23 @@
 <div class="h-[100dvh] bg-black text-white relative overflow-hidden select-none transition-all duration-500">
 
     @if (loading()) {
-    <div class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl">
+    <div role="status" aria-live="polite" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl">
         <div class="w-12 h-12 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin"></div>
         <p class="mt-4 font-medium text-pink-200 animate-pulse">Sincronizando HUD... 🚀</p>
     </div>
+    }
+
+    @if (!loading() && errorMessage()) {
+    <main class="absolute inset-0 z-[105] flex items-center justify-center bg-black px-5 py-8">
+        <section role="alert" aria-live="assertive" class="w-full max-w-sm rounded-3xl border border-pink-500/20 bg-white/5 p-6 text-center shadow-2xl backdrop-blur-xl">
+            <div aria-hidden="true" class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-pink-500/15 text-3xl">🧭</div>
+            <h1 class="text-xl font-black text-white">Enlace de ruta no válido</h1>
+            <p class="mt-2 text-sm leading-relaxed text-white/65">{{ errorMessage() }}</p>
+            <button type="button" (click)="retryRoute()" class="mt-6 min-h-12 w-full rounded-2xl bg-pink-600 px-5 font-bold text-white transition-colors hover:bg-pink-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300">
+                Reintentar
+            </button>
+        </section>
+    </main>
     }
 
     @if (toastMsg()) {

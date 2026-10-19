@@ -57,6 +57,16 @@ export class ApiService {
         return this.http.get<PagedResult<OrderSummaryDto>>(`${this.base}/orders/paged`, { params });
     }
 
+    getClientOrdersPaged(clientId: number, page: number, size: number): Observable<PagedResult<OrderSummaryDto>> {
+        const params = new HttpParams()
+            .set('clientId', clientId.toString())
+            .set('page', page.toString())
+            .set('pageSize', size.toString())
+            .set('sortBy', 'date')
+            .set('sortDir', 'desc');
+        return this.http.get<PagedResult<OrderSummaryDto>>(`${this.base}/orders/paged`, { params });
+    }
+
     getOrderMergeCandidates(targetOrderId: number, page: number, size: number, search: string): Observable<PagedResult<OrderSummaryDto>> {
         const params = new HttpParams()
             .set('targetOrderId', targetOrderId.toString())

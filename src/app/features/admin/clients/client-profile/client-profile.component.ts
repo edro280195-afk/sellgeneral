@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { ClientDto, CLIENT_TAG_LABELS } from '../../../../core/models';
+import { ClientDto, CLIENT_TAG_LABELS, OrderSummaryDto } from '../../../../core/models';
 import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2.component';
 
 @Component({
@@ -165,6 +165,54 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
                 </div>
             </div>
 
+            <!-- ── Order History ── -->
+            <section class="card-coquette overflow-hidden animate-slide-up" aria-label="Historial de pedidos de la clienta">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-pink-50 p-4 sm:p-5">
+                    <div class="min-w-0">
+                        <h3 class="flex items-center gap-2 text-base font-black text-pink-900">📦 Historial de pedidos</h3>
+                        <p class="mt-1 text-[11px] text-pink-400">{{ clientOrderTotalCount() }} pedidos · del más reciente al más antiguo</p>
+                    </div>
+                    @if (clientOrderPageCount() > 1) {
+                        <div class="flex shrink-0 items-center gap-2 text-xs font-bold text-pink-700">
+                            <button type="button" class="min-h-11 min-w-11 rounded-xl border border-pink-100 bg-white px-3 disabled:opacity-40"
+                                    aria-label="Pedidos anteriores" (click)="loadClientOrders(clientOrderPage() - 1)" [disabled]="clientOrderPage() <= 1 || clientOrdersLoading()">←</button>
+                            <span class="whitespace-nowrap">{{ clientOrderPage() }} / {{ clientOrderPageCount() }}</span>
+                            <button type="button" class="min-h-11 min-w-11 rounded-xl border border-pink-100 bg-white px-3 disabled:opacity-40"
+                                    aria-label="Pedidos siguientes" (click)="loadClientOrders(clientOrderPage() + 1)" [disabled]="clientOrderPage() >= clientOrderPageCount() || clientOrdersLoading()">→</button>
+                        </div>
+                    }
+                </div>
+
+                @if (clientOrdersLoading()) {
+                    <div class="space-y-2 p-4" aria-label="Cargando historial de pedidos">
+                        @for (row of [1, 2, 3]; track row) { <div class="shimmer h-14 rounded-xl"></div> }
+                    </div>
+                } @else if (clientOrdersError()) {
+                    <div class="p-5 text-center">
+                        <p class="text-sm font-semibold text-rose-600">No pudimos cargar el historial.</p>
+                        <button type="button" class="mt-3 min-h-11 rounded-xl bg-pink-50 px-4 text-xs font-black text-pink-700"
+                                (click)="loadClientOrders(clientOrderPage())">Reintentar</button>
+                    </div>
+                } @else if (clientOrders().length === 0) {
+                    <p class="p-5 text-center text-sm text-pink-400">Todavía no hay pedidos registrados para esta clienta.</p>
+                } @else {
+                    <div class="divide-y divide-pink-50 px-4 sm:px-5">
+                        @for (order of clientOrders(); track order.id) {
+                            <div class="flex min-w-0 items-center gap-3 py-3">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-black text-pink-900">Pedido #{{ order.id }}</p>
+                                    <p class="mt-0.5 truncate text-[11px] text-pink-400">{{ order.createdAt | date:'d MMM yyyy, h:mm a' }} · {{ order.itemsCount }} productos</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <p class="text-sm font-black text-pink-800">{{ order.total | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
+                                    <span class="text-[10px] font-bold" [class]="getOrderStatusClass(order.status)">{{ getOrderStatusLabel(order.status) }}</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
             <!-- ── Loyalty ── -->
             @if (loyalty()) {
                 <div class="card-coquette p-6 animate-slide-up delay-200 relative overflow-hidden isolate" style="opacity:0; animation-fill-mode: forwards;">
@@ -236,6 +284,13 @@ export class ClientProfileComponent implements OnInit {
     client = signal<ClientDto | null>(null);
     loyalty = signal<any>(null);
     loading = signal(true);
+    clientOrders = signal<OrderSummaryDto[]>([]);
+    clientOrdersLoading = signal(true);
+    clientOrdersError = signal(false);
+    clientOrderPage = signal(1);
+    clientOrderTotalCount = signal(0);
+    readonly clientOrderPageSize = 5;
+    clientOrderPageCount = computed(() => Math.max(1, Math.ceil(this.clientOrderTotalCount() / this.clientOrderPageSize)));
 
     // General info editing
     editingInfo = signal(false);
@@ -256,6 +311,30 @@ export class ClientProfileComponent implements OnInit {
         if (!id) { this.goBack(); return; }
         this.loadClient(id);
         this.api.getLoyaltySummary(id).subscribe({ next: (l) => this.loyalty.set(l), error: () => {} });
+        this.loadClientOrders(1);
+    }
+
+    loadClientOrders(page: number): void {
+        const clientId = Number(this.route.snapshot.paramMap.get('id'));
+        if (!clientId) return;
+
+        const safePage = Math.max(1, Math.min(page, this.clientOrderPageCount()));
+        this.clientOrderPage.set(safePage);
+        this.clientOrdersLoading.set(true);
+        this.clientOrdersError.set(false);
+        this.api.getClientOrdersPaged(clientId, safePage, this.clientOrderPageSize).subscribe({
+            next: result => {
+                this.clientOrders.set(result.items);
+                this.clientOrderTotalCount.set(result.totalCount);
+                this.clientOrderPage.set(result.currentPage);
+                this.clientOrdersLoading.set(false);
+            },
+            error: () => {
+                this.clientOrders.set([]);
+                this.clientOrdersLoading.set(false);
+                this.clientOrdersError.set(true);
+            }
+        });
     }
 
     private loadClient(id: number): void {
@@ -268,6 +347,24 @@ export class ClientProfileComponent implements OnInit {
     goBack(): void { this.router.navigate(['/admin/clients']); }
 
     getTagLabel(tag: string): string { return CLIENT_TAG_LABELS[tag] || tag; }
+
+    getOrderStatusLabel(status: string): string {
+        const labels: Record<string, string> = {
+            Pending: 'Pendiente', Confirmed: 'Confirmado', InRoute: 'En ruta',
+            Delivered: 'Entregado', NotDelivered: 'No entregado', Canceled: 'Cancelado',
+            Postponed: 'Pospuesto', Shipped: 'Enviado'
+        };
+        return labels[status] ?? status;
+    }
+
+    getOrderStatusClass(status: string): string {
+        const classes: Record<string, string> = {
+            Pending: 'text-amber-600', Confirmed: 'text-blue-600', InRoute: 'text-indigo-600',
+            Delivered: 'text-emerald-600', NotDelivered: 'text-rose-600', Canceled: 'text-gray-500',
+            Postponed: 'text-violet-600', Shipped: 'text-cyan-700'
+        };
+        return classes[status] ?? 'text-pink-600';
+    }
 
     // ── Info editing ──
 

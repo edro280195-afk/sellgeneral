@@ -559,6 +559,7 @@ export interface RouteDto {
     status: string;
     createdAt: string;
     startedAt?: string;
+    liquidatedAt?: string | null;
     deliveries: RouteDeliveryDto[];
     expenses?: DriverExpenseDto[];
 }

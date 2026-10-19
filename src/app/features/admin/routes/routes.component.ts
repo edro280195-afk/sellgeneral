@@ -8,7 +8,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { PushNotificationService } from '../../../core/services/push-notification.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { RouteDto, RouteDeliveryDto, OrderSummaryDto, DriverExpenseDto, OrderPaymentDto, AiRouteSelectionResponse } from '../../../core/models';
+import { RouteDto, RouteDeliveryDto, OrderSummaryDto, AvailableTandaDto, DriverExpenseDto, OrderPaymentDto, AiRouteSelectionResponse } from '../../../core/models';
 import { environment } from '../../../../environments/environment';
 import { RouteOptimizerComponent } from './route-optimizer/route-optimizer.component';
 import { AddressEditorV2Component } from '../clients/address-editor-v2/address-editor-v2.component';
@@ -203,22 +203,43 @@ interface GeocodedOrder extends OrderSummaryDto {
       </div>
 
       <!-- ═══ FILTRO DE RUTAS + AUTO-REFRESH ═══ -->
-      <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5 animate-slide-up" style="animation-delay:200ms">
-        <div class="flex flex-wrap gap-2">
-          <button class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
+      <div class="relative z-10 mb-5 space-y-3 animate-slide-up" style="animation-delay:200ms">
+        <label class="block w-full min-w-0 sm:max-w-md">
+          <span class="sr-only">Buscar ruta, clienta o tanda</span>
+          <input class="input-coquette min-h-11" type="search" placeholder="Buscar ruta, clienta o tanda…"
+                 [ngModel]="routeSearch()" (ngModelChange)="setRouteSearch($event)" />
+        </label>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar rutas por estado">
+          <button class="min-h-11 px-3 rounded-xl text-xs font-black border transition-all"
                   [class]="routeStatusFilter()==='All' ? 'bg-pink-500 text-white border-pink-500 shadow-md' : 'bg-white/70 text-gray-500 border-gray-100 hover:border-pink-200'"
-                  (click)="routeStatusFilter.set('All')">Todas</button>
-          <button class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
+                  [attr.aria-pressed]="routeStatusFilter()==='All'" (click)="setRouteStatusFilter('All')">Todas</button>
+          <button class="min-h-11 px-3 rounded-xl text-xs font-black border transition-all"
                   [class]="routeStatusFilter()==='Active' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white/70 text-gray-500 border-gray-100 hover:border-blue-200'"
-                  (click)="routeStatusFilter.set('Active')">En Camino ({{ routesByStatus('Active') }})</button>
-          <button class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
+                  [attr.aria-pressed]="routeStatusFilter()==='Active'" (click)="setRouteStatusFilter('Active')">En Camino ({{ routesByStatus('Active') }})</button>
+          <button class="min-h-11 px-3 rounded-xl text-xs font-black border transition-all"
                   [class]="routeStatusFilter()==='Pending' ? 'bg-amber-400 text-white border-amber-400 shadow-md' : 'bg-white/70 text-gray-500 border-gray-100 hover:border-amber-200'"
-                  (click)="routeStatusFilter.set('Pending')">Pendientes ({{ routesByStatus('Pending') }})</button>
-          <button class="px-3 py-1.5 rounded-xl text-xs font-black border transition-all"
+                  [attr.aria-pressed]="routeStatusFilter()==='Pending'" (click)="setRouteStatusFilter('Pending')">Pendientes ({{ routesByStatus('Pending') }})</button>
+          <button class="min-h-11 px-3 rounded-xl text-xs font-black border transition-all"
                   [class]="routeStatusFilter()==='Completed' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'bg-white/70 text-gray-500 border-gray-100 hover:border-emerald-200'"
-                  (click)="routeStatusFilter.set('Completed')">Finalizadas ({{ routesByStatus('Completed') }})</button>
+                  [attr.aria-pressed]="routeStatusFilter()==='Completed'" (click)="setRouteStatusFilter('Completed')">Finalizadas ({{ routesByStatus('Completed') }})</button>
         </div>
         <span class="text-[10px] text-pink-300 font-mono">⟳ Actualizado {{ refreshAgo() || 'ahora' }}</span>
+        </div>
+        @if (filteredRoutes().length > 0) {
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-pink-800" aria-live="polite">
+            <span>Mostrando {{ routePageItems().length }} de {{ filteredRoutes().length }} rutas</span>
+            @if (routePageCount() > 1) {
+              <div class="flex items-center gap-2">
+                <button type="button" class="min-h-11 rounded-xl border border-pink-100 bg-white/70 px-3 font-bold disabled:opacity-50"
+                        (click)="goToRoutePage(visibleRoutePage() - 1)" [disabled]="visibleRoutePage() <= 1"><span class="sm:hidden">←</span><span class="hidden sm:inline">← Anterior</span></button>
+                <span class="whitespace-nowrap">{{ visibleRoutePage() }} / {{ routePageCount() }}</span>
+                <button type="button" class="min-h-11 rounded-xl border border-pink-100 bg-white/70 px-3 font-bold disabled:opacity-50"
+                        (click)="goToRoutePage(visibleRoutePage() + 1)" [disabled]="visibleRoutePage() >= routePageCount()"><span class="sm:hidden">→</span><span class="hidden sm:inline">Siguiente →</span></button>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <!-- ═══ LOADING ═══ -->
@@ -234,6 +255,14 @@ interface GeocodedOrder extends OrderSummaryDto {
             <p class="text-5xl mb-4">🛣️</p>
             <p class="text-pink-500 font-bold text-lg">No hay rutas activas</p>
             <p class="text-pink-300 text-sm mt-1">Ve a Pedidos, selecciona varios y crea una ruta mágica 💕</p>
+          </div>
+        }
+
+        @if (routes().length > 0 && filteredRoutes().length === 0) {
+          <div class="relative z-10 rounded-3xl border border-pink-100 bg-white/80 p-8 text-center">
+            <p class="text-3xl">🔎</p>
+            <p class="mt-2 font-bold text-pink-900">No encontramos rutas</p>
+            <p class="mt-1 text-sm text-pink-700">Prueba otro nombre, número o clienta.</p>
           </div>
         }
 
@@ -280,7 +309,7 @@ interface GeocodedOrder extends OrderSummaryDto {
 
         <!-- ═══ ROUTE CARDS ═══ -->
         <div class="relative z-10 space-y-5">
-          @for (route of filteredRoutes(); track route.id; let i = $index) {
+          @for (route of routePageItems(); track route.id; let i = $index) {
             <div class="group bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden hover:shadow-[0_15px_40px_rgb(244,114,182,0.12)] transition-all duration-300 animate-slide-up"
                  [style.animation-delay]="(i * 70) + 'ms'">
 
@@ -356,6 +385,12 @@ interface GeocodedOrder extends OrderSummaryDto {
                         (click)="shareWhatsApp(route)">
                   📱 <span class="hidden sm:inline">WhatsApp</span>
                 </button>
+                @if (canLiquidateRoute(route)) {
+                  <button type="button" class="min-h-11 flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 hover:bg-emerald-100 active:scale-95 transition-all"
+                          (click)="$event.stopPropagation(); openCorteModal(route)">
+                    💰 <span>Corte de caja</span>
+                  </button>
+                }
                 <button class="sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 rounded-xl bg-red-50 text-red-500 text-xs font-bold border border-red-100 hover:bg-red-100 active:scale-95 transition-all sm:ml-auto"
                         (click)="deleteRoute(route.id)">
                   🗑️
@@ -442,19 +477,54 @@ interface GeocodedOrder extends OrderSummaryDto {
                     }
                   </div>
 
-                  <!-- Quick Add Order to Route -->
-                  @if (route.status !== 'Completed' && pendingOrders().length > 0) {
-                    <div class="p-4 bg-pink-50/50 border-t border-pink-50">
-                      <p class="text-[10px] font-black uppercase tracking-widest text-pink-400 mb-2">➕ Agregar Pedido a esta Ruta</p>
-                      <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
-                        @for (po of pendingOrders(); track po.id) {
-                          <button class="px-3 py-1.5 rounded-xl bg-white border border-pink-100 text-[10px] font-bold text-pink-900 shadow-sm hover:border-pink-300 transition-all flex items-center gap-1"
-                                  (click)="addOrderToRoute(route, po.id)">
-                            <span>#{{ po.id }} · {{ po.clientName }}</span>
-                            <span class="text-pink-400">➕</span>
-                          </button>
-                        }
-                      </div>
+                  <!-- Agregar pedido o tanda sin salir de la ruta -->
+                  @if (route.status !== 'Completed' && route.status !== 'Canceled') {
+                    <div class="border-t border-pink-50 bg-pink-50/50 p-4">
+                      @if (routeStopPicker()?.routeId !== route.id) {
+                        <button type="button" class="min-h-11 w-full rounded-xl border border-pink-200 bg-white px-4 text-sm font-bold text-pink-700 transition-colors hover:bg-pink-50"
+                                (click)="openRouteStopPicker(route, 'Order')">
+                          ＋ Agregar pedido o tanda
+                        </button>
+                      } @else {
+                        <div class="flex flex-wrap items-center gap-2">
+                          <p class="mr-auto text-xs font-black uppercase tracking-wider text-pink-700">Agregar parada</p>
+                          <button type="button" class="min-h-11 rounded-xl px-3 text-xs font-bold"
+                                  [class]="routeStopPicker()?.kind === 'Order' ? 'bg-pink-600 text-white' : 'bg-white text-pink-700 border border-pink-100'"
+                                  (click)="openRouteStopPicker(route, 'Order')">Pedidos</button>
+                          <button type="button" class="min-h-11 rounded-xl px-3 text-xs font-bold"
+                                  [class]="routeStopPicker()?.kind === 'Tanda' ? 'bg-fuchsia-600 text-white' : 'bg-white text-fuchsia-700 border border-fuchsia-100'"
+                                  (click)="openRouteStopPicker(route, 'Tanda')">Tandas</button>
+                          <button type="button" aria-label="Cerrar selector" class="min-h-11 min-w-11 rounded-xl bg-white text-gray-500" (click)="closeRouteStopPicker()">×</button>
+                        </div>
+                        <label class="mt-3 block">
+                          <span class="sr-only">Buscar pedido o tanda</span>
+                          <input class="input-coquette min-h-11" type="search" placeholder="Buscar clienta, pedido o tanda…"
+                                 [ngModel]="routeStopSearch()" (ngModelChange)="routeStopSearch.set($event)" />
+                        </label>
+                        <div class="mt-3 max-h-52 space-y-2 overflow-y-auto overscroll-contain pr-1">
+                          @if (routeStopPicker()?.kind === 'Order') {
+                            @for (po of filteredRouteOrders(); track po.id) {
+                              <button type="button" class="min-h-11 w-full rounded-xl border border-pink-100 bg-white px-3 py-2 text-left text-xs font-semibold text-pink-900 hover:border-pink-300"
+                                      (click)="addOrderToRoute(route, po.id)">
+                                <span class="font-black">Pedido #{{ po.id }}</span> · {{ po.clientName }} <span class="float-right text-pink-500">＋</span>
+                              </button>
+                            } @empty {
+                              <p class="py-3 text-center text-xs text-pink-500">No hay pedidos pendientes que coincidan.</p>
+                            }
+                          } @else if (loadingAvailableTandas()) {
+                            <p class="py-3 text-center text-xs text-fuchsia-600">Cargando tandas disponibles…</p>
+                          } @else {
+                            @for (tanda of filteredRouteTandas(); track tanda.tandaParticipantId) {
+                              <button type="button" class="min-h-11 w-full rounded-xl border border-fuchsia-100 bg-white px-3 py-2 text-left text-xs font-semibold text-fuchsia-950 hover:border-fuchsia-300"
+                                      (click)="addTandaToRoute(route, tanda)">
+                                <span class="font-black">{{ tanda.clientName }}</span> · {{ tanda.tandaName }} · Semana {{ tanda.week }} <span class="float-right text-fuchsia-500">＋</span>
+                              </button>
+                            } @empty {
+                              <p class="py-3 text-center text-xs text-fuchsia-600">No hay entregas de tanda disponibles.</p>
+                            }
+                          }
+                        </div>
+                      }
                     </div>
                   }
 
@@ -529,6 +599,58 @@ interface GeocodedOrder extends OrderSummaryDto {
       <!-- ═══════════════════════════════════════════════════
            MODAL: MAGIC ADDRESS PICKER (UX Overdose)
            ═══════════════════════════════════════════════════ -->
+      @if (showCorteModal()) {
+        @if (corteRoute(); as route) {
+          <div class="fixed inset-0 z-[3000] flex items-end justify-center bg-black/50 p-3 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:items-center sm:p-6"
+               (click)="closeCorte()">
+            <section role="dialog" aria-modal="true" aria-labelledby="routeSettlementTitle"
+                     class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-3xl bg-[#fdfbf7] shadow-2xl"
+                     (click)="$event.stopPropagation()">
+              <header class="rounded-t-3xl bg-gradient-to-r from-pink-600 to-rose-500 px-5 py-5 text-white">
+                <div class="flex items-start gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h2 id="routeSettlementTitle" class="text-lg font-black">Liquidación de chofer</h2>
+                    <p class="mt-1 text-sm text-white/90">Ruta #{{ route.id }} · {{ route.deliveries.length }} paradas resueltas</p>
+                  </div>
+                  <button type="button" class="min-h-11 min-w-11 shrink-0 rounded-full bg-white/15 text-xl" aria-label="Cerrar liquidación"
+                          [disabled]="liquidating()" (click)="closeCorte()">×</button>
+                </div>
+              </header>
+              <div class="space-y-4 px-5 py-5 font-mono text-sm">
+                <div class="flex items-center justify-between gap-3"><span>Efectivo cobrado por chofer</span><strong class="text-emerald-700">{{ corteData().totalCash | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
+                <div class="flex items-center justify-between gap-3 text-xs text-gray-500"><span>Transferencias y otros métodos</span><strong>{{ corteData().totalTransfer | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
+                <div class="border-t border-dashed border-gray-300"></div>
+                <div>
+                  <p class="mb-2 text-xs font-black uppercase tracking-widest text-gray-500">Gastos registrados</p>
+                  @if (route.expenses?.length) {
+                    @for (expense of route.expenses!; track expense.id) {
+                      <div class="flex justify-between gap-3 py-1 text-xs"><span class="min-w-0 break-words">{{ expense.expenseType }}{{ expense.notes ? ' · ' + expense.notes : '' }}</span><strong class="shrink-0 text-rose-600">−{{ expense.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
+                    }
+                  } @else {
+                    <p class="text-xs italic text-gray-400">Sin gastos registrados.</p>
+                  }
+                  <div class="mt-2 flex justify-between border-t border-dashed border-gray-200 pt-2 text-xs font-bold"><span>Total de gastos</span><span class="text-rose-600">−{{ corteData().totalExpenses | currency:'MXN':'symbol-narrow':'1.2-2' }}</span></div>
+                </div>
+                <div class="border-t-2 border-dashed border-gray-400"></div>
+                <div class="text-center">
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Efectivo neto a entregar</p>
+                  <p class="mt-1 text-4xl font-black text-pink-600">{{ corteData().totalToDeliver | currency:'MXN':'symbol-narrow':'1.2-2' }}</p>
+                </div>
+                <p class="rounded-xl bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">Al confirmar se registra el corte de caja de esta ruta. Las entregas pendientes no se modifican.</p>
+              </div>
+              <footer class="sticky bottom-0 flex gap-3 border-t border-pink-100 bg-[#fdfbf7] px-5 pb-5 pt-3">
+                <button type="button" class="min-h-11 flex-1 rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 disabled:opacity-50"
+                        [disabled]="liquidating()" (click)="closeCorte()">Cancelar</button>
+                <button type="button" class="min-h-11 flex-[2] rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 px-4 text-sm font-bold text-white shadow-md disabled:opacity-50"
+                        [disabled]="liquidating() || !canLiquidateRoute(route)" (click)="confirmLiquidate()">
+                  {{ liquidating() ? 'Registrando…' : 'Confirmar corte de caja' }}
+                </button>
+              </footer>
+            </section>
+          </div>
+        }
+      }
+
       @if (showAddressPicker()) {
         <app-address-editor-v2
           [clientName]="pickerOrder()?.clientName"
@@ -952,10 +1074,35 @@ export class RoutesComponent implements OnInit, OnDestroy {
 
   // ─── FILTRO DE RUTAS ───
   routeStatusFilter = signal<string>('All');
+  routeSearch = signal('');
+  visibleRoutePage = signal(1);
+  readonly routePageSize = 10;
   filteredRoutes = computed(() => {
     const f = this.routeStatusFilter();
-    if (f === 'All') return this.routes();
-    return this.routes().filter(r => r.status === f);
+    const query = this.normalizeRouteSearch(this.routeSearch());
+    return this.routes().filter(route => {
+      if (f !== 'All' && route.status !== f) return false;
+      if (!query) return true;
+      const searchableValues = [
+        `ruta ${route.id}`,
+        `#${route.id}`,
+        ...route.deliveries.flatMap(delivery => [
+          delivery.clientName,
+          delivery.tandaName ?? '',
+          delivery.tandaProductName ?? '',
+          delivery.tandaVariant ?? '',
+          delivery.orderId != null ? `pedido ${delivery.orderId}` : ''
+        ])
+      ];
+      return searchableValues.some(value => this.normalizeRouteSearch(value).includes(query));
+    });
+  });
+  routePageCount = computed(() => Math.max(1, Math.ceil(this.filteredRoutes().length / this.routePageSize)));
+  routePageItems = computed(() => {
+    const routes = this.filteredRoutes();
+    const page = Math.min(this.visibleRoutePage(), this.routePageCount());
+    const start = (page - 1) * this.routePageSize;
+    return routes.slice(start, start + this.routePageSize);
   });
 
   // ─── AUTO-REFRESH ───
@@ -991,6 +1138,20 @@ export class RoutesComponent implements OnInit, OnDestroy {
   // Create Route
   showCreateModal = signal(false);
   pendingOrders = signal<OrderSummaryDto[]>([]);
+  availableTandas = signal<AvailableTandaDto[]>([]);
+  loadingAvailableTandas = signal(false);
+  routeStopPicker = signal<{ routeId: number; kind: 'Order' | 'Tanda' } | null>(null);
+  routeStopSearch = signal('');
+  filteredRouteOrders = computed(() => {
+    const query = this.normalizeRouteSearch(this.routeStopSearch());
+    return this.pendingOrders().filter(order => !query ||
+      this.normalizeRouteSearch(`#${order.id} ${order.clientName} ${order.clientPhone ?? ''}`).includes(query));
+  });
+  filteredRouteTandas = computed(() => {
+    const query = this.normalizeRouteSearch(this.routeStopSearch());
+    return this.availableTandas().filter(tanda => !query ||
+      this.normalizeRouteSearch(`${tanda.clientName} ${tanda.tandaName} ${tanda.tandaProductName ?? ''} ${tanda.variant ?? ''} ${tanda.week}`).includes(query));
+  });
   selectedOrderIds = signal<Set<number>>(new Set());
   creating = signal(false);
   expandedRouteIds = signal<Set<number>>(new Set());
@@ -1014,6 +1175,9 @@ export class RoutesComponent implements OnInit, OnDestroy {
   showAddressPicker = signal(false);
   pickerOrder = signal<OrderSummaryDto | null>(null);
   showOptimizerModal = signal(false);
+  showCorteModal = signal(false);
+  corteRoute = signal<RouteDto | null>(null);
+  liquidating = signal(false);
 
   // Search & Filtering
   searchQuery = signal('');
@@ -1499,6 +1663,49 @@ export class RoutesComponent implements OnInit, OnDestroy {
     });
   }
 
+  private normalizeRouteSearch(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
+
+  setRouteSearch(value: string): void {
+    this.routeSearch.set(value);
+    this.visibleRoutePage.set(1);
+  }
+
+  setRouteStatusFilter(status: string): void {
+    this.routeStatusFilter.set(status);
+    this.visibleRoutePage.set(1);
+  }
+
+  goToRoutePage(page: number): void {
+    this.visibleRoutePage.set(Math.max(1, Math.min(page, this.routePageCount())));
+  }
+
+  openRouteStopPicker(route: RouteDto, kind: 'Order' | 'Tanda'): void {
+    if (route.status === 'Completed' || route.status === 'Canceled') return;
+    this.routeStopPicker.set({ routeId: route.id, kind });
+    this.routeStopSearch.set('');
+    if (kind !== 'Tanda') return;
+
+    this.loadingAvailableTandas.set(true);
+    this.api.getAvailableTandas().subscribe({
+      next: tandas => {
+        this.availableTandas.set(tandas);
+        this.loadingAvailableTandas.set(false);
+      },
+      error: () => {
+        this.availableTandas.set([]);
+        this.loadingAvailableTandas.set(false);
+        this.toast.error('No se pudieron cargar las tandas disponibles.');
+      }
+    });
+  }
+
+  closeRouteStopPicker(): void {
+    this.routeStopPicker.set(null);
+    this.routeStopSearch.set('');
+  }
+
   // ─── INLINE ADDRESS EDITING ───
   startEditAddress(order: any): void {
     this.editingOrderId.set(order.id);
@@ -1729,6 +1936,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
       next: (r) => {
         r.sort((a, b) => b.id - a.id);
         this.routes.set(r);
+        this.visibleRoutePage.update(page => Math.min(page, this.routePageCount()));
         this.loading.set(false);
         this.lastRefreshedAt.set(new Date());
         this.refreshAgo.set('ahora');
@@ -1746,7 +1954,10 @@ export class RoutesComponent implements OnInit, OnDestroy {
     this.api.getOrders().subscribe({
       next: (orders) => {
         this.pendingOrders.set(
-          orders.filter(o => o.status !== 'Canceled' && o.status !== 'Delivered' && o.orderType !== 'PickUp' && !o.deliveryRouteId)
+          orders.filter(o =>
+            (o.status === 'Pending' || o.status === 'Confirmed' || o.status === 'Postponed') &&
+            o.orderType !== 'PickUp' && !o.deliveryRouteId
+          )
             .sort((a, b) => (a.clientAddress ? 0 : 1) - (b.clientAddress ? 0 : 1))
         );
       }
@@ -1783,14 +1994,27 @@ export class RoutesComponent implements OnInit, OnDestroy {
     }
   }
 
-  async addOrderToRoute(route: any, orderId: number) {
+  async addOrderToRoute(route: RouteDto, orderId: number): Promise<void> {
     const pos = await this.getCurrentLocation();
     this.api.addOrderToRoute(route.id, orderId, pos?.lat, pos?.lng).subscribe({
       next: () => {
         this.toast.success('Pedido agregado a la ruta 🚀');
+        this.closeRouteStopPicker();
         this.loadRoutes();
       },
       error: (err) => this.toast.error(err.error?.message || 'Error al agregar pedido')
+    });
+  }
+
+  async addTandaToRoute(route: RouteDto, tanda: AvailableTandaDto): Promise<void> {
+    const position = await this.getCurrentLocation();
+    this.api.addTandaToRoute(route.id, tanda.tandaParticipantId, position?.lat, position?.lng).subscribe({
+      next: () => {
+        this.toast.success('Entrega de tanda agregada a la ruta ✨');
+        this.closeRouteStopPicker();
+        this.loadRoutes();
+      },
+      error: (error) => this.toast.error(error.error?.message || 'No se pudo agregar la tanda a la ruta.')
     });
   }
 
@@ -2403,6 +2627,67 @@ export class RoutesComponent implements OnInit, OnDestroy {
     });
     const gastos = route.expenses?.reduce((s, e) => s + e.amount, 0) || 0;
     return { cobrado, gastos, neto: cobrado - gastos };
+  }
+
+  canLiquidateRoute(route: RouteDto): boolean {
+    return route.status !== 'Canceled' && !route.liquidatedAt && route.deliveries.length > 0 &&
+      route.deliveries.every(delivery => delivery.status === 'Delivered' || delivery.status === 'NotDelivered');
+  }
+
+  openCorteModal(route: RouteDto): void {
+    if (!this.canLiquidateRoute(route)) {
+      this.toast.info('El corte estará disponible cuando todas las paradas tengan un resultado.');
+      return;
+    }
+    this.corteRoute.set(route);
+    this.showCorteModal.set(true);
+  }
+
+  closeCorte(): void {
+    if (this.liquidating()) return;
+    this.showCorteModal.set(false);
+    this.corteRoute.set(null);
+  }
+
+  corteData(): { totalCash: number; totalTransfer: number; totalExpenses: number; totalToDeliver: number } {
+    const route = this.corteRoute();
+    if (!route) return { totalCash: 0, totalTransfer: 0, totalExpenses: 0, totalToDeliver: 0 };
+
+    let totalCash = 0;
+    let totalTransfer = 0;
+    for (const delivery of route.deliveries) {
+      if (delivery.status !== 'Delivered') continue;
+      for (const payment of delivery.payments ?? []) {
+        if (payment.registeredBy.trim().toLowerCase() !== 'driver') continue;
+        if (this.normalizeRouteSearch(payment.method) === 'efectivo') totalCash += payment.amount;
+        else totalTransfer += payment.amount;
+      }
+    }
+
+    const totalExpenses = route.expenses?.reduce((sum, expense) => sum + expense.amount, 0) ?? 0;
+    return { totalCash, totalTransfer, totalExpenses, totalToDeliver: totalCash - totalExpenses };
+  }
+
+  confirmLiquidate(): void {
+    const route = this.corteRoute();
+    if (!route || !this.canLiquidateRoute(route)) {
+      this.toast.error('La ruta cambió y ya no está lista para el corte. Actualiza la información.');
+      return;
+    }
+
+    this.liquidating.set(true);
+    this.api.liquidateRoute(route.id).subscribe({
+      next: () => {
+        this.liquidating.set(false);
+        this.toast.success('Corte de caja registrado correctamente.');
+        this.closeCorte();
+        this.loadRoutes();
+      },
+      error: () => {
+        this.liquidating.set(false);
+        this.toast.error('No se pudo registrar el corte. Actualiza la ruta e inténtalo de nuevo.');
+      }
+    });
   }
 
   // ─── ROUTE SUMMARY (post-completada) ───

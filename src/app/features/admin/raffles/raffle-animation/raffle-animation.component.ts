@@ -18,7 +18,7 @@ interface Participant {
             
             @if (!isPreview()) {
                 <div class="cinematic-bg"></div>
-                <button (click)="close.emit()" class="close-btn">×</button>
+                <button (click)="close.emit()" class="close-btn" aria-label="Cerrar sorteo">×</button>
             }
 
 
@@ -561,6 +561,48 @@ interface Participant {
             }
             .start-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 20px 50px rgba(236, 72, 153, 0.5); }
             .start-btn:disabled { opacity: 0.5; cursor: default; }
+
+            @media (max-width: 700px) {
+                .arena-overlay:not(.preview-mode) {
+                    min-height: 100dvh;
+                    align-items: flex-start;
+                    overflow-y: auto;
+                    overscroll-behavior: contain;
+                    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+                }
+                .arena-content {
+                    box-sizing: border-box;
+                    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                    justify-content: center;
+                    padding: 3.5rem 14px 1rem;
+                }
+                .header-section { margin-bottom: 0.75rem; }
+                .presents { max-width: 80vw; letter-spacing: 0.18em; overflow-wrap: anywhere; }
+                .main-title { max-width: 90vw; font-size: 2rem; line-height: 1.15; overflow-wrap: anywhere; }
+                .animation-workspace { height: min(48dvh, 400px); min-height: 220px; }
+                .roulette-container { width: min(78vw, 48dvh, 400px); height: auto; aspect-ratio: 1; }
+                .roulette-pointer svg { width: 42px; height: 42px; }
+                .center-piece { width: 68px; height: 68px; border-width: 5px; }
+                .slot-machine { max-width: 100%; gap: clamp(5px, 2vw, 12px); padding: clamp(10px, 4vw, 20px); border-width: 5px; border-radius: 24px; }
+                .slot-column { width: min(25vw, 110px); height: min(34dvh, 210px); border-radius: 14px; }
+                .slot-item { height: min(34dvh, 210px); padding: 8px; font-size: 1rem; overflow-wrap: anywhere; }
+                .elimination-container { min-height: 0; padding: 0.5rem; }
+                .elimination-grid { min-height: 200px; }
+                .footer-section { height: auto; min-height: 64px; margin-top: 0.75rem; justify-content: center; }
+                .start-btn { width: min(100%, 360px); min-height: 52px; padding: 0.75rem 1rem; font-size: 1rem; }
+                .winner-overlay { overflow-y: auto; overscroll-behavior: contain; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+                .winner-card { box-sizing: border-box; width: min(100%, 520px); max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); overflow-y: auto; padding: 1.5rem 1rem; border-radius: 24px; }
+                .winner-badge { margin-bottom: 1rem; font-size: 0.8rem; letter-spacing: 0.18em; line-height: 1.4; }
+                .winner-name-final { margin-bottom: 1rem; font-size: clamp(2rem, 11vw, 3.5rem); overflow-wrap: anywhere; }
+                .winner-stars { margin-bottom: 1rem; font-size: 1.5rem; }
+                .continue-btn { width: 100%; min-height: 48px; padding: 0.75rem 1rem; letter-spacing: 0.04em; }
+                .summary-card { box-sizing: border-box; width: min(100%, 520px); max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); padding: 1.25rem 1rem; border-radius: 24px; }
+                .summary-title { margin-bottom: 1rem; font-size: 1.15rem; line-height: 1.35; }
+                .summary-list { min-height: 100px; padding: 0.75rem; gap: 0.5rem; border-radius: 16px; }
+                .summary-item { min-width: 0; gap: 0.6rem; padding: 0.6rem 0.75rem; border-radius: 14px; }
+                .name-label { min-width: 0; font-size: 0.95rem; overflow-wrap: anywhere; }
+                .close-btn { top: max(6px, env(safe-area-inset-top)); right: max(6px, env(safe-area-inset-right)); width: 48px; height: 48px; display: grid; place-items: center; font-size: 2rem; }
+            }
         </style>
     `
 })
@@ -813,6 +855,11 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
     }
 
     private startPreviewLoop() {
+        if (this.prefersReducedMotion()) {
+            this.drawWheel();
+            return;
+        }
+
         this.tickerActive = true;
         const tick = () => {
             if (!this.tickerActive) return;
@@ -848,7 +895,12 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         this.spinning.set(true);
         this.requesting.set(emitRequest);
         this.winner.set(null);
-        this.tickerActive = true;
+        this.tickerActive = !this.prefersReducedMotion();
+
+        if (this.prefersReducedMotion()) {
+            if (emitRequest) this.startRequested.emit();
+            return;
+        }
 
         if (this.animationType() === 'roulette') {
             const obj = { speed: 0 };
@@ -906,6 +958,11 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         if (this.currentWinnerIndex() >= this.currentWinnerNames().length) return;
 
         const winnerName = this.currentWinnerNames()[this.currentWinnerIndex()];
+        if (this.prefersReducedMotion()) {
+            this.showWinner(winnerName);
+            return;
+        }
+
         const type = this.animationType();
         if (type === 'roulette') {
             this.spinRouletteFinal(winnerName);
@@ -938,7 +995,7 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         
         setTimeout(() => {
             this.spinForCurrentIndex();
-        }, 1500);
+        }, this.prefersReducedMotion() ? 0 : 1500);
     }
 
     getTurnNumber(index: number): number {
@@ -1082,6 +1139,8 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         const p = this.participants().find(x => x.name === name) || { id: '0', name };
         this.winner.set(p);
         this.spinning.set(false);
+
+        if (this.prefersReducedMotion()) return;
         
         setTimeout(() => {
             if (this.winnerDisplay) {
@@ -1127,6 +1186,8 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         this.summaryMode.set(true);
         this.playWinnerSound();
 
+        if (this.prefersReducedMotion()) return;
+
         setTimeout(() => {
             // Cinematic Confetti Sequence for Summary
             const duration = 3 * 1000;
@@ -1159,6 +1220,11 @@ export class RaffleAnimationComponent implements AfterViewInit, OnDestroy {
         if (total <= 40) return 'repeat(6, 1fr)';
         if (total <= 80) return 'repeat(8, 1fr)';
         return 'repeat(10, 1fr)';
+    }
+
+    private prefersReducedMotion(): boolean {
+        return typeof window !== 'undefined'
+            && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
     getCardHeight(): string {

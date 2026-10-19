@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -22,30 +22,26 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="relative min-h-screen overflow-hidden bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50 pb-24 font-sans text-stone-800"
-         (scroll)="onScroll($event)">
+    <div class="relative min-h-[100dvh] min-w-0 overflow-hidden bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50 pb-24 font-sans text-stone-800">
          
       <!-- Parallax Background Layers -->
       <div class="fixed inset-0 pointer-events-none z-0">
         <!-- Layer 1: Slowest (Far back) -->
-        <div class="absolute inset-0 opacity-40 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.1 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-40">
           <div class="absolute top-[10%] left-[5%] text-4xl animate-pulse-slow">✨</div>
           <div class="absolute top-[40%] right-[10%] text-5xl opacity-50">🌸</div>
           <div class="absolute top-[75%] left-[15%] text-4xl animate-float">🎀</div>
         </div>
         
         <!-- Layer 2: Medium speed -->
-        <div class="absolute inset-0 opacity-60 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.25 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-60">
           <div class="absolute top-[20%] right-[15%] text-3xl animate-float-delayed">💖</div>
           <div class="absolute top-[60%] left-[8%] text-5xl">✨</div>
           <div class="absolute top-[85%] right-[20%] text-3xl animate-bounce-slow">🌷</div>
         </div>
         
         <!-- Layer 3: Fastest (Closest) -->
-        <div class="absolute inset-0 opacity-80 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.5 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-80">
           <div class="absolute top-[5%] right-[30%] text-2xl blur-[1px]">🌸</div>
           <div class="absolute top-[50%] right-[5%] text-4xl blur-[1px] animate-float">🎀</div>
           <div class="absolute top-[30%] left-[20%] text-2xl blur-[1px]">✨</div>
@@ -962,7 +958,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
   private cardFormInstance: any = null;
 
   // Parallax Scroll Tracking
-  scrollY = signal(0);
 
   toastVisible = signal(false);
   toastMessage = signal('');
@@ -1199,14 +1194,6 @@ export class OrderViewComponent implements OnInit, OnDestroy, AfterViewInit {
     // El SVG viene del canvas y puede contener data:image/png en base64.
     // Confiamos en él porque lo generamos nosotros mismos en la app del conductor.
     return this.sanitizer.bypassSecurityTrustHtml(svg);
-  }
-
-  @HostListener('window:scroll', ['$event'])
-  onScroll(event: Event) {
-    // Basic implementation for window scroll. 
-    // Wait, the template binds (scroll)="onScroll($event)" to the main div. 
-    // Let's read from window scroll as well to be safe if body scrolls.
-    this.scrollY.set(window.scrollY);
   }
 
   ngOnInit() {

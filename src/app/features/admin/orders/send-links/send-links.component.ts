@@ -106,11 +106,11 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
               </div>
 
               <!-- Actions -->
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
                 <button class="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
                         title="Solo copiar el enlace" (click)="copyLink(o)">🔗</button>
 
-                <button class="flex items-center gap-2 px-4 h-10 rounded-xl bg-pink-500 text-white font-black text-sm hover:bg-pink-600 hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-200"
+                <button class="order-first sm:order-none w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 px-4 rounded-xl bg-pink-500 text-white font-black text-sm hover:bg-pink-600 hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-200"
                         (click)="send(o)">
                   💌 Copiar y marcar enviado
                 </button>

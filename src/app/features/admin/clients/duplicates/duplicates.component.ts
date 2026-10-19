@@ -16,7 +16,7 @@ interface PairWithDetails {
     standalone: true,
     imports: [CommonModule, DatePipe],
     template: `
-    <div class="p-4 lg:p-8 min-h-[80vh]">
+    <div class="min-w-0 p-4 lg:p-8">
       <div class="max-w-5xl mx-auto">
         <header class="mb-6">
           <h1 class="text-3xl font-bold text-pink-900">🪞 Clientas duplicadas</h1>

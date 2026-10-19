@@ -12,7 +12,7 @@ import { gsap } from 'gsap';
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink],
     template: `
-        <div class="relative min-h-[80vh] overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
+        <div class="relative min-w-0 overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
             <div class="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-pink-50/50 via-purple-50/50 to-rose-50/50"></div>
                 <div class="absolute top-[10%] left-[5%] text-6xl animate-pulse-slow blur-[1px]">🎉</div>
@@ -23,8 +23,8 @@ import { gsap } from 'gsap';
 
             <div class="space-y-6 relative z-10 max-w-7xl mx-auto">
                 <div class="flex flex-wrap items-center justify-between gap-6 animate-slide-down">
-                    <div>
-                        <h1 class="text-4xl font-black text-pink-900 font-display flex items-center gap-4">
+                    <div class="min-w-0">
+                        <h1 class="min-w-0 text-2xl sm:text-4xl font-black text-pink-900 font-display flex flex-wrap items-center gap-2 sm:gap-4">
                             <span class="animate-wiggle inline-block drop-shadow-xl">✨</span>
                             Centro de Sorteos
                         </h1>
@@ -65,7 +65,7 @@ import { gsap } from 'gsap';
 
                 <div class="card-coquette bg-white/30 backdrop-blur-lg p-6 border-white/40 animate-slide-up delay-100">
                     <div class="flex flex-wrap gap-6 items-end">
-                        <div class="flex-1 min-w-[300px] relative">
+                        <div class="w-full min-w-0 flex-1 sm:min-w-[300px] relative">
                             <label class="label-coquette text-pink-800 font-bold mb-2 block">🔍 Filtrar por nombre</label>
                             <div class="relative group">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400 group-focus-within:text-pink-600 transition-colors">🔍</span>

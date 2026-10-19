@@ -229,7 +229,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
       @if (selectedOrder() && drawerOpen()) {
         <div class="fixed inset-0 z-[90] bg-gradient-to-r from-pink-900/10 to-pink-800/20 backdrop-blur-[6px] transition-opacity" (click)="closeDrawer()"></div>
         
-        <div class="fixed inset-y-0 right-0 z-[100] w-full md:w-[520px] lg:w-[620px] bg-gradient-to-b from-white via-pink-50/20 to-rose-50/30 backdrop-blur-2xl shadow-[-20px_0_60px_-10px_rgba(236,72,153,0.15)] transform transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col rounded-l-[2rem] overflow-hidden border-l border-pink-100/30"
+        <div class="fixed inset-y-0 right-0 z-[100] w-full md:w-[520px] lg:w-[620px] pt-[env(safe-area-inset-top)] bg-gradient-to-b from-white via-pink-50/20 to-rose-50/30 backdrop-blur-2xl shadow-[-20px_0_60px_-10px_rgba(236,72,153,0.15)] transform transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col rounded-none md:rounded-l-[2rem] overflow-hidden border-l border-pink-100/30"
              [class.translate-x-0]="drawerOpen()" [class.translate-x-full]="!drawerOpen()">
              
           <!-- Header -->
@@ -266,7 +266,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                 }
               </div>
             </div>
-            <button class="w-9 h-9 flex shrink-0 items-center justify-center rounded-full bg-white/80 text-pink-400 hover:bg-pink-100 hover:text-pink-600 transition-all shadow-sm border border-pink-100/50 ml-4" (click)="closeDrawer()">✕</button>
+            <button class="w-11 h-11 min-w-[44px] min-h-[44px] flex shrink-0 items-center justify-center rounded-full bg-white/80 text-pink-400 hover:bg-pink-100 hover:text-pink-600 transition-all shadow-sm border border-pink-100/50 ml-3" aria-label="Cerrar pedido" (click)="closeDrawer()">✕</button>
           </div>
 
           <!-- Scrollable Body -->
@@ -573,17 +573,17 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
           </div>
 
           <!-- Quick WhatsApp Toolbar -->
-          <div class="bg-white/90 backdrop-blur-xl border-t border-pink-100/50 p-4 shrink-0 flex items-center justify-between gap-2 shadow-[0_-4px_20px_rgba(236,72,153,0.08)]">
+          <div class="bg-white/90 backdrop-blur-xl border-t border-pink-100/50 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 flex items-center justify-between gap-2 shadow-[0_-4px_20px_rgba(236,72,153,0.08)]">
             <div class="flex flex-col">
               <span class="text-[9px] text-pink-400 font-black uppercase tracking-widest">Total</span>
               <span class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-700 to-rose-600">{{ selectedOrder()!.total | currency:'MXN':'symbol-narrow' }}</span>
             </div>
             
             <div class="flex gap-1.5">
-              <button class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:text-purple-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-purple-100/50" title="Copiar Enlace Público" (click)="copyLink()">🔗</button>
-              <button class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-blue-100/50" title="En Camino" (click)="sendWaOnRoute()">🚗</button>
-              <button class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-rose-100/50" title="Cobrar" (click)="sendWaPaymentRequest()">💸</button>
-              <button class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-amber-100/50" title="Regalo Cumpleaños 🎂" (click)="applyBirthdayGift()">🎁</button>
+              <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:text-purple-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-purple-100/50" aria-label="Copiar enlace público" (click)="copyLink()">🔗</button>
+              <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-blue-100/50" aria-label="Enviar aviso de pedido en camino" (click)="sendWaOnRoute()">🚗</button>
+              <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-rose-100/50" aria-label="Enviar solicitud de cobro" (click)="sendWaPaymentRequest()">💸</button>
+              <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-amber-100/50" aria-label="Aplicar regalo de cumpleaños" (click)="applyBirthdayGift()">🎁</button>
             </div>
           </div>
         </div>
@@ -610,9 +610,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
       <!-- Print Preview Modal -->
       @if (showPrintPreview() && printHtml()) {
         <div class="fixed inset-0 z-[150] bg-pink-900/60 flex items-center justify-center p-2 md:p-4 animate-fade-in">
-          <div class="bg-white rounded-[2rem] md:rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-[0_32px_64px_-12px_rgba(244,114,182,0.3)] border border-pink-100/50 flex flex-col animate-scale-up" style="max-height: 95vh; contain: content;">
+          <div class="bg-white rounded-2xl md:rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-[0_32px_64px_-12px_rgba(244,114,182,0.3)] border border-pink-100/50 flex flex-col animate-scale-up" style="max-height: 95vh; max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem); contain: content;">
             <!-- Modal Header -->
-            <div class="px-8 py-6 bg-gradient-to-r from-pink-100/40 to-rose-50/40 border-b border-pink-100/40 flex items-center justify-between">
+            <div class="p-4 md:px-8 md:py-6 bg-gradient-to-r from-pink-100/40 to-rose-50/40 border-b border-pink-100/40 flex items-center justify-between gap-3">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-sm border border-pink-100">🖨️</div>
                 <div>
@@ -632,7 +632,7 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
             </div>
 
             <!-- Modal Footer -->
-            <div class="p-8 bg-white border-t border-pink-100/40 flex gap-4">
+            <div class="p-4 md:p-8 bg-white border-t border-pink-100/40 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button class="flex-1 btn-coquette btn-outline-pink py-4 font-black text-sm" (click)="closePrintPreview()">Regresar ✨</button>
               <button class="flex-1 btn-coquette btn-pink py-4 font-black text-sm shadow-xl shadow-pink-200/50 flex items-center justify-center gap-2 group" (click)="executePrint()">
                 <span class="text-xl group-hover:animate-bounce">🖨️</span> Imprimir Etiqueta

@@ -2,6 +2,10 @@
     display: block;
 }
 
+.pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 /* ═══ CUSTOM HUD ANIMATIONS ═══ */
 
 @keyframes bounce-horizontal {

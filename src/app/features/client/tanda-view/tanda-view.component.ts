@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy, HostListener, computed, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +13,7 @@ import { gsap } from 'gsap';
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="tv-root" (scroll)="onScroll($event)">
+    <div class="tv-root">
 
       <!-- ░░ ORBS DE FONDO ░░ -->
       <div class="tv-bg-orbs" aria-hidden="true">
@@ -517,7 +517,7 @@ import { gsap } from 'gsap';
       color: #f0edf8;
       position: relative;
       overflow-x: hidden;
-      padding-bottom: 6rem;
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
     }
 
     /* ── BG Orbs ── */
@@ -1079,7 +1079,7 @@ import { gsap } from 'gsap';
 
     /* ── ASSISTANT ── */
     .tv-assistant {
-      position: fixed; bottom: 1.5rem; right: 1.25rem;
+      position: fixed; bottom: calc(1.5rem + env(safe-area-inset-bottom)); right: max(1rem, env(safe-area-inset-right));
       z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;
     }
     .tv-assistant__bubble {
@@ -1122,7 +1122,7 @@ import { gsap } from 'gsap';
     /* ── TOAST ── */
     .tv-toast {
       position: fixed;
-      bottom: 5.5rem;
+      bottom: calc(5.5rem + env(safe-area-inset-bottom));
       left: 50%; transform: translateX(-50%);
       z-index: 100;
       display: flex; align-items: center; gap: 0.625rem;
@@ -1166,7 +1166,6 @@ export class TandaViewComponent implements OnInit, OnDestroy {
   tanda = signal<any | null>(null);
   loading = signal(true);
   error = signal(false);
-  scrollY = signal(0);
   accessToken: string = '';
 
   activeTab = signal<'summary' | 'transparency'>('summary');
@@ -1192,11 +1191,6 @@ export class TandaViewComponent implements OnInit, OnDestroy {
     if (!t) return false;
     return false;
   });
-
-  @HostListener('window:scroll', ['$event'])
-  onScroll(event?: any) {
-    this.scrollY.set(window.scrollY);
-  }
 
   copyText(val: string) {
     navigator.clipboard.writeText(val).then(() => {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, HostListener, computed, effect } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { ThemeService } from '../../../core/services/theme.service';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
@@ -12,37 +12,34 @@ import { gsap } from 'gsap';
   selector: 'app-clients',
   imports: [FormsModule, CurrencyPipe],
   template: `
-    <div class="relative min-h-[80vh] overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
+    <div class="relative min-w-0 overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
       <!-- Parallax Background Elements -->
       <div class="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-pink-50/50 via-purple-50/50 to-rose-50/50"></div>
         
         <!-- Slowest Layer -->
-        <div class="absolute inset-0 opacity-40 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.1 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-40">
           <div class="absolute top-[10%] left-[5%] text-6xl animate-pulse-slow blur-[1px]">🌸</div>
           <div class="absolute top-[60%] right-[10%] text-5xl opacity-50">✨</div>
         </div>
         
         <!-- Medium Layer -->
-        <div class="absolute inset-0 opacity-60 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.25 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-60">
           <div class="absolute top-[20%] right-[20%] text-4xl animate-float-delayed">💖</div>
           <div class="absolute top-[75%] left-[15%] text-5xl animate-bounce-slow blur-[1px]">🎀</div>
         </div>
         
         <!-- Fast Layer -->
-        <div class="absolute inset-0 opacity-80 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.4 + 'px)'">
+        <div class="hidden sm:block absolute inset-0 opacity-80">
           <div class="absolute top-[40%] left-[8%] text-3xl animate-float">🌷</div>
           <div class="absolute top-[85%] right-[25%] text-2xl blur-[1px]">💎</div>
         </div>
       </div>
 
-      <div class="space-y-6 relative z-10 max-w-7xl mx-auto">
+      <div class="space-y-6 relative z-10 w-full min-w-0 max-w-7xl mx-auto">
         <div class="flex flex-wrap items-center justify-between gap-4 animate-slide-down">
           <div>
-            <h1 class="text-3xl font-black text-pink-900 font-display flex items-center gap-3">
+            <h1 class="min-w-0 text-2xl sm:text-3xl font-black text-pink-900 font-display flex flex-wrap items-center gap-2 sm:gap-3">
               <span class="animate-wiggle inline-block drop-shadow-md">💎</span> 
               Directorio de Clientas
             </h1>
@@ -60,7 +57,7 @@ import { gsap } from 'gsap';
         <!-- Filters (Glassmorphic) -->
         <div class="bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(244,114,182,0.1)] animate-slide-up delay-100" style="opacity:0; animation-fill-mode: forwards;">
           <div class="flex flex-wrap gap-3 items-center">
-            <div class="flex-1 min-w-[250px] relative">
+            <div class="w-full min-w-0 flex-1 sm:min-w-[250px] relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">🔍</span>
               <input class="w-full bg-white/60 border border-pink-200/50 rounded-2xl py-3 pl-10 pr-4 text-pink-900 placeholder-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all shadow-inner" 
                      placeholder="Buscar por nombre, teléfono o dirección..." 
@@ -190,7 +187,6 @@ export class ClientsComponent implements OnInit {
   search = signal('');
   tagFilter = signal('');
   typeFilter = signal('');
-  scrollY = signal(0);
 
   // Computed signal for filtered clients
   filteredClients = computed(() => {
@@ -229,11 +225,6 @@ export class ClientsComponent implements OnInit {
         setTimeout(() => this.animateList(), 50);
       }
     });
-  }
-
-  @HostListener('window:scroll', ['$event'])
-  onScroll(event: Event) {
-    this.scrollY.set(window.scrollY);
   }
 
   ngOnInit(): void {

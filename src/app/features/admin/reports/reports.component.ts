@@ -38,7 +38,7 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
       </div>
 
       <!-- Filters Panel -->
-      <div class="card-coquette p-6 border-pink-100 bg-white/60 backdrop-blur-md sticky top-0 z-30 shadow-sm animate-slide-up overflow-hidden">
+      <div class="card-coquette p-6 border-pink-100 bg-white/60 backdrop-blur-md shadow-sm animate-slide-up overflow-hidden">
         <!-- Floating Sparkles Background -->
         <div class="absolute inset-0 pointer-events-none opacity-20">
           <div class="sparkle-1">✨</div>
@@ -49,7 +49,7 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
         <div class="flex flex-wrap gap-6 items-end relative z-10">
           <div class="flex-1 min-w-[200px]">
             <label class="label-coquette text-pink-800 font-black mb-2 block text-xs tracking-widest uppercase">📅 Rango de Fechas</label>
-            <div class="flex items-center gap-2 group">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 group">
               <input type="date" class="input-coquette flex-1 shadow-inner focus:ring-pink-300 transition-all border-pink-50 calendar-pink" 
                      [(ngModel)]="startDate" (change)="onDateChange()" />
               <span class="text-pink-200 font-black">/</span>
@@ -594,20 +594,20 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
              [class.animate-fade-out]="closingGeminiModal()"
              (click)="closeGeminiModal()">
              
-          <div class="bg-gradient-to-br from-[#f8f5fc] to-[#fce4ec] w-full max-w-6xl rounded-3xl sm:rounded-[3rem] max-h-[95vh] flex flex-col overflow-hidden shadow-[0_0_80px_rgb(236,72,153,0.3)] border border-pink-200" 
+          <div class="bg-gradient-to-br from-[#f8f5fc] to-[#fce4ec] w-full max-w-6xl rounded-2xl sm:rounded-[3rem] max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1rem)] flex flex-col overflow-hidden shadow-[0_0_80px_rgb(236,72,153,0.3)] border border-pink-200"
                [class.animate-scale-in]="!closingGeminiModal()"
                [class.animate-scale-out]="closingGeminiModal()"
                (click)="$event.stopPropagation()">
             
             <!-- Modal Header -->
-            <div class="px-8 py-6 border-b border-pink-100/50 flex justify-between items-center bg-white/40 sticky top-0 z-20 backdrop-blur-xl">
+            <div class="p-4 sm:px-8 sm:py-6 border-b border-pink-100/50 flex justify-between items-center gap-3 bg-white/40 sticky top-0 z-20 backdrop-blur-xl">
               <div class="flex items-center gap-4">
-                 <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl shadow-lg shadow-pink-200/50">
+                 <div class="hidden sm:flex w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 items-center justify-center text-2xl shadow-lg shadow-pink-200/50">
                    ✨
                  </div>
                  <div>
-                   <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-pink-700 tracking-tight">Resultados Estratégicos</h2>
-                   <p class="text-sm font-bold text-pink-400">Powered by Gemini 1.5 Pro</p>
+                   <h2 class="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-pink-700 tracking-tight">Resultados Estratégicos</h2>
+                   <p class="hidden sm:block text-sm font-bold text-pink-400">Powered by Gemini 1.5 Pro</p>
                  </div>
               </div>
               <button class="w-10 h-10 rounded-full bg-white/80 hover:bg-pink-100 text-pink-500 flex items-center justify-center text-xl shadow-sm transition-colors" (click)="closeGeminiModal()">✕</button>
@@ -661,7 +661,7 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
               </div>
             </div>
             
-            <div class="px-8 py-5 border-t border-pink-100 bg-white/40 backdrop-blur-md flex justify-end">
+            <div class="p-4 sm:px-8 sm:py-5 border-t border-pink-100 bg-white/40 backdrop-blur-md flex justify-end pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <button class="px-8 py-3 rounded-2xl bg-white border-2 border-pink-200 text-pink-600 font-bold hover:bg-pink-50 focus:ring-4 focus:ring-pink-100 transition-all" (click)="closeGeminiModal()">
                  Entendido 👍
               </button>

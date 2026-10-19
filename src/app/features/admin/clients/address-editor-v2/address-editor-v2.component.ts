@@ -22,22 +22,22 @@ interface Suggestion {
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [CommonModule, FormsModule, GoogleMap, MapMarker],
     template: `
-    <div class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center sm:justify-center"
+    <div class="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center sm:justify-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
          (click)="cancel.emit()">
         <div class="w-full sm:max-w-5xl sm:mx-4 bg-white sm:rounded-[2rem] flex flex-col overflow-hidden shadow-2xl"
-             style="height:96dvh; max-height:96dvh;"
+             style="height: 96dvh; height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));"
              (click)="$event.stopPropagation()">
 
             <!-- ── HEADER ── -->
-            <div class="px-6 pt-5 pb-4 shrink-0 border-b border-gray-100 flex items-center justify-between">
+            <div class="px-4 sm:px-6 pt-4 sm:pt-5 pb-4 shrink-0 border-b border-gray-100 flex items-center justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-black text-pink-900 leading-tight">Editar ubicación</h2>
                     @if (clientName) {
                         <p class="text-xs text-pink-400 font-bold mt-0.5">{{ clientName }}</p>
                     }
                 </div>
-                <button (click)="cancel.emit()"
-                        class="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-bold transition-all">
+                <button (click)="cancel.emit()" aria-label="Cerrar editor de ubicación"
+                        class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-bold transition-all">
                     ✕
                 </button>
             </div>
@@ -204,7 +204,7 @@ interface Suggestion {
             </div>
 
             <!-- ── FOOTER ── -->
-            <div class="px-6 py-4 border-t border-gray-100 shrink-0 flex gap-3 justify-end bg-white">
+            <div class="px-4 sm:px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-gray-100 shrink-0 flex flex-col sm:flex-row gap-3 justify-end bg-white">
                 <button (click)="cancel.emit()"
                         class="px-5 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all active:scale-95">
                     Cancelar

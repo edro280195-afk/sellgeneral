@@ -16,7 +16,7 @@ Chart.register(...registerables);
   selector: 'app-dashboard',
   imports: [CurrencyPipe, RouterLink, DatePipe],
   template: `
-    <div class="dashboard-container space-y-6 lg:space-y-8 pb-10">
+    <div #dashboardRoot class="dashboard-container min-w-0 space-y-6 pb-10 lg:space-y-8">
       <!-- Hero del tenant con banner + nombre -->
       @if (theme.bannerUrl() || theme.name()) {
         <section class="tenant-hero card-coquette overflow-hidden opacity-0 translate-y-[-20px]">
@@ -63,7 +63,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-xl">📦</span>
                 <span class="text-xs font-semibold text-pink-400 uppercase tracking-wider">Pedidos Totales</span>
               </div>
-              <p class="text-4xl font-bold text-pink-900 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-pink-900 flex items-baseline gap-1 sm:text-4xl">
                 <span class="count-val" [attr.data-value]="data()?.totalOrders">0</span>
               </p>
               <div class="flex gap-3 mt-2 text-xs">
@@ -81,7 +81,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl">💵</span>
                 <span class="text-xs font-semibold text-green-500 uppercase tracking-wider">Ingresos Hoy</span>
               </div>
-              <p class="text-4xl font-bold text-green-700 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-green-700 flex items-baseline gap-1 sm:text-4xl">
                 <span class="text-2xl font-medium">$</span>
                 <span class="count-val" [attr.data-value]="data()?.revenueToday">0</span>
               </p>
@@ -96,7 +96,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl">💰</span>
                 <span class="text-xs font-semibold text-purple-400 uppercase tracking-wider">Ingresos del Mes</span>
               </div>
-              <p class="text-4xl font-bold text-purple-700 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-purple-700 flex items-baseline gap-1 sm:text-4xl">
                 <span class="text-2xl font-medium">$</span>
                 <span class="count-val" [attr.data-value]="data()?.revenueMonth">0</span>
               </p>
@@ -111,7 +111,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-xl">👩‍💼</span>
                 <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Total Clientas</span>
               </div>
-              <p class="text-4xl font-bold text-rose-700 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-rose-700 flex items-baseline gap-1 sm:text-4xl">
                 <span class="count-val" [attr.data-value]="data()?.totalClients">0</span>
               </p>
               <div class="flex gap-3 mt-2 text-xs">
@@ -129,7 +129,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl">🚗</span>
                 <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">Rutas Activas</span>
               </div>
-              <p class="text-4xl font-bold text-blue-700 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-blue-700 flex items-baseline gap-1 sm:text-4xl">
                 <span class="count-val" [attr.data-value]="data()?.activeRoutes">0</span>
               </p>
             </div>
@@ -144,7 +144,7 @@ Chart.register(...registerables);
                 <span class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-xl">💳</span>
                 <span class="text-xs font-semibold text-amber-500 uppercase tracking-wider">Por Cobrar</span>
               </div>
-              <p class="text-4xl font-bold text-amber-700 flex items-baseline gap-1">
+              <p class="text-3xl font-bold text-amber-700 flex items-baseline gap-1 sm:text-4xl">
                 <span class="text-2xl font-medium">$</span>
                 <span class="count-val" [attr.data-value]="data()?.pendingAmount">0</span>
               </p>
@@ -178,18 +178,18 @@ Chart.register(...registerables);
              <div class="recent-orders-list space-y-3">
                @for (order of data()?.recentOrders; track order.id) {
                  <div class="recent-order-item p-3 rounded-2xl bg-white/50 border border-pink-50 hover:border-pink-200 transition-all flex items-center justify-between group">
-                   <div class="flex items-center gap-3">
+                   <div class="flex min-w-0 flex-1 items-center gap-3">
                      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-pink-100/50 group-hover:scale-110 transition-transform">
                        {{ getStatusEmoji(order.status) }}
                      </div>
-                     <div>
-                       <p class="text-sm font-bold text-pink-900 leading-tight">{{ order.clientName }}</p>
-                       <p class="text-[10px] font-medium text-pink-400 uppercase tracking-tighter">
+                     <div class="min-w-0">
+                       <p class="truncate text-sm font-bold leading-tight text-pink-900">{{ order.clientName }}</p>
+                       <p class="truncate text-[10px] font-medium uppercase tracking-tighter text-pink-400">
                          {{ order.createdAt | date:'shortTime' }} • {{ order.orderType }}
                        </p>
                      </div>
                    </div>
-                   <div class="text-right">
+                   <div class="shrink-0 text-right">
                      <p class="text-sm font-black text-pink-600">{{ order.total | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
                      <span class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase" [class]="getStatusClass(order.status)">
                        {{ order.status }}
@@ -333,6 +333,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   protected theme = inject(ThemeService);
 
   @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('dashboardRoot', { static: true }) dashboardRoot!: ElementRef<HTMLElement>;
 
   data = signal<DashboardDto | null>(null);
   loading = signal(true);
@@ -383,6 +384,19 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   private initDashboardAnimations(): void {
+    const root = this.dashboardRoot.nativeElement;
+    if (this.prefersReducedMotion()) {
+      root.querySelectorAll<HTMLElement>('.opacity-0').forEach(element => {
+        element.style.opacity = '1';
+        element.style.transform = 'none';
+      });
+      root.querySelectorAll<HTMLElement>('.count-val').forEach(counter => {
+        const value = Number(counter.getAttribute('data-value') || '0');
+        counter.textContent = Math.floor(value).toLocaleString('es-MX');
+      });
+      return;
+    }
+
     const tl = gsap.timeline();
 
     // 1. Reveal Header
@@ -403,7 +417,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }, "-=0.4");
 
     // 3. Count up animation for each metric
-    const counters = document.querySelectorAll('.count-val');
+    const counters = root.querySelectorAll<HTMLElement>('.count-val');
     counters.forEach(counter => {
       const val = parseFloat(counter.getAttribute('data-value') || '0');
       const obj = { value: 0 };
@@ -413,7 +427,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         duration: 2,
         ease: 'power3.out',
         onUpdate: () => {
-          counter.innerHTML = Math.floor(obj.value).toLocaleString('es-MX');
+          counter.textContent = Math.floor(obj.value).toLocaleString('es-MX');
         },
         scrollTrigger: {
           trigger: counter,
@@ -474,6 +488,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: this.prefersReducedMotion() ? false : { duration: 600 },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -503,5 +518,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         }
       }
     });
+  }
+
+  private prefersReducedMotion(): boolean {
+    return typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 }

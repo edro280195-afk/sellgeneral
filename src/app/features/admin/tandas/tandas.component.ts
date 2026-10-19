@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, HostListener, effect } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TandaService } from '../../../core/services/tanda.service';
@@ -27,19 +27,17 @@ interface TandaForm {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="relative min-h-[80vh] overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
+    <div class="relative min-w-0 overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
       <!-- Parallax Background Elements (Identidad Neni's App) -->
       <div class="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-pink-50/50 via-purple-50/50 to-rose-50/50"></div>
         
-        <div class="absolute inset-0 opacity-40 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.1 + 'px)'">
+        <div class="absolute inset-0 opacity-40">
           <div class="absolute top-[10%] left-[5%] text-6xl animate-pulse-slow blur-[1px]">🌸</div>
           <div class="absolute top-[60%] right-[10%] text-5xl opacity-50">✨</div>
         </div>
         
-        <div class="absolute inset-0 opacity-60 transition-transform duration-75 ease-out"
-             [style.transform]="'translateY(' + scrollY() * 0.25 + 'px)'">
+        <div class="absolute inset-0 opacity-60">
           <div class="absolute top-[20%] right-[20%] text-4xl animate-float-delayed">💖</div>
           <div class="absolute top-[75%] left-[15%] text-5xl animate-bounce-slow blur-[1px]">🎀</div>
         </div>
@@ -63,7 +61,7 @@ interface TandaForm {
         <!-- Filters & Search (Integrated) -->
         <div class="card-coquette p-5 animate-slide-up delay-100" style="opacity:0; animation-fill-mode: forwards;">
           <div class="flex flex-wrap gap-4 items-end">
-            <div class="flex-1 min-w-[300px] relative">
+            <div class="w-full min-w-0 flex-1 sm:min-w-[300px] relative">
               <label class="label-coquette">🔍 Buscar Tanda o Producto</label>
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">🔍</span>
@@ -160,10 +158,10 @@ interface TandaForm {
 
       <!-- MODAL CREACIÓN (Official Coquette Style) -->
       @if (showCreateModal()) {
-        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div class="absolute inset-0 bg-pink-900/40 backdrop-blur-sm" (click)="showCreateModal.set(false)"></div>
           
-          <div class="card-coquette bg-white p-6 lg:p-8 w-full max-w-6xl relative z-10 animate-scale-in max-h-[94vh] overflow-y-auto scrollbar-hide">
+          <div class="card-coquette bg-white p-4 sm:p-6 lg:p-8 w-full max-w-6xl relative z-10 animate-scale-in max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overscroll-contain scrollbar-hide">
             <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
               <div>
                 <h3 class="text-2xl font-black text-pink-900 flex items-center gap-3">
@@ -218,7 +216,7 @@ interface TandaForm {
                     }
                   </div>
 
-                  <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label class="label-coquette">📅 Lugares / semanas</label>
                       <input class="input-coquette" type="number" name="weeks"
@@ -371,7 +369,6 @@ export class TandasComponent implements OnInit {
   loadingTandas = signal(true);
   showCreateModal = signal(false);
   isSaving = signal(false);
-  scrollY = signal(0);
   
   // Filtros / Búsqueda
   searchQuery = '';
@@ -429,11 +426,6 @@ export class TandasComponent implements OnInit {
         setTimeout(() => this.animateList(), 50);
       }
     });
-  }
-
-  @HostListener('window:scroll')
-  onScroll() {
-    this.scrollY.set(window.scrollY);
   }
 
   ngOnInit() {

@@ -10,7 +10,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
   template: `
-    <div class="relative min-h-screen pb-20">
+    <div class="relative min-w-0">
       
       <!-- ═══ HEADER ═══ -->
       <div class="flex flex-wrap items-center justify-between gap-4 mb-8 animate-slide-down">
@@ -83,14 +83,14 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
 
       <!-- ═══ SUPPLIER DRAWER (DETAILS & INVESTMENTS) ═══ -->
       @if (selectedSupplier()) {
-        <div class="fixed inset-0 z-50 flex justify-end">
+        <div class="fixed inset-0 z-50 flex justify-end pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <div class="absolute inset-0 bg-pink-900/20 backdrop-blur-sm animate-fade-in" (click)="closeDetails()"></div>
           
-          <div class="relative w-full max-w-lg bg-white h-full shadow-2xl flex flex-col animate-slide-right overflow-hidden rounded-l-[40px]">
+          <div class="relative w-full max-w-lg min-w-0 bg-white h-full shadow-2xl flex flex-col animate-slide-right overflow-hidden rounded-none sm:rounded-l-[40px]">
             
             <!-- Drawer Header -->
-            <div class="p-8 pb-6 border-b border-pink-50 relative">
-              <button class="absolute top-6 right-8 text-pink-300 hover:text-pink-600 transition-colors text-2xl" (click)="closeDetails()">✕</button>
+            <div class="p-5 sm:p-8 pb-5 sm:pb-6 border-b border-pink-50 relative">
+              <button class="absolute top-3 right-3 sm:top-6 sm:right-6 text-pink-300 hover:text-pink-600 transition-colors text-2xl" aria-label="Cerrar proveedor" (click)="closeDetails()">✕</button>
               
               <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16 bg-pink-500 text-white rounded-[24px] flex items-center justify-center text-3xl font-black shadow-lg shadow-pink-200">
@@ -115,7 +115,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
             </div>
 
             <!-- Drawer Content -->
-            <div class="flex-1 overflow-y-auto p-8 pt-6 space-y-8 custom-scrollbar">
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8 pt-5 sm:pt-6 space-y-8 custom-scrollbar">
               
               <!-- Add Investment Section -->
               <div class="space-y-4">
@@ -186,7 +186,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
                           <span class="text-[10px] font-black text-pink-300 uppercase">{{ inv.date | date:'MMM' }}</span>
                           <span class="text-lg font-black text-pink-900 leading-none">{{ inv.date | date:'dd' }}</span>
                         </div>
-                        <div class="flex-1 min-width-0">
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-center gap-2">
                             <p class="font-black text-pink-900">{{ inv.amount | currency:(inv.currency || 'MXN'):'symbol-narrow' }}</p>
                             @if (inv.currency === 'USD') {
@@ -220,7 +220,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
       @if (showForm()) {
         <div class="overlay backdrop-blur-md" (click)="showForm.set(false)"></div>
         <div class="modal-container z-[60]">
-          <div class="card-coquette w-full max-w-md p-8 animate-scale-in border-none shadow-2xl overflow-hidden relative">
+          <div class="card-coquette w-full max-w-md max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overscroll-contain p-4 sm:p-8 animate-scale-in border-none shadow-2xl relative">
             
             <!-- Modal Header Decorations -->
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-pink-50 rounded-full blur-3xl opacity-50"></div>
@@ -253,7 +253,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
                   <textarea class="input-coquette min-h-[100px] py-3 shadow-sm focus:shadow-pink-100" [(ngModel)]="form.notes" placeholder="Cualquier detalle relevante..."></textarea>
                 </div>
 
-                <div class="flex gap-4 pt-4">
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <button class="btn-coquette btn-outline-pink flex-1 h-12 font-black" (click)="showForm.set(false)">Cancelar</button>
                   <button class="btn-coquette btn-pink flex-1 h-12 font-black shadow-lg shadow-pink-200/50" (click)="save()">💖 Guardar</button>
                 </div>

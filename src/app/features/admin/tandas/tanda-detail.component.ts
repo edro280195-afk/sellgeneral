@@ -608,9 +608,9 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
     <!-- Modal de Reordenamiento Drag & Drop -->
     @if (showReorderModal()) {
       <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)]">
           <!-- Header -->
-          <div class="p-6 border-b flex justify-between items-center bg-gradient-to-r from-purple-50 to-pink-50">
+          <div class="p-4 sm:p-6 border-b flex justify-between items-center gap-3 bg-gradient-to-r from-purple-50 to-pink-50">
             <div>
               <h3 class="text-xl font-bold text-gray-800">Reordenar Participantes</h3>
               <p class="text-xs text-gray-500">Arrastra para cambiar el orden de los turnos</p>
@@ -621,7 +621,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
           </div>
 
           <!-- Draggable List -->
-          <div class="flex-1 overflow-y-auto p-6 bg-gray-50/30">
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-gray-50/30">
             <div cdkDropList 
                  (cdkDropListDropped)="drop($event)"
                  class="space-y-3">
@@ -649,7 +649,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
           </div>
 
           <!-- Footer -->
-          <div class="p-6 bg-white border-t flex gap-3">
+          <div class="p-4 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white border-t flex flex-col sm:flex-row gap-3">
             <button (click)="showReorderModal.set(false)" 
                     class="flex-1 px-6 py-3 border border-gray-200 text-gray-600 rounded-2xl hover:bg-gray-50 font-semibold transition-all">
               Cancelar

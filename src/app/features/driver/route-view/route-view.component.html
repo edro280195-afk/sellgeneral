@@ -19,7 +19,7 @@
     @if (route(); as r) {
         
     <!-- Indicadores de la ruta -->
-    <div class="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-48 flex justify-center">
+    <div class="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-50 w-48 flex justify-center">
         
         <div class="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-4 py-2 flex items-center justify-between shadow-2xl h-10">
             
@@ -78,7 +78,7 @@
          [class.translate-y-[70%]]="!isCardExpanded()">
         
         @if (nextDelivery(); as d) {
-            <div class="bg-black/60 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2.5rem] p-6 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] animate-slide-up pointer-events-auto relative">
+            <div class="w-full max-h-[calc(100dvh-6rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain bg-black/60 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2.5rem] p-5 sm:p-6 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] animate-slide-up pointer-events-auto relative">
                 
                 <!-- HANDLE FOR COLLAPSE -->
                 <div class="w-full h-8 absolute -top-4 left-0 flex items-center justify-center cursor-pointer" 
@@ -251,9 +251,9 @@
     </div>
 
     @if (showReorderModal()) {
-        <div class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-2xl flex flex-col p-4 animate-fade-in">
-            <div class="bg-black/40 border border-white/10 rounded-[2.5rem] flex-1 flex flex-col overflow-hidden shadow-2xl">
-                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+        <div class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-2xl flex flex-col p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in">
+            <div class="min-h-0 bg-black/40 border border-white/10 rounded-[2.5rem] flex-1 flex flex-col overflow-hidden shadow-2xl">
+                <div class="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center gap-3 bg-white/5">
                     <div>
                         <h3 class="font-black text-xl uppercase italic tracking-tighter">🔃 Reordenar Ruta</h3>
                         <p class="text-[10px] text-pink-400 uppercase font-bold tracking-widest">Usa ↑↓ para mover paradas</p>
@@ -299,7 +299,7 @@
                     }
                 </div>
 
-                <div class="p-6 bg-white/5 border-t border-white/10">
+                <div class="p-4 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10">
                     <button (click)="saveReorder()"
                             class="w-full py-4 bg-pink-600 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-pink-600/20 active:scale-95 transition-transform">
                         Guardar Orden
@@ -310,16 +310,16 @@
     }
 
     @if (activeChatDelivery(); as delivery) {
-        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex flex-col p-4 animate-fade-in" (click)="closeClientChat()">
-            <div class="bg-black/60 border border-white/20 rounded-3xl flex-1 flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
-                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex flex-col p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in" (click)="closeClientChat()">
+            <div class="min-h-0 bg-black/60 border border-white/20 rounded-3xl flex-1 flex flex-col overflow-hidden" (click)="$event.stopPropagation()">
+                <div class="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center gap-3 bg-white/5">
                     <div>
                         <h3 class="font-black text-xl uppercase italic">{{ delivery.clientName }}</h3>
                         <span class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest">Chat Directo</span>
                     </div>
                     <button (click)="closeClientChat()" class="text-2xl">✕</button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-6 space-y-4" #clientChatScroll>
+                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4" #clientChatScroll>
                     @for (msg of clientChatMessages(); track msg.id) {
                         <div class="flex" [class.justify-end]="msg.sender === 'Driver'">
                             <div class="max-w-[80%] px-4 py-3 rounded-2xl text-sm"
@@ -334,7 +334,7 @@
                         </div>
                     }
                 </div>
-                <div class="p-4 bg-white/5 border-t border-white/10 flex space-x-2">
+                <div class="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10 flex items-center gap-2">
                     <input type="text" [(ngModel)]="newClientMessage" (keydown.enter)="sendClientChat()"
                            class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
                            placeholder="Mensaje para clienta...">
@@ -345,8 +345,8 @@
     }
 
     @if (showExpenseModal()) {
-        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in" (click)="closeExpenseModal()">
-            <div class="bg-black/80 border-t border-white/20 rounded-t-[3rem] w-full p-8 animate-slide-up" (click)="$event.stopPropagation()">
+        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end pt-[env(safe-area-inset-top)] animate-fade-in" (click)="closeExpenseModal()">
+            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-black/80 border-t border-white/20 rounded-t-[2rem] sm:rounded-t-[3rem] w-full p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] animate-slide-up" (click)="$event.stopPropagation()">
                 <h3 class="text-2xl font-black uppercase mb-6 tracking-tighter">⛽ Registrar Gasto</h3>
                 <div class="space-y-4">
                     <select [(ngModel)]="expenseForm.type" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-4 focus:outline-none">
@@ -367,8 +367,8 @@
     }
 
     @if (failModalId()) {
-        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-fade-in" (click)="cancelFail()">
-            <div class="bg-black/80 border-t border-white/20 rounded-t-[3rem] w-full p-8 animate-slide-up" (click)="$event.stopPropagation()">
+        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end pt-[env(safe-area-inset-top)] animate-fade-in" (click)="cancelFail()">
+            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-black/80 border-t border-white/20 rounded-t-[2rem] sm:rounded-t-[3rem] w-full p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] animate-slide-up" (click)="$event.stopPropagation()">
                 <h3 class="text-2xl font-black uppercase mb-6 tracking-tighter">😿 Reportar Error</h3>
                 <div class="grid grid-cols-2 gap-2 mb-6">
                     @for (reason of failReasons; track reason) {
@@ -393,8 +393,8 @@
     }
 
     @if (signatureModalId()) {
-        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in" (click)="closeSignaturePad()">
-            <div class="bg-black/80 border border-white/20 rounded-[2.5rem] w-full max-w-md p-6 animate-slide-up" (click)="$event.stopPropagation()">
+        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in" (click)="closeSignaturePad()">
+            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overscroll-contain bg-black/80 border border-white/20 rounded-[2.5rem] w-full max-w-md p-4 sm:p-6 animate-slide-up" (click)="$event.stopPropagation()">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-black uppercase tracking-tighter">✍️ Firma de quien recibe</h3>
                     <button (click)="closeSignaturePad()" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">✕</button>

@@ -12,7 +12,7 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
     standalone: true,
     imports: [CommonModule, FormsModule, CurrencyPipe, AddressEditorV2Component],
     template: `
-    <div class="space-y-6">
+    <div class="w-full min-w-0 space-y-6">
         <button class="btn-coquette btn-ghost text-sm" (click)="goBack()">← Volver a Clientas</button>
 
         @if (loading()) {
@@ -30,7 +30,7 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
 
                     <div class="flex-1 min-w-0">
                         @if (!editingInfo()) {
-                            <h2 class="text-2xl font-bold text-pink-900">{{ c.name }}</h2>
+                        <h2 class="text-2xl font-bold text-pink-900 [overflow-wrap:anywhere]">{{ c.name }}</h2>
                             @if (c.phone) { <p class="text-pink-500 mt-1">📱 {{ c.phone }}</p> }
                             <div class="flex items-center gap-3 mt-3">
                                 <span class="badge"
@@ -72,7 +72,7 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
                         }
                     </div>
 
-                    <div class="text-right shrink-0">
+                    <div class="w-full shrink-0 text-left sm:w-auto sm:text-right">
                         <p class="text-3xl font-bold text-pink-900">{{ c.totalSpent | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
                         <p class="text-sm text-pink-400">{{ c.ordersCount }} pedidos</p>
                     </div>
@@ -81,7 +81,7 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
 
             <!-- ── Location Card ── -->
             <div class="card-coquette overflow-hidden animate-slide-up">
-                <div class="p-5 border-b border-pink-50 flex items-center justify-between">
+                <div class="flex flex-col items-start gap-3 border-b border-pink-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                     <div>
                         <h3 class="text-base font-black text-pink-900 flex items-center gap-2">
                             📍 Ubicación de entrega
@@ -90,7 +90,7 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
                             {{ locationStatusText(c) }}
                         </p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
                         <span class="px-2.5 py-1 rounded-full text-[10px] font-black"
                               [class]="locationStatusClass(c)">
                             {{ locationStatusBadge(c) }}

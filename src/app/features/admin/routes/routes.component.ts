@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, HostListener, CUSTOM_ELEMENTS_SCHEMA, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, CUSTOM_ELEMENTS_SCHEMA, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, KeyValuePipe } from '@angular/common';
 import { GoogleMap, MapInfoWindow, MapMarker } from '@angular/google-maps';
 import { FormsModule } from '@angular/forms';
@@ -48,22 +48,16 @@ interface GeocodedOrder extends OrderSummaryDto {
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <div class="relative min-h-screen pb-20">
+    <div class="relative min-w-0">
 
       <!-- ═══ PARALLAX FLOATING ELEMENTS ═══ -->
       <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div class="absolute text-6xl opacity-[0.04] animate-float" [style.top.px]="80" [style.left.%]="5"
-             [style.transform]="'translateY(' + (scrollY() * 0.15) + 'px)'">🚗</div>
-        <div class="absolute text-5xl opacity-[0.05] animate-float" style="animation-delay:1s" [style.top.px]="200" [style.right.%]="8"
-             [style.transform]="'translateY(' + (scrollY() * 0.1) + 'px)'">📦</div>
-        <div class="absolute text-4xl opacity-[0.04] animate-float" style="animation-delay:2s" [style.top.px]="400" [style.left.%]="70"
-             [style.transform]="'translateY(' + (scrollY() * 0.2) + 'px)'">🗺️</div>
-        <div class="absolute text-5xl opacity-[0.03] animate-float" style="animation-delay:3s" [style.top.px]="600" [style.left.%]="20"
-             [style.transform]="'translateY(' + (scrollY() * 0.12) + 'px)'">💎</div>
-        <div class="absolute text-3xl opacity-[0.05] animate-sparkle" style="animation-delay:0.5s" [style.top.px]="150" [style.left.%]="45"
-             [style.transform]="'translateY(' + (scrollY() * 0.18) + 'px)'">✨</div>
-        <div class="absolute text-4xl opacity-[0.04] animate-float" style="animation-delay:4s" [style.top.px]="700" [style.right.%]="15"
-             [style.transform]="'translateY(' + (scrollY() * 0.08) + 'px)'">🌸</div>
+        <div class="absolute text-6xl opacity-[0.04] animate-float" [style.top.px]="80" [style.left.%]="5">🚗</div>
+        <div class="absolute text-5xl opacity-[0.05] animate-float" style="animation-delay:1s" [style.top.px]="200" [style.right.%]="8">📦</div>
+        <div class="absolute text-4xl opacity-[0.04] animate-float" style="animation-delay:2s" [style.top.px]="400" [style.left.%]="70">🗺️</div>
+        <div class="absolute text-5xl opacity-[0.03] animate-float" style="animation-delay:3s" [style.top.px]="600" [style.left.%]="20">💎</div>
+        <div class="absolute text-3xl opacity-[0.05] animate-sparkle" style="animation-delay:0.5s" [style.top.px]="150" [style.left.%]="45">✨</div>
+        <div class="absolute text-4xl opacity-[0.04] animate-float" style="animation-delay:4s" [style.top.px]="700" [style.right.%]="15">🌸</div>
       </div>
 
       <!-- ═══════════════════════════════════════════════════
@@ -551,8 +545,8 @@ interface GeocodedOrder extends OrderSummaryDto {
            MODAL: NUEVA RUTA (Enhanced)
            ═══════════════════════════════════════════════════ -->
       @if (showCreateModal()) {
-        <div class="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in" (click)="showCreateModal.set(false)">
-          <div class="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in shadow-2xl" (click)="$event.stopPropagation()">
+        <div class="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] animate-fade-in" (click)="showCreateModal.set(false)">
+          <div class="min-h-0 bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex flex-col overflow-hidden animate-scale-in shadow-2xl" (click)="$event.stopPropagation()">
 
             <div class="px-6 pt-6 pb-4 border-b border-pink-50">
               <div class="flex items-center justify-between">
@@ -658,7 +652,7 @@ interface GeocodedOrder extends OrderSummaryDto {
             </div>
 
             @if (pendingOrders().length > 0) {
-              <div class="px-6 py-4 border-t border-pink-50 flex gap-3">
+            <div class="px-4 sm:px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-pink-50 flex flex-col sm:flex-row gap-3">
                 <button class="flex-1 py-3 rounded-2xl border border-pink-200 text-pink-600 font-bold text-sm hover:bg-pink-50 transition-colors"
                         (click)="showCreateModal.set(false)">Cancelar</button>
                 <button class="flex-[2] py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm shadow-lg shadow-pink-200 disabled:opacity-40 disabled:shadow-none transition-all active:scale-[0.98]"
@@ -953,7 +947,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
 
   routes = signal<RouteDto[]>([]);
   loading = signal(true);
-  scrollY = signal(0);
   latestEvent = signal<string>('');
   collapsedRadar = signal(true);
 
@@ -1086,9 +1079,6 @@ export class RoutesComponent implements OnInit, OnDestroy {
 
   // Geocode Cache
   private geocodeCache = new Map<string, { lat: number; lng: number } | null>();
-
-  @HostListener('window:scroll')
-  onScroll() { this.scrollY.set(window.scrollY); }
 
   ngOnInit(): void {
     this.loadRoutes();

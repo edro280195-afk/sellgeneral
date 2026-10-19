@@ -266,6 +266,7 @@ const MORE_NAV_GROUPS: NavItem['group'][] = ['Ventas', 'Clientas', 'Operación',
       position: relative;
       display: flex;
       min-height: 100svh;
+      min-height: 100dvh;
       flex-direction: column;
       overflow-x: clip;
       background:
@@ -458,7 +459,7 @@ const MORE_NAV_GROUPS: NavItem['group'][] = ['Ventas', 'Clientas', 'Operación',
       top: calc(100% + 9px);
       right: clamp(18px, 3vw, 42px);
       width: min(720px, calc(100vw - 36px));
-      max-height: min(72svh, 660px);
+      max-height: min(72dvh, 660px);
       overflow-y: auto;
       padding: 21px;
       border: 3px solid rgba(255, 255, 255, 0.92);
@@ -577,7 +578,7 @@ const MORE_NAV_GROUPS: NavItem['group'][] = ['Ventas', 'Clientas', 'Operación',
     }
 
     @media (max-width: 760px) {
-      .app-shell { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+      .app-shell { padding-bottom: calc(82px + max(8px, env(safe-area-inset-bottom))); }
       .top-bar { flex-wrap: wrap; gap: 9px; padding: max(12px, env(safe-area-inset-top)) 14px 12px; }
       .top-left { flex: 1 1 auto; gap: 0; }
       .brand-logo { width: 42px; height: 42px; flex-basis: 42px; border-radius: 15px; }
@@ -640,7 +641,7 @@ const MORE_NAV_GROUPS: NavItem['group'][] = ['Ventas', 'Clientas', 'Operación',
         left: max(10px, env(safe-area-inset-left));
         width: auto;
         max-width: 540px;
-        max-height: min(72svh, 650px);
+        max-height: min(72dvh, 650px);
         margin: 0 auto;
         padding: 17px;
         border-radius: 25px;
@@ -667,7 +668,7 @@ const MORE_NAV_GROUPS: NavItem['group'][] = ['Ventas', 'Clientas', 'Operación',
       .brand-name { max-width: 32vw; font-size: 0.82rem; }
       .top-right { gap: 4px; }
       .business-tools { gap: 3px; }
-      .nav-link { font-size: 0.59rem; }
+      .nav-link { font-size: 0.62rem; }
       .more-menu { padding: 14px; }
       .more-links { grid-template-columns: 1fr; }
       .account-action { flex-basis: 100%; }

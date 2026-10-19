@@ -20,7 +20,7 @@ import { gsap } from 'gsap';
     standalone: true,
     imports: [CommonModule, FormsModule, RaffleAnimationComponent],
     template: `
-        <div class="relative min-h-[80vh] overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
+        <div class="relative min-w-0 overflow-hidden -m-4 lg:-m-8 p-4 lg:p-8">
             <div class="absolute inset-0 pointer-events-none z-[-1] overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-pink-50/50 via-purple-50/50 to-rose-50/50"></div>
                 <div class="absolute top-[10%] left-[5%] text-6xl animate-pulse-slow blur-[1px]">🎉</div>

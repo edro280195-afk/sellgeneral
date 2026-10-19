@@ -312,3 +312,70 @@
     display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.capture-queue {
+    min-width: 0;
+    min-height: 0;
+    height: 520px;
+}
+
+@media (max-width: 1023px) {
+    .capture-queue {
+        position: static;
+        height: min(520px, max(260px, calc(100vh - 15rem)));
+        height: min(520px, max(260px, calc(100dvh - 15rem)));
+    }
+}
+
+@media (max-width: 640px) {
+    .tab-switch {
+        width: 100%;
+        gap: 3px;
+        margin-bottom: 1rem;
+        border-radius: 0.85rem;
+    }
+
+    .tab-switch button {
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.45rem 0.25rem;
+        font-size: 0.72rem;
+        line-height: 1.2;
+    }
+
+    .pin-active-bar {
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        font-size: 0.82rem;
+    }
+
+    .pin-active-bar > span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .pin-remove-btn {
+        flex: 0 0 auto;
+        min-height: 44px;
+    }
+
+    .turbo-input-wrapper:focus-within {
+        transform: none;
+    }
+
+    .turbo-shortcuts-keys {
+        gap: 0.4rem;
+    }
+
+    .queue-remove-sm {
+        min-width: 44px;
+        min-height: 44px;
+        opacity: 1;
+        font-size: 0.8rem;
+    }
+
+    .queue-group-item input[type=number] {
+        width: 44px;
+    }
+}

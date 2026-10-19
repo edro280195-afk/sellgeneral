@@ -20,7 +20,7 @@ import {
     LabelTemplateEditorDto, LabelTemplateSaveDraftRequest, LabelAssetDto,
     CreateLabelPrintJobRequest, LabelPrintJobDto, UpdateLabelPrintJobStatusRequest, AvailableLabelPackageDto,
     InventoryBoxSummaryDto, InventoryBoxDto, InventoryMovementPageDto,
-    InventoryLabelPrintDto, BuyerNotificationDto
+    InventoryLabelPrintDto, BuyerNotificationDto, SalesPeriodDto, MergeOrdersRequest
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -43,17 +43,35 @@ export class ApiService {
         return this.http.get<OrderSummaryDto[]>(`${this.base}/orders`);
     }
 
-    getOrdersPaged(page: number, size: number, status?: string, search?: string, orderType?: string, startDate?: string, endDate?: string, type?: string): Observable<PagedResult<OrderSummaryDto>> {
+    getOrdersPaged(page: number, size: number, status?: string, search?: string, orderType?: string, startDate?: string, endDate?: string, type?: string, salesPeriodId?: number): Observable<PagedResult<OrderSummaryDto>> {
         let params = new HttpParams()
             .set('page', page.toString())
             .set('pageSize', size.toString());
         if (status) params = params.set('status', status);
         if (search) params = params.set('search', search);
-        if (orderType) params = params.set('type', orderType);
+        if (orderType) params = params.set('orderType', orderType);
         if (type) params = params.set('type', type);
         if (startDate) params = params.set('dateFrom', startDate);
         if (endDate) params = params.set('dateTo', endDate);
+        if (salesPeriodId != null) params = params.set('salesPeriodId', salesPeriodId.toString());
         return this.http.get<PagedResult<OrderSummaryDto>>(`${this.base}/orders/paged`, { params });
+    }
+
+    getOrderMergeCandidates(targetOrderId: number, page: number, size: number, search: string): Observable<PagedResult<OrderSummaryDto>> {
+        const params = new HttpParams()
+            .set('targetOrderId', targetOrderId.toString())
+            .set('page', page.toString())
+            .set('pageSize', size.toString())
+            .set('search', search);
+        return this.http.get<PagedResult<OrderSummaryDto>>(`${this.base}/orders/merge-candidates`, { params });
+    }
+
+    mergeOrders(targetOrderId: number, request: MergeOrdersRequest): Observable<OrderSummaryDto> {
+        return this.http.post<OrderSummaryDto>(`${this.base}/orders/${targetOrderId}/merge`, request);
+    }
+
+    getSalesPeriods(): Observable<SalesPeriodDto[]> {
+        return this.http.get<SalesPeriodDto[]>(`${this.base}/salesperiods`);
     }
 
     markOrderNotified(id: number, notified: boolean): Observable<OrderSummaryDto> {

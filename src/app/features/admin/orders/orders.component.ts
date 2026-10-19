@@ -1,4 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -126,6 +127,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                   @if (order.clientAddress) {
                     <p class="mt-0.5 truncate text-xs text-pink-700">📍 {{ order.clientAddress }}</p>
                   }
+                  @if (order.mergedIntoOrderId) {
+                    <p class="mt-0.5 truncate text-xs font-semibold text-violet-700">↗ Integrado en pedido #{{ order.mergedIntoOrderNumber ?? order.mergedIntoOrderId }}</p>
+                  }
                   <p class="mt-0.5 truncate text-xs text-pink-700">
                     @if (order.scheduledDeliveryDate) {
                       🚚 Entrega: {{ order.scheduledDeliveryDate | date:'dd MMM yyyy' }}
@@ -166,6 +170,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                     <span class="badge shadow-sm status-badge" [class]="getStatusClass(order.status)" [attr.data-id]="order.id">
                       {{ getStatusLabel(order.status) }}
                     </span>
+                    @if (order.mergedIntoOrderId) {
+                      <span class="rounded-full bg-violet-50 px-2 py-1 text-[10px] font-bold text-violet-700">↗ #{{ order.mergedIntoOrderNumber ?? order.mergedIntoOrderId }}</span>
+                    }
                     <button class="flex h-11 min-h-[44px] w-11 min-w-[44px] shrink-0 items-center justify-center rounded-full bg-white text-rose-700 shadow-sm border border-pink-100/70 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" type="button" aria-label="Eliminar pedido" title="Eliminar pedido" (click)="deleteOrder(order.id)">
                       🗑️
                     </button>
@@ -303,6 +310,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                   <p class="text-sm text-pink-800 font-bold truncate flex-1">{{ selectedOrder()!.clientName }}</p>
                   <span class="text-[10px] text-pink-700 opacity-0 group-hover:opacity-100 transition-opacity">✏️ editar</span>
                 </div>
+                @if (selectedOrder()!.mergedIntoOrderId) {
+                  <p class="px-2 text-xs font-semibold text-violet-700">↗ Integrado en pedido #{{ selectedOrder()!.mergedIntoOrderNumber ?? selectedOrder()!.mergedIntoOrderId }}</p>
+                }
                 
                 @if (showClientEdit()) {
                   <div class="mt-2 space-y-2 bg-white/70 backdrop-blur-sm p-4 rounded-2xl border border-pink-100 shadow-sm animate-slide-down">
@@ -446,6 +456,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
                                (change)="updateItemQty(item.id, item.quantity, item.productName, item.unitPrice)"
                                class="w-full bg-transparent border-b border-transparent hover:border-pink-200 focus:border-pink-400 focus:bg-pink-50/60 transition-all font-black text-pink-900 text-sm appearance-none outline-none ring-0 placeholder-pink-300 px-1 py-0.5 rounded-t-sm" 
                                placeholder="Nombre del producto...">
+                        @if (item.originalClientName) {
+                          <span class="ml-1 mt-1 block text-[10px] font-semibold text-violet-700">Pedido originalmente de {{ item.originalClientName }}</span>
+                        }
                         <span class="text-[9px] text-pink-700 ml-1 opacity-0 group-focus-within/item:opacity-100 transition-opacity">✏️ Enter para guardar</span>
                       </div>
                       <button class="text-pink-200 hover:text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-90 transition-all shrink-0" (click)="removeItem(item.id)" title="Eliminar producto">🗑️</button>
@@ -628,6 +641,112 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
               }
             </div>
 
+            <!-- Fusionar pedidos conserva el historial del origen -->
+            <section class="overflow-hidden rounded-2xl border border-violet-100 bg-white/75 shadow-sm">
+              <button type="button"
+                      class="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                      [attr.aria-expanded]="mergePanelOpen()"
+                      aria-controls="order-merge-panel"
+                      (click)="toggleMergePanel()">
+                <span class="min-w-0">
+                  <span class="block text-sm font-black text-violet-900">🔀 Unir otro pedido a este</span>
+                  <span class="mt-0.5 block text-xs text-violet-700">Reúne compras y conserva la trazabilidad.</span>
+                </span>
+                <span class="shrink-0 text-violet-700" aria-hidden="true">{{ mergePanelOpen() ? '⌃' : '⌄' }}</span>
+              </button>
+
+              @if (mergePanelOpen()) {
+                <div id="order-merge-panel" class="space-y-3 border-t border-violet-100 px-3 py-3 sm:px-4">
+                  @if (!canMergeSelectedOrder()) {
+                    <p class="rounded-xl bg-amber-50 px-3 py-2.5 text-sm font-medium text-amber-900" role="status">
+                      Solo los pedidos pendientes, confirmados o pospuestos pueden recibir otra compra.
+                    </p>
+                  } @else {
+                    <p class="text-xs leading-5 text-pink-800">Busca otro pedido pendiente, confirmado o pospuesto. Debe estar sin bolsas generadas.</p>
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                      <input id="merge-order-search"
+                             class="input-coquette min-w-0 flex-1"
+                             type="search"
+                             placeholder="Clienta, artículo o #pedido"
+                             [ngModel]="mergeSearch()"
+                             (ngModelChange)="mergeSearch.set($event)"
+                             (keyup.enter)="searchMergeCandidates()"
+                             [disabled]="loadingMergeCandidates() || mergingOrders()"
+                             aria-label="Buscar pedido para unir" />
+                      <button type="button" class="btn-coquette btn-outline-pink min-h-11 px-4"
+                              (click)="searchMergeCandidates()"
+                              [disabled]="loadingMergeCandidates() || mergingOrders()">
+                        Buscar
+                      </button>
+                    </div>
+
+                    @if (loadingMergeCandidates()) {
+                      <p class="rounded-xl bg-pink-50 px-3 py-3 text-sm text-pink-800" role="status">Buscando pedidos disponibles…</p>
+                    } @else if (mergeCandidateError()) {
+                      <p class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-900" role="alert">{{ mergeCandidateError() }}</p>
+                    } @else if (mergeCandidates().length === 0) {
+                      <p class="rounded-xl bg-pink-50 px-3 py-3 text-sm text-pink-800">No hay pedidos disponibles con esta búsqueda.</p>
+                    } @else {
+                      <div class="space-y-2" aria-label="Pedidos que se pueden unir">
+                        @for (candidate of mergeCandidates(); track candidate.id) {
+                          <button type="button"
+                                  class="w-full rounded-xl border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700"
+                                  [class.border-violet-300]="selectedMergeSource()?.id === candidate.id"
+                                  [class.bg-violet-50]="selectedMergeSource()?.id === candidate.id"
+                                  [class.border-pink-100]="selectedMergeSource()?.id !== candidate.id"
+                                  [class.bg-white]="selectedMergeSource()?.id !== candidate.id"
+                                  [attr.aria-pressed]="selectedMergeSource()?.id === candidate.id"
+                                  [disabled]="mergingOrders()"
+                                  (click)="selectMergeSource(candidate)">
+                            <span class="flex items-center justify-between gap-2">
+                              <span class="truncate text-sm font-black text-pink-900">{{ candidate.clientName }}</span>
+                              <span class="shrink-0 text-xs font-bold text-pink-800">Pedido #{{ candidate.id }}</span>
+                            </span>
+                            <span class="mt-1 block text-xs text-pink-700">
+                              {{ candidate.itemsCount }} artículos · {{ getStatusLabel(candidate.status) }} · Debe {{ candidate.balanceDue | currency:'MXN':'symbol-narrow' }}
+                            </span>
+                          </button>
+                        }
+                      </div>
+
+                      @if (mergeCandidatePageCount() > 1) {
+                        <div class="flex items-center justify-between gap-2 text-xs text-pink-800">
+                          <button type="button" class="min-h-11 rounded-xl border border-pink-100 px-3 font-bold disabled:opacity-50"
+                                  (click)="searchMergeCandidates(mergeCandidatePage() - 1)"
+                                  [disabled]="mergeCandidatePage() <= 1 || loadingMergeCandidates()">← Anterior</button>
+                          <span>Página {{ mergeCandidatePage() }} de {{ mergeCandidatePageCount() }}</span>
+                          <button type="button" class="min-h-11 rounded-xl border border-pink-100 px-3 font-bold disabled:opacity-50"
+                                  (click)="searchMergeCandidates(mergeCandidatePage() + 1)"
+                                  [disabled]="mergeCandidatePage() >= mergeCandidatePageCount() || loadingMergeCandidates()">Siguiente →</button>
+                        </div>
+                      }
+                    }
+
+                    @if (selectedMergeSource(); as source) {
+                      <div class="space-y-3 rounded-xl border border-violet-100 bg-violet-50/70 p-3">
+                        <div>
+                          <p class="text-sm font-black text-violet-900">Pedido #{{ source.id }} listo para unir</p>
+                          <p class="mt-1 text-xs leading-5 text-violet-800">Se moverán {{ source.itemsCount }} artículos y sus pagos registrados. El pedido de origen quedará cancelado para conservar el historial.</p>
+                          @if (source.clientId !== selectedOrder()!.clientId) {
+                            <p class="mt-2 text-xs leading-5 text-violet-900">Es otra clienta: los artículos conservarán el nombre de su dueña original, y el total de cobro quedará en el pedido de {{ selectedOrder()!.clientName }}.</p>
+                          }
+                          @if ((selectedOrder()!.packageCount ?? 0) > 0) {
+                            <p class="mt-2 text-xs leading-5 text-amber-900">Este pedido destino ya tiene bolsas. Revisa sus etiquetas después de unir.</p>
+                          }
+                        </div>
+                        <button type="button"
+                                class="btn-coquette btn-pink flex min-h-11 w-full items-center justify-center gap-2"
+                                (click)="mergeSelectedOrders()"
+                                [disabled]="mergingOrders()">
+                          {{ mergingOrders() ? 'Uniendo pedidos…' : 'Unir al pedido #' + selectedOrder()!.id }}
+                        </button>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </section>
+
             <div class="h-16"></div>
           </div>
 
@@ -774,6 +893,20 @@ export class OrdersComponent implements OnInit {
   isLoadingPackages = signal(false);
   packagesToGenerate = 1;
 
+  // Merge orders
+  mergePanelOpen = signal(false);
+  mergeSearch = signal('');
+  mergeCandidates = signal<OrderSummaryDto[]>([]);
+  selectedMergeSource = signal<OrderSummaryDto | null>(null);
+  loadingMergeCandidates = signal(false);
+  mergeCandidateError = signal('');
+  mergingOrders = signal(false);
+  mergeCandidatePage = signal(1);
+  mergeCandidateTotal = signal(0);
+  readonly mergeCandidatePageSize = 8;
+  mergeCandidatePageCount = computed(() => Math.max(1, Math.ceil(this.mergeCandidateTotal() / this.mergeCandidatePageSize)));
+  private readonly MERGEABLE_ORDER_STATUSES = ['Pending', 'Confirmed', 'Postponed'];
+
   // Printing
   showLabelEditor = signal(false);
   labelEditorPackage = signal<OrderPackageDto | null>(null);
@@ -855,6 +988,96 @@ export class OrdersComponent implements OnInit {
         this.toast.error('Error al cargar pedidos');
       }
     });
+  }
+
+  canMergeSelectedOrder(): boolean {
+    const order = this.selectedOrder();
+    return !!order
+      && !order.mergedIntoOrderId
+      && this.MERGEABLE_ORDER_STATUSES.includes(order.status);
+  }
+
+  toggleMergePanel(): void {
+    const opening = !this.mergePanelOpen();
+    this.mergePanelOpen.set(opening);
+    if (!opening) return;
+
+    this.selectedMergeSource.set(null);
+    this.mergeSearch.set('');
+    if (this.canMergeSelectedOrder()) this.searchMergeCandidates(1);
+  }
+
+  searchMergeCandidates(page = 1): void {
+    const target = this.selectedOrder();
+    if (!target || !this.canMergeSelectedOrder()) return;
+
+    this.loadingMergeCandidates.set(true);
+    this.mergeCandidateError.set('');
+    this.api.getOrderMergeCandidates(target.id, page, this.mergeCandidatePageSize, this.mergeSearch().trim()).subscribe({
+      next: (result) => {
+        this.mergeCandidates.set(result.items);
+        this.mergeCandidatePage.set(result.currentPage);
+        this.mergeCandidateTotal.set(result.totalCount);
+        this.loadingMergeCandidates.set(false);
+      },
+      error: (error: unknown) => {
+        this.loadingMergeCandidates.set(false);
+        const message = this.readMergeError(error, 'No se pudieron buscar pedidos disponibles');
+        this.mergeCandidateError.set(message);
+        this.toast.error(message);
+      }
+    });
+  }
+
+  selectMergeSource(order: OrderSummaryDto): void {
+    this.selectedMergeSource.set(order);
+  }
+
+  mergeSelectedOrders(): void {
+    const target = this.selectedOrder();
+    const source = this.selectedMergeSource();
+    if (!target || !source || !this.canMergeSelectedOrder() || this.mergingOrders()) return;
+
+    const confirmation = [
+      `¿Unir el pedido #${source.id} al pedido #${target.id}?`,
+      `Se moverán ${source.itemsCount} artículos y los pagos registrados.`,
+      `El pedido #${source.id} quedará cancelado y conservará su historial.`,
+      ...(source.clientId !== target.clientId
+        ? [`Los artículos conservarán el nombre de ${source.clientName}, pero la bolsa y el cobro quedarán en el pedido de ${target.clientName}.`]
+        : [])
+    ].join('\n\n');
+
+    if (!confirm(confirmation)) return;
+
+    this.mergingOrders.set(true);
+    this.api.mergeOrders(target.id, { sourceOrderId: source.id }).subscribe({
+      next: (mergedOrder) => {
+        this.mergingOrders.set(false);
+        this.selectedOrder.set(mergedOrder);
+        this.orders.update(orders => orders.map(order => order.id === mergedOrder.id ? mergedOrder : order));
+        this.mergePanelOpen.set(false);
+        this.selectedMergeSource.set(null);
+        this.toast.success(`Pedido #${source.id} unido al pedido #${mergedOrder.id}`);
+        this.loadOrders();
+        this.loadPackages(mergedOrder.id);
+      },
+      error: (error: unknown) => {
+        this.mergingOrders.set(false);
+        this.toast.error(this.readMergeError(error, 'No se pudieron unir los pedidos'));
+      }
+    });
+  }
+
+  private readMergeError(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const payload: unknown = error.error;
+      if (typeof payload === 'string' && payload.trim()) return payload;
+      if (typeof payload === 'object' && payload !== null && 'message' in payload) {
+        const message = payload.message;
+        if (typeof message === 'string' && message.trim()) return message;
+      }
+    }
+    return error instanceof Error && error.message ? error.message : fallback;
   }
 
   goToPage(page: number): void {

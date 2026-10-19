@@ -107,6 +107,7 @@ export interface OrderItemDto {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
+    originalClientName?: string | null;
 }
 
 export interface OrderPaymentDto {
@@ -152,6 +153,12 @@ export interface OrderSummaryDto {
     deliveryRouteId?: number;
     scheduledDeliveryDate?: string;
     notifiedAt?: string;
+    salesPeriodId?: number | null;
+    salesPeriodName?: string | null;
+    mergedIntoOrderId?: number | null;
+    mergedAt?: string | null;
+    orderNumber?: number;
+    mergedIntoOrderNumber?: number | null;
     clientPoints?: number;
     clientLatitude?: number | null;
     clientLongitude?: number | null;
@@ -176,6 +183,19 @@ export interface PagedResult<T> {
     totalCount: number;
     currentPage: number;
     pageSize: number;
+}
+
+export interface SalesPeriodDto {
+    id: number;
+    name: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    createdAt: string;
+}
+
+export interface MergeOrdersRequest {
+    sourceOrderId: number;
 }
 
 export interface ExcelUploadResultDto {

@@ -1,10 +1,11 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { OrderSummaryDto } from '../../../../core/models';
+import { OrderSummaryDto, PagedResult, SalesPeriodDto } from '../../../../core/models';
 import { buildOrderMessage } from '../../../../core/utils/order-message.util';
 
 @Component({
@@ -25,34 +26,43 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
       </div>
 
       <!-- Controls -->
-      <div class="card-coquette p-4 animate-slide-up" style="opacity:0">
+      <div class="card-coquette p-3 sm:p-4 animate-slide-up" style="opacity:0">
         <div class="flex flex-wrap gap-3 items-end">
-          <div class="flex-1 min-w-[200px]">
-            <label class="label-coquette">🔍 Buscar clienta</label>
-            <input class="input-coquette" placeholder="Nombre de clienta..." [(ngModel)]="search" />
+          <div class="w-full min-w-0 sm:flex-1 sm:min-w-[220px]">
+            <label class="label-coquette" for="send-links-period">📋 Corte de venta</label>
+            <select id="send-links-period" class="input-coquette" [ngModel]="selectedPeriodId()" (ngModelChange)="changePeriod($event)">
+              <option [ngValue]="null">Todos los cortes</option>
+              @for (period of salesPeriods(); track period.id) {
+                <option [ngValue]="period.id">{{ period.name }}{{ period.isActive ? ' · activo' : '' }}</option>
+              }
+            </select>
+          </div>
+          <div class="w-full min-w-0 sm:flex-1 sm:min-w-[220px]">
+            <label class="label-coquette" for="send-links-search">🔍 Buscar clienta o pedido</label>
+            <input id="send-links-search" class="input-coquette" placeholder="Nombre o #123..." [ngModel]="search()" (ngModelChange)="changeSearch($event)" />
           </div>
           <label class="flex items-center gap-2 cursor-pointer bg-pink-50/60 px-3 py-2.5 rounded-xl border border-pink-100 select-none">
-            <input type="checkbox" [(ngModel)]="hideNotified" class="accent-pink-500 w-4 h-4" />
+            <input type="checkbox" [ngModel]="hideNotified()" (ngModelChange)="setHideNotified($event)" class="accent-pink-500 w-4 h-4" />
             <span class="text-xs font-bold text-pink-700">Ocultar ya enviados</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer bg-pink-50/60 px-3 py-2.5 rounded-xl border border-pink-100 select-none">
-            <input type="checkbox" [(ngModel)]="hideClosed" class="accent-pink-500 w-4 h-4" />
+            <input type="checkbox" [ngModel]="hideClosed()" (ngModelChange)="setHideClosed($event)" class="accent-pink-500 w-4 h-4" />
             <span class="text-xs font-bold text-pink-700">Ocultar entregados/cancelados</span>
           </label>
         </div>
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-3 gap-3 animate-fade-in">
-        <div class="card-coquette p-4 text-center">
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 animate-fade-in">
+        <div class="card-coquette p-3 sm:p-4 text-center">
           <p class="text-2xl font-black text-pink-900">{{ stats().total }}</p>
           <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest">En lista</p>
         </div>
-        <div class="card-coquette p-4 text-center">
+        <div class="card-coquette p-3 sm:p-4 text-center">
           <p class="text-2xl font-black text-emerald-600">{{ stats().sent }}</p>
           <p class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Enviados</p>
         </div>
-        <div class="card-coquette p-4 text-center">
+        <div class="card-coquette p-3 sm:p-4 text-center">
           <p class="text-2xl font-black text-amber-600">{{ stats().pending }}</p>
           <p class="text-[10px] font-black text-amber-400 uppercase tracking-widest">Pendientes</p>
         </div>
@@ -64,6 +74,22 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
           <div class="h-full bg-gradient-to-r from-pink-400 to-rose-500 transition-all duration-500"
                [style.width.%]="(stats().sent / stats().total) * 100"></div>
         </div>
+      }
+
+      @if (!loading() && filteredOrders().length > 0) {
+        <p class="text-xs font-semibold text-pink-700" aria-live="polite">
+          Mostrando {{ pageOrders().length }} de {{ filteredOrders().length }} pedidos
+        </p>
+      }
+
+      @if (!loading() && filteredOrders().length > 0 && pageCount() > 1) {
+        <nav class="flex items-center justify-between gap-2" aria-label="Navegación de pedidos">
+          <button type="button" class="btn-coquette btn-ghost min-h-11 px-3 text-xs"
+                  (click)="goToPage(visiblePage() - 1)" [disabled]="visiblePage() <= 1">← Anterior</button>
+          <span class="text-xs font-bold text-pink-800">Página {{ visiblePage() }} de {{ pageCount() }}</span>
+          <button type="button" class="btn-coquette btn-ghost min-h-11 px-3 text-xs"
+                  (click)="goToPage(visiblePage() + 1)" [disabled]="visiblePage() >= pageCount()">Siguiente →</button>
+        </nav>
       }
 
       <!-- List -->
@@ -81,7 +107,7 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
         </div>
       } @else {
         <div class="space-y-3 pb-8">
-          @for (o of filteredOrders(); track o.id) {
+          @for (o of pageOrders(); track o.id) {
             <div class="card-coquette p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-all"
                  [class.ring-2]="!!o.notifiedAt"
                  [class.ring-emerald-200]="!!o.notifiedAt"
@@ -107,22 +133,32 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
 
               <!-- Actions -->
               <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:shrink-0">
-                <button class="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:scale-105 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
+                <button class="h-11 min-h-[44px] w-11 min-w-[44px] rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
                         title="Solo copiar el enlace" (click)="copyLink(o)">🔗</button>
 
-                <button class="order-first sm:order-none w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 px-4 rounded-xl bg-pink-500 text-white font-black text-sm hover:bg-pink-600 hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-200"
+                <button class="order-first sm:order-none w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 px-4 rounded-xl bg-pink-500 text-white font-black text-sm hover:bg-pink-600 active:scale-95 transition-all shadow-md shadow-pink-200"
                         (click)="send(o)">
                   💌 Copiar y marcar enviado
                 </button>
 
                 @if (o.notifiedAt) {
-                  <button class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 hover:scale-105 active:scale-95 flex items-center justify-center transition-all border border-gray-100"
+                  <button class="h-11 min-h-[44px] w-11 min-w-[44px] rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:scale-95 flex items-center justify-center transition-all border border-gray-100"
                           title="Marcar como NO enviado" (click)="toggleNotified(o)">↩️</button>
                 }
               </div>
             </div>
           }
         </div>
+      }
+
+      @if (!loading() && filteredOrders().length > 0 && pageCount() > 1) {
+        <nav class="flex items-center justify-between gap-2 pb-8" aria-label="Páginas de pedidos">
+          <button type="button" class="btn-coquette btn-ghost min-h-11 px-3 text-xs"
+                  (click)="goToPage(visiblePage() - 1)" [disabled]="visiblePage() <= 1">← Anterior</button>
+          <span class="text-xs font-bold text-pink-800">Página {{ visiblePage() }} de {{ pageCount() }}</span>
+          <button type="button" class="btn-coquette btn-ghost min-h-11 px-3 text-xs"
+                  (click)="goToPage(visiblePage() + 1)" [disabled]="visiblePage() >= pageCount()">Siguiente →</button>
+        </nav>
       }
     </div>
   `
@@ -132,23 +168,41 @@ export class SendLinksComponent implements OnInit {
   private toast = inject(ToastService);
 
   orders = signal<OrderSummaryDto[]>([]);
+  salesPeriods = signal<SalesPeriodDto[]>([]);
   loading = signal(true);
 
-  search = '';
-  hideNotified = false;
-  hideClosed = true;
+  selectedPeriodId = signal<number | null>(null);
+  search = signal('');
+  hideNotified = signal(false);
+  hideClosed = signal(true);
+  currentPage = signal(1);
+  readonly pageSize = 10;
 
   private readonly CLOSED_STATUSES = ['Delivered', 'Canceled', 'NotDelivered'];
 
   filteredOrders = computed(() => {
-    const term = this.search.trim().toLowerCase();
+    const raw = this.search().trim();
+    const term = this.normalizeText(raw);
+    const idTerm = raw.replace(/^#/, '').trim();
     return this.orders().filter(o => {
-      if (this.hideNotified && o.notifiedAt) return false;
-      if (this.hideClosed && this.CLOSED_STATUSES.includes(o.status)) return false;
-      if (term && !o.clientName.toLowerCase().includes(term)) return false;
+      if (this.hideNotified() && o.notifiedAt) return false;
+      if (this.hideClosed() && this.CLOSED_STATUSES.includes(o.status)) return false;
+      if (term && !this.normalizeText(o.clientName || '').includes(term)
+        && !(idTerm && /^\d+$/.test(idTerm) && o.id.toString().includes(idTerm))) return false;
       return true;
     });
   });
+
+  pageCount = computed(() => Math.max(1, Math.ceil(this.filteredOrders().length / this.pageSize)));
+  visiblePage = computed(() => Math.min(this.currentPage(), this.pageCount()));
+  pageOrders = computed(() => {
+    const start = (this.visiblePage() - 1) * this.pageSize;
+    return this.filteredOrders().slice(start, start + this.pageSize);
+  });
+
+  private normalizeText(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
 
   stats = computed(() => {
     const list = this.filteredOrders();
@@ -160,21 +214,75 @@ export class SendLinksComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadOrders();
+    this.api.getSalesPeriods().subscribe({
+      next: (periods) => {
+        this.salesPeriods.set(periods);
+        const activePeriod = periods.find(period => period.isActive);
+        this.selectedPeriodId.set(activePeriod?.id ?? null);
+        this.loadOrders();
+      },
+      error: () => this.loadOrders()
+    });
   }
 
   loadOrders(): void {
     this.loading.set(true);
-    this.api.getOrdersPaged(1, 500, '', '', '', undefined, undefined, '').subscribe({
-      next: (res) => {
-        this.orders.set(res.items);
-        this.loading.set(false);
+    const pageSize = 500;
+    const salesPeriodId = this.selectedPeriodId() ?? undefined;
+    this.api.getOrdersPaged(1, pageSize, '', '', '', undefined, undefined, '', salesPeriodId).subscribe({
+      next: (firstPage) => {
+        const pageCount = Math.ceil(firstPage.totalCount / pageSize);
+        if (pageCount <= 1) {
+          this.setLoadedOrders([firstPage]);
+          return;
+        }
+
+        const remainingPages = Array.from({ length: pageCount - 1 }, (_, index) =>
+          this.api.getOrdersPaged(index + 2, pageSize, '', '', '', undefined, undefined, '', salesPeriodId)
+        );
+        forkJoin(remainingPages).subscribe({
+          next: (pages) => this.setLoadedOrders([firstPage, ...pages]),
+          error: () => this.failOrderLoad()
+        });
       },
-      error: () => {
-        this.loading.set(false);
-        this.toast.error('Error al cargar pedidos');
-      }
+      error: () => this.failOrderLoad()
     });
+  }
+
+  changePeriod(periodId: number | null): void {
+    this.selectedPeriodId.set(periodId);
+    this.currentPage.set(1);
+    this.loadOrders();
+  }
+
+  changeSearch(search: string): void {
+    this.search.set(search);
+    this.currentPage.set(1);
+  }
+
+  setHideNotified(hide: boolean): void {
+    this.hideNotified.set(hide);
+    this.currentPage.set(1);
+  }
+
+  setHideClosed(hide: boolean): void {
+    this.hideClosed.set(hide);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    this.currentPage.set(Math.min(Math.max(1, page), this.pageCount()));
+  }
+
+  private setLoadedOrders(pages: PagedResult<OrderSummaryDto>[]): void {
+    this.orders.set(pages.flatMap(page => page.items));
+    this.loading.set(false);
+    this.currentPage.set(1);
+  }
+
+  private failOrderLoad(): void {
+    this.loading.set(false);
+    this.toast.error('Error al cargar pedidos');
   }
 
   /** Construye el mensaje, lo copia y marca el pedido como enviado. */

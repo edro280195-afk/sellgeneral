@@ -94,7 +94,7 @@ interface TandaForm {
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pb-8">
             @for (tanda of filteredTandas(); track tanda.id) {
               <div [routerLink]="['/admin/tandas', tanda.id]" 
-                   class="tanda-card-anim group relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500 opacity-0 translate-y-8 cursor-pointer">
+                   class="tanda-card-anim group relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500 cursor-pointer">
                 
                 <div class="relative bg-white/90 backdrop-blur-xl rounded-[1.7rem] p-6 flex flex-col h-full shadow-[0_8px_32px_rgba(244,114,182,0.08)] group-hover:shadow-[0_20px_50px_rgba(244,114,182,0.18)] transition-shadow duration-500 overflow-hidden">
                   
@@ -464,8 +464,9 @@ export class TandasComponent implements OnInit {
   }
 
   animateList() {
-    gsap.set('.tanda-card-anim', { opacity: 0, y: 30 });
-    gsap.to('.tanda-card-anim', {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    gsap.fromTo('.tanda-card-anim', { opacity: 0, y: 30 }, {
       opacity: 1,
       y: 0,
       duration: 0.4,

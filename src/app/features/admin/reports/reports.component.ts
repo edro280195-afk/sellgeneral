@@ -26,10 +26,12 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
         </div>
         
         <!-- Premium Pill Tabs -->
-        <div class="bg-white/40 backdrop-blur-xl p-1.5 rounded-2xl border border-white/60 shadow-sm flex gap-1 self-start">
+        <div class="report-tabs bg-white/40 backdrop-blur-xl p-1.5 rounded-2xl border border-white/60 shadow-sm">
           @for (tab of tabs; track tab.id) {
-            <button (click)="activeTab.set(tab.id)" 
-                    [class]="activeTab() === tab.id ? 'tab-pill-active' : 'tab-pill-inactive'">
+            <button class="report-tab"
+                    (click)="activeTab.set(tab.id)"
+                    [class.tab-pill-active]="activeTab() === tab.id"
+                    [class.tab-pill-inactive]="activeTab() !== tab.id">
               <span class="mr-1.5">{{ tab.icon }}</span>
               {{ tab.label }}
             </button>
@@ -672,6 +674,56 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
     </div>
   `,
   styles: `
+    .report-tabs {
+      display: grid;
+      width: 100%;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .report-tab {
+      display: inline-flex;
+      min-width: 0;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 6px;
+      border-radius: 12px;
+      font-size: 0.68rem;
+      line-height: 1.15;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .report-tab:last-child {
+      width: min(100%, calc(50% - 2px));
+      grid-column: 1 / -1;
+      justify-self: center;
+    }
+
+    @media (min-width: 768px) {
+      .report-tabs {
+        display: flex;
+        width: auto;
+        flex-wrap: wrap;
+      }
+
+      .report-tab {
+        min-height: 44px;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+      }
+
+      .report-tab:last-child {
+        width: auto;
+        grid-column: auto;
+        justify-self: auto;
+      }
+    }
+
     @keyframes cycleText {
       0% { opacity: 0; transform: translateY(15px); filter: blur(4px); }
       5% { opacity: 1; transform: translateY(0); filter: blur(0); }

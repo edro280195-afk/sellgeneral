@@ -44,16 +44,16 @@ import { AddressEditorV2Component } from '../address-editor-v2/address-editor-v2
                             </button>
                         } @else {
                             <div class="space-y-3">
-                                <input class="input-coquette" [(ngModel)]="infoForm.name" placeholder="Nombre" />
-                                <input class="input-coquette" [(ngModel)]="infoForm.phone" placeholder="Teléfono" />
+                                <input class="input-coquette" [(ngModel)]="infoForm.name" placeholder="Nombre" aria-label="Nombre de la clienta" />
+                                <input class="input-coquette" [(ngModel)]="infoForm.phone" placeholder="Teléfono" aria-label="Teléfono de la clienta" />
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <select class="input-coquette" [(ngModel)]="infoForm.tag">
+                                    <select class="input-coquette" [(ngModel)]="infoForm.tag" aria-label="Etiqueta de la clienta">
                                         <option value="None">Normal</option>
                                         <option value="RisingStar">🚀 En Ascenso</option>
                                         <option value="Vip">👑 Consentida</option>
                                         <option value="Blacklist">🚫 Lista Negra</option>
                                     </select>
-                                    <select class="input-coquette" [(ngModel)]="infoForm.type">
+                                    <select class="input-coquette" [(ngModel)]="infoForm.type" aria-label="Tipo de clienta">
                                         <option value="Nueva">Nueva</option>
                                         <option value="Frecuente">Frecuente</option>
                                     </select>

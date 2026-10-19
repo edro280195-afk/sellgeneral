@@ -134,8 +134,37 @@ import { BusinessBootstrapService } from '../../../core/services/business-bootst
         }
 
         @media (max-width: 640px) {
-            .banner { flex-wrap: wrap; }
-            .banner-cta { width: 100%; text-align: center; }
+            .banners-stack { padding-bottom: 0.6rem; }
+            .banner {
+                flex-wrap: nowrap;
+                gap: 0.65rem;
+                padding: 0.7rem 0.8rem;
+            }
+            .banner-icon { flex: 0 0 auto; font-size: 1.2rem; }
+            .banner-text { min-width: 0; }
+            .banner-title { font-size: 0.82rem; }
+            .banner-meta { font-size: 0.73rem; }
+            .banner-sub {
+                display: -webkit-box;
+                overflow: hidden;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                font-size: 0.74rem;
+                line-height: 1.3;
+            }
+            .banner-cta {
+                display: inline-flex;
+                min-height: 44px;
+                width: auto;
+                flex: 0 0 auto;
+                align-items: center;
+                justify-content: center;
+                padding: 0 0.8rem;
+                font-size: 0.72rem;
+                text-align: center;
+                white-space: normal;
+            }
         }
     `],
 })

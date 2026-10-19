@@ -46,10 +46,10 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
                     {{ s.name.charAt(0).toUpperCase() }}
                   </div>
                   <div class="flex gap-1">
-                    <button class="w-8 h-8 rounded-full hover:bg-pink-100 text-pink-400 transition-colors flex items-center justify-center" 
-                            (click)="editSupplier(s); $event.stopPropagation()" title="Editar">✏️</button>
-                    <button class="w-8 h-8 rounded-full hover:bg-red-50 text-red-300 transition-colors flex items-center justify-center" 
-                            (click)="deleteSupplier(s.id); $event.stopPropagation()" title="Eliminar">🗑️</button>
+                    <button class="w-11 h-11 min-w-11 min-h-11 rounded-full hover:bg-pink-100 text-pink-400 transition-colors flex items-center justify-center"
+                            (click)="editSupplier(s); $event.stopPropagation()" title="Editar" aria-label="Editar proveedor">✏️</button>
+                    <button class="w-11 h-11 min-w-11 min-h-11 rounded-full hover:bg-red-50 text-red-300 transition-colors flex items-center justify-center"
+                            (click)="deleteSupplier(s.id); $event.stopPropagation()" title="Eliminar" aria-label="Eliminar proveedor">🗑️</button>
                   </div>
                 </div>
 
@@ -199,8 +199,8 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
                           <p class="text-xs text-pink-400 italic truncate">{{ inv.notes || 'Sin descripción' }}</p>
                         </div>
                         <div class="text-right flex flex-col items-end gap-1">
-                          <button class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-all text-xs p-2" 
-                                  (click)="deleteInvestment(selectedSupplier()!.id, inv.id)">🗑️</button>
+                          <button class="min-h-11 min-w-11 rounded-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 text-red-300 hover:text-red-500 transition-all text-xs p-2"
+                                  (click)="deleteInvestment(selectedSupplier()!.id, inv.id)" aria-label="Eliminar inversión">🗑️</button>
                         </div>
                       </div>
                     } @empty {
@@ -220,7 +220,7 @@ import { SupplierDto, InvestmentDto, CreateInvestmentRequest } from '../../../co
       @if (showForm()) {
         <div class="overlay backdrop-blur-md" (click)="showForm.set(false)"></div>
         <div class="modal-container z-[60]">
-          <div class="card-coquette w-full max-w-md max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overscroll-contain p-4 sm:p-8 animate-scale-in border-none shadow-2xl relative">
+          <div class="card-coquette w-full max-w-md max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-8 animate-scale-in border-none shadow-2xl relative">
             
             <!-- Modal Header Decorations -->
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-pink-50 rounded-full blur-3xl opacity-50"></div>

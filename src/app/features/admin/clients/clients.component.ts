@@ -56,24 +56,26 @@ import { gsap } from 'gsap';
 
         <!-- Filters (Glassmorphic) -->
         <div class="bg-white/70 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_30px_rgb(244,114,182,0.1)] animate-slide-up delay-100" style="opacity:0; animation-fill-mode: forwards;">
-          <div class="flex flex-wrap gap-3 items-center">
-            <div class="w-full min-w-0 flex-1 sm:min-w-[250px] relative">
+          <div class="client-filter-controls">
+            <div class="client-filter-search relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">🔍</span>
-              <input class="w-full bg-white/60 border border-pink-200/50 rounded-2xl py-3 pl-10 pr-4 text-pink-900 placeholder-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all shadow-inner" 
+              <input class="client-filter-input bg-white/60 border border-pink-200/50 rounded-2xl py-3 pl-10 pr-4 text-pink-900 placeholder-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all shadow-inner"
                      placeholder="Buscar por nombre, teléfono o dirección..." 
                      [ngModel]="search()" (ngModelChange)="search.set($event)" />
             </div>
-            <select class="bg-white/60 border border-pink-200/50 rounded-2xl py-3 px-4 text-pink-700 font-medium focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all w-48 shadow-inner" 
+            <select class="client-filter-select client-filter-select-tags bg-white/60 border border-pink-200/50 rounded-2xl py-3 px-4 text-pink-700 font-medium focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all shadow-inner"
+                    aria-label="Filtrar por etiqueta"
                     [ngModel]="tagFilter()" (ngModelChange)="tagFilter.set($event)">
-              <option value="">🏷️ Todas las etiquetas</option>
+              <option value="">🏷️ Todas</option>
               <option value="None">🌸 Normal</option>
               <option value="RisingStar">🚀 En Ascenso</option>
               <option value="Vip">👑 Consentida VIP</option>
               <option value="Blacklist">🚫 Lista Negra</option>
             </select>
-            <select class="bg-white/60 border border-pink-200/50 rounded-2xl py-3 px-4 text-pink-700 font-medium focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all w-44 shadow-inner" 
+            <select class="client-filter-select client-filter-select-type bg-white/60 border border-pink-200/50 rounded-2xl py-3 px-4 text-pink-700 font-medium focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all shadow-inner"
+                    aria-label="Filtrar por tipo de clienta"
                     [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
-              <option value="">👥 Todos los tipos</option>
+              <option value="">👥 Todos</option>
               <option value="Nueva">🌱 Nueva</option>
               <option value="Frecuente">💫 Frecuente</option>
             </select>
@@ -90,7 +92,7 @@ import { gsap } from 'gsap';
           <!-- Client Cards -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             @for (client of filteredClients(); track client.id; let i = $index) {
-              <div class="client-card-anim group relative bg-white/80 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_25px_rgb(0,0,0,0.04)] cursor-pointer opacity-0 translate-y-8 transition-all duration-300" 
+              <div class="client-card-anim group relative bg-white/80 backdrop-blur-xl p-5 rounded-3xl border border-white shadow-[0_8px_25px_rgb(0,0,0,0.04)] cursor-pointer transition-all duration-300"
                    (click)="viewProfile(client.id)">
                 
                 <!-- VIP Shimmer Overlay -->
@@ -172,7 +174,43 @@ import { gsap } from 'gsap';
         }
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .client-filter-controls {
+      display: grid;
+      min-width: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: center;
+    }
+
+    .client-filter-search {
+      grid-column: 1 / -1;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .client-filter-input,
+    .client-filter-select {
+      box-sizing: border-box;
+      min-width: 0;
+      min-height: 48px;
+    }
+
+    .client-filter-input { width: 100%; }
+    .client-filter-select { width: 100%; padding-right: 2rem; }
+
+    @media (max-width: 380px) {
+      .client-filter-controls { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (min-width: 640px) {
+      .client-filter-controls { display: flex; flex-wrap: wrap; }
+      .client-filter-search { flex: 1 1 250px; width: auto; min-width: 250px; }
+      .client-filter-select-tags { width: 12rem; }
+      .client-filter-select-type { width: 11rem; }
+    }
+  `]
 })
 export class ClientsComponent implements OnInit {
   private api = inject(ApiService);
@@ -241,10 +279,9 @@ export class ClientsComponent implements OnInit {
   }
 
   private animateList(): void {
-    // Reset state before animating
-    gsap.set('.client-card-anim', { opacity: 0, y: 30 });
-    
-    gsap.to('.client-card-anim', {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    gsap.fromTo('.client-card-anim', { opacity: 0, y: 30 }, {
       opacity: 1,
       y: 0,
       duration: 0.35, // Accelerated from 0.6

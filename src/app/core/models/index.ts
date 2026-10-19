@@ -573,6 +573,14 @@ export interface RouteDto {
     expenses?: DriverExpenseDto[];
 }
 
+export interface DriverRouteDto {
+    id: number;
+    name?: string;
+    status: string;
+    startedAt?: string | null;
+    deliveries: RouteDeliveryDto[];
+}
+
 export interface SupplierDto {
     id: number;
     name: string;

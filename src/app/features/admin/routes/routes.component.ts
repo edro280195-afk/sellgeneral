@@ -353,7 +353,7 @@ interface GeocodedOrder extends OrderSummaryDto {
               <div class="px-5 mb-3">
                 <div class="flex justify-between items-center mb-1.5">
                   <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Progreso</span>
-                  <span class="text-xs font-bold text-pink-600">{{ getDelivered(route) }}/{{ route.deliveries.length }} 🎁</span>
+                  <span class="text-xs font-bold text-pink-600">{{ getResolved(route) }}/{{ route.deliveries.length }} resueltas</span>
                 </div>
                 <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div class="h-full bg-gradient-to-r from-pink-400 via-fuchsia-500 to-violet-500 rounded-full transition-all duration-700 ease-out"
@@ -533,7 +533,12 @@ interface GeocodedOrder extends OrderSummaryDto {
                     <div class="mx-5 mb-4 mt-2 rounded-2xl bg-red-50 border border-red-100 p-3 animate-pulse-subtle">
                       <p class="text-xs font-black text-red-500 mb-2">😿 No entregados:</p>
                       @for (d of getFailedDeliveries(route); track d.deliveryId) {
-                        <p class="text-xs text-red-600"><strong>{{ d.clientName }}:</strong> {{ d.failureReason }}</p>
+                        <div class="text-xs text-red-600">
+                          <p><strong>{{ d.clientName }}:</strong> {{ d.failureReason || 'Sin motivo registrado' }}</p>
+                          @if (d.notes) {
+                            <p class="mt-0.5 break-words text-red-500">Detalle: {{ d.notes }}</p>
+                          }
+                        </div>
                       }
                     </div>
                   }
@@ -549,7 +554,7 @@ interface GeocodedOrder extends OrderSummaryDto {
                           </div>
                           <div class="flex gap-3 text-[10px] font-mono text-pink-400">
                             <span>⏱ {{ getRouteDuration(route) }}</span>
-                            <span>✅ {{ getDelivered(route) }}/{{ route.deliveries.length }}</span>
+                            <span>✅ {{ getResolved(route) }}/{{ route.deliveries.length }} resueltas</span>
                           </div>
                         </div>
                       </div>
@@ -575,7 +580,7 @@ interface GeocodedOrder extends OrderSummaryDto {
                       <!-- Totales -->
                       <div class="px-4 pb-4 pt-2 border-t border-pink-100/60 flex gap-3 flex-wrap">
                         <div class="flex-1 bg-white rounded-xl p-2.5 border border-emerald-100 text-center">
-                          <p class="text-[9px] font-black uppercase tracking-wider text-emerald-400">Cobrado</p>
+                          <p class="text-[9px] font-black uppercase tracking-wider text-emerald-400">Cobrado por chofer</p>
                           <p class="text-base font-black text-emerald-600">{{ getRouteTotals(route).cobrado | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
                         </div>
                         <div class="flex-1 bg-white rounded-xl p-2.5 border border-amber-100 text-center">
@@ -583,7 +588,7 @@ interface GeocodedOrder extends OrderSummaryDto {
                           <p class="text-base font-black text-amber-600">{{ getRouteTotals(route).gastos | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
                         </div>
                         <div class="flex-1 bg-white rounded-xl p-2.5 border border-pink-100 text-center">
-                          <p class="text-[9px] font-black uppercase tracking-wider text-pink-400">Neto</p>
+                          <p class="text-[9px] font-black uppercase tracking-wider text-pink-400">Efectivo neto</p>
                           <p class="text-base font-black text-pink-600">{{ getRouteTotals(route).neto | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
                         </div>
                       </div>
@@ -625,7 +630,10 @@ interface GeocodedOrder extends OrderSummaryDto {
                     <p class="mb-2 text-xs font-black uppercase tracking-widest text-rose-700">No entregadas · {{ failedDeliveries(route).length }}</p>
                     @for (delivery of failedDeliveries(route); track delivery.deliveryId) {
                       <div class="py-1 text-xs leading-relaxed text-rose-900">
-                        <span class="font-bold">{{ delivery.clientName }}:</span> {{ delivery.failureReason || 'Sin motivo registrado' }}
+                        <p><span class="font-bold">{{ delivery.clientName }}:</span> {{ delivery.failureReason || 'Sin motivo registrado' }}</p>
+                        @if (delivery.notes) {
+                          <p class="mt-0.5 break-words text-rose-800/80">Detalle: {{ delivery.notes }}</p>
+                        }
                       </div>
                     }
                     <p class="mt-2 border-t border-rose-200 pt-2 text-[11px] text-rose-700">Cuentan como paradas resueltas y no suman cobros al corte.</p>
@@ -1905,8 +1913,8 @@ export class RoutesComponent implements OnInit, OnDestroy {
     return route.deliveries?.reduce((sum, d) => sum + d.total, 0) || 0;
   }
 
-  getDelivered(r: RouteDto): number {
-    return r.deliveries.filter(d => d.status === 'Delivered').length;
+  getResolved(r: RouteDto): number {
+    return r.deliveries.filter(d => d.status === 'Delivered' || d.status === 'NotDelivered').length;
   }
 
   getOrderCount(r: RouteDto): number {
@@ -1918,7 +1926,7 @@ export class RoutesComponent implements OnInit, OnDestroy {
   }
 
   getProgress(r: RouteDto): number {
-    return r.deliveries.length ? (this.getDelivered(r) / r.deliveries.length) * 100 : 0;
+    return r.deliveries.length ? (this.getResolved(r) / r.deliveries.length) * 100 : 0;
   }
 
   getFailedDeliveries(r: RouteDto): RouteDeliveryDto[] {
@@ -2632,12 +2640,17 @@ export class RoutesComponent implements OnInit, OnDestroy {
   // ─── ROUTE TOTALS (para resumen post-ruta) ───
   getRouteTotals(route: RouteDto): { cobrado: number; gastos: number; neto: number } {
     let cobrado = 0;
-    route.deliveries.forEach(d => {
-      if (d.payments?.length) d.payments.forEach(p => cobrado += p.amount);
-      else if (d.status === 'Delivered') cobrado += d.amountPaid || 0;
-    });
+    let efectivo = 0;
+    for (const delivery of route.deliveries) {
+      if (delivery.status !== 'Delivered') continue;
+      for (const payment of delivery.payments ?? []) {
+        if ((payment.registeredBy ?? '').trim().toLowerCase() !== 'driver') continue;
+        cobrado += payment.amount;
+        if (this.normalizeRouteSearch(payment.method) === 'efectivo') efectivo += payment.amount;
+      }
+    }
     const gastos = route.expenses?.reduce((s, e) => s + e.amount, 0) || 0;
-    return { cobrado, gastos, neto: cobrado - gastos };
+    return { cobrado, gastos, neto: efectivo - gastos };
   }
 
   canLiquidateRoute(route: RouteDto): boolean {

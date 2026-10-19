@@ -32,16 +32,22 @@
     @if (route(); as r) {
         
     <!-- Indicadores de la ruta -->
-    <div class="absolute top-[calc(1.5rem+env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-50 w-48 flex justify-center">
-        
-        <div class="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] px-4 py-2 flex items-center justify-between shadow-2xl h-10">
-            
-            <div class="flex items-center space-x-3 w-full justify-center">
-                <span class="text-xs font-bold text-pink-500">{{ deliveredCount() }}/{{ r.deliveries.length }}</span>
-                <div class="h-1 w-8 bg-white/20 rounded-full overflow-hidden">
-                    <div class="h-full bg-pink-500 transition-all duration-1000" [style.width.%]="progressPercent()"></div>
+    <div class="absolute top-[calc(0.75rem+env(safe-area-inset-top))] left-3 right-3 z-50 mx-auto max-w-sm">
+        <div class="flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-black/90 px-3 py-2 shadow-2xl backdrop-blur-2xl">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wide">
+                    <span class="text-pink-200">{{ resolvedCount() }}/{{ r.deliveries.length }} resueltas</span>
+                    @if (failedCount() > 0) {
+                        <span class="shrink-0 text-rose-300">{{ failedCount() }} no entregada(s)</span>
+                    }
                 </div>
-                <span class="text-xs font-bold text-emerald-400">${{ totalCobrado() | number:'1.0-0' }}</span>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
+                    <div class="h-full rounded-full bg-gradient-to-r from-pink-500 to-emerald-400 transition-[width] duration-500" [style.width.%]="progressPercent()"></div>
+                </div>
+            </div>
+            <div class="shrink-0 border-l border-white/15 pl-3 text-right">
+                <span class="block text-[9px] font-bold uppercase tracking-wide text-white/45">Recaudado</span>
+                <strong class="text-sm font-black text-emerald-300">${{ totalCobrado() | number:'1.0-0' }}</strong>
             </div>
         </div>
     </div>
@@ -66,20 +72,20 @@
     <div class="absolute top-[140px] right-4 z-50 flex flex-col items-center gap-3">
 
         <!-- Navegación (principal, más grande) -->
-        <button (click)="openGoogleRoute(r)"
-                class="w-14 h-14 bg-pink-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(219,39,119,0.5)] active:scale-90 transition-transform">
+        <button type="button" aria-label="Navegar a la siguiente parada" (click)="openGoogleRoute(r)"
+                class="min-h-14 min-w-14 bg-pink-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(219,39,119,0.5)] active:scale-90 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
         </button>
 
         @if (gpsActive()) {
             <!-- Reordenar -->
-            <button (click)="openReorderModal()"
-                    class="w-10 h-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform">
+            <button type="button" aria-label="Reordenar paradas" (click)="openReorderModal()"
+                    class="min-h-11 min-w-11 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                 🔃
             </button>
             <!-- Centrar GPS -->
-            <button (click)="centerOnMe()"
-                    class="w-10 h-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform">
+            <button type="button" aria-label="Centrar en mi ubicación" (click)="centerOnMe()"
+                    class="min-h-11 min-w-11 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-lg shadow-lg active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                 📍
             </button>
         }
@@ -88,16 +94,17 @@
 
     <!-- ACTIVE CARD (BOTTOM SHEET REINVENTED) -->
     <div class="absolute bottom-0 left-0 w-full z-40 px-4 pb-safe transition-all duration-500 ease-in-out pointer-events-none"
-         [class.translate-y-[70%]]="!isCardExpanded()">
+         [class.translate-y-[calc(100%_-_5rem)]]="!isCardExpanded()">
         
         @if (nextDelivery(); as d) {
-            <div class="w-full max-h-[calc(100dvh-6rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain bg-black/60 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2.5rem] p-5 sm:p-6 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] animate-slide-up pointer-events-auto relative">
+            <div class="w-full max-h-[calc(100dvh_-_6rem_-_env(safe-area-inset-top))] overflow-y-auto overscroll-contain bg-black/60 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2.5rem] p-5 sm:p-6 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] animate-slide-up pointer-events-auto">
                 
                 <!-- HANDLE FOR COLLAPSE -->
-                <div class="w-full h-8 absolute -top-4 left-0 flex items-center justify-center cursor-pointer" 
-                     (click)="toggleCard()" (mousedown)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
-                    <div class="w-16 h-1.5 bg-white/30 rounded-full transition-all duration-300 group-hover:bg-white/50"></div>
-                </div>
+                <button type="button" [attr.aria-expanded]="isCardExpanded()" [attr.aria-label]="isCardExpanded() ? 'Contraer detalles de la parada' : 'Expandir detalles de la parada'"
+                        class="-mx-2 -mt-2 mb-1 flex min-h-11 w-[calc(100%_+_1rem)] items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+                        (click)="toggleCard()">
+                    <span class="h-1.5 w-12 rounded-full bg-white/35 transition-colors"></span>
+                </button>
                 
                 <div class="flex justify-between items-start mb-4 mt-2">
                     <div class="flex-1 min-w-0">
@@ -113,12 +120,12 @@
                         </div>
                         <h2 class="text-3xl font-black leading-none mb-1 uppercase tracking-tight truncate">{{ d.clientName }}</h2>
                         <div class="flex items-center text-white/40 text-sm">
-                            <span class="truncate block w-full">{{ d.alternativeAddress || d.address || d.clientAddress }}</span>
+                            <span class="truncate block w-full">{{ d.alternativeAddress || d.clientAddress || 'Sin dirección' }}</span>
                         </div>
                     </div>
                     @if (d.status !== 'Delivered' && d.status !== 'NotDelivered' && d.kind !== 'Tanda') {
-                        <button (click)="openClientChat(d, $event)"
-                                class="w-12 h-12 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center text-xl active:scale-90 transition-transform shadow-lg ml-4 flex-shrink-0">
+                        <button type="button" aria-label="Abrir chat con la clienta" (click)="openClientChat(d, $event)"
+                                class="min-h-12 min-w-12 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center text-xl active:scale-90 transition-transform shadow-lg ml-4 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
                             💬
                         </button>
                     }
@@ -175,84 +182,120 @@
                 <!-- ACTIONS AREA -->
                 <div class="grid grid-cols-2 gap-3 mb-6">
                     <!-- COBRO SELECTORS (Omitted for brevity in collapse mode but keep in full) -->
-                    @if ((d.balanceDue ?? d.total) > 0) {
+                    @if ((d.balanceDue) > 0) {
                         <div class="col-span-2 grid grid-cols-3 gap-2">
-                            <button class="flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
-                                    [class.bg-emerald-500/20]="paymentMethods[d.id] === 'Efectivo'"
-                                    [class.border-emerald-500/50]="paymentMethods[d.id] === 'Efectivo'"
-                                    [class.text-emerald-400]="paymentMethods[d.id] === 'Efectivo'"
-                                    [class.bg-white/5]="paymentMethods[d.id] !== 'Efectivo'"
-                                    [class.border-white/10]="paymentMethods[d.id] !== 'Efectivo'"
-                                    [class.text-white/40]="paymentMethods[d.id] !== 'Efectivo'"
-                                    (click)="paymentMethods[d.id] = 'Efectivo'">
+                            <button type="button" [attr.aria-pressed]="paymentMethods[d.deliveryId] === 'Efectivo'" class="min-h-11 flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
+                                    [class.bg-emerald-500/20]="paymentMethods[d.deliveryId] === 'Efectivo'"
+                                    [class.border-emerald-500/50]="paymentMethods[d.deliveryId] === 'Efectivo'"
+                                    [class.text-emerald-400]="paymentMethods[d.deliveryId] === 'Efectivo'"
+                                    [class.bg-white/5]="paymentMethods[d.deliveryId] !== 'Efectivo'"
+                                    [class.border-white/10]="paymentMethods[d.deliveryId] !== 'Efectivo'"
+                                    [class.text-white/40]="paymentMethods[d.deliveryId] !== 'Efectivo'"
+                                    (click)="paymentMethods[d.deliveryId] = 'Efectivo'">
                                 <span class="text-lg">💵</span>
                                 <span class="text-[10px] font-bold uppercase mt-1">Efectivo</span>
                             </button>
-                            <button class="flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
-                                    [class.bg-blue-500/20]="paymentMethods[d.id] === 'Transferencia'"
-                                    [class.border-blue-500/50]="paymentMethods[d.id] === 'Transferencia'"
-                                    [class.text-blue-400]="paymentMethods[d.id] === 'Transferencia'"
-                                    [class.bg-white/5]="paymentMethods[d.id] !== 'Transferencia'"
-                                    [class.border-white/10]="paymentMethods[d.id] !== 'Transferencia'"
-                                    [class.text-white/40]="paymentMethods[d.id] !== 'Transferencia'"
-                                    (click)="paymentMethods[d.id] = 'Transferencia'">
+                            <button type="button" [attr.aria-pressed]="paymentMethods[d.deliveryId] === 'Transferencia'" class="min-h-11 flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
+                                    [class.bg-blue-500/20]="paymentMethods[d.deliveryId] === 'Transferencia'"
+                                    [class.border-blue-500/50]="paymentMethods[d.deliveryId] === 'Transferencia'"
+                                    [class.text-blue-400]="paymentMethods[d.deliveryId] === 'Transferencia'"
+                                    [class.bg-white/5]="paymentMethods[d.deliveryId] !== 'Transferencia'"
+                                    [class.border-white/10]="paymentMethods[d.deliveryId] !== 'Transferencia'"
+                                    [class.text-white/40]="paymentMethods[d.deliveryId] !== 'Transferencia'"
+                                    (click)="paymentMethods[d.deliveryId] = 'Transferencia'">
                                 <span class="text-lg">💳</span>
                                 <span class="text-[10px] font-bold uppercase mt-1">Transfer</span>
                             </button>
-                            <button class="flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
-                                    [class.bg-amber-500/20]="paymentMethods[d.id] === 'Deposito'"
-                                    [class.border-amber-500/50]="paymentMethods[d.id] === 'Deposito'"
-                                    [class.text-amber-400]="paymentMethods[d.id] === 'Deposito'"
-                                    [class.bg-white/5]="paymentMethods[d.id] !== 'Deposito'"
-                                    [class.border-white/10]="paymentMethods[d.id] !== 'Deposito'"
-                                    [class.text-white/40]="paymentMethods[d.id] !== 'Deposito'"
-                                    (click)="paymentMethods[d.id] = 'Deposito'">
+                            <button type="button" [attr.aria-pressed]="paymentMethods[d.deliveryId] === 'Deposito'" class="min-h-11 flex flex-col items-center justify-center py-3 rounded-2xl border transition-all"
+                                    [class.bg-amber-500/20]="paymentMethods[d.deliveryId] === 'Deposito'"
+                                    [class.border-amber-500/50]="paymentMethods[d.deliveryId] === 'Deposito'"
+                                    [class.text-amber-400]="paymentMethods[d.deliveryId] === 'Deposito'"
+                                    [class.bg-white/5]="paymentMethods[d.deliveryId] !== 'Deposito'"
+                                    [class.border-white/10]="paymentMethods[d.deliveryId] !== 'Deposito'"
+                                    [class.text-white/40]="paymentMethods[d.deliveryId] !== 'Deposito'"
+                                    (click)="paymentMethods[d.deliveryId] = 'Deposito'">
                                 <span class="text-lg">🏦</span>
                                 <span class="text-[10px] font-bold uppercase mt-1">Depósito</span>
                             </button>
                         </div>
                     }
 
-                    <button (click)="showFailModalFn(d.id)" 
-                            class="py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/60 active:bg-white/10 transition-opacity"
+                    <button type="button" (click)="showFailModalFn(d.deliveryId)"
+                            class="min-h-11 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/70 active:bg-white/10 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
                             [class.opacity-0]="!isCardExpanded()" [class.pointer-events-none]="!isCardExpanded()">
-                        😿 No pude
+                        No entregado
                     </button>
                     
-                    <label class="py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/60 flex items-center justify-center active:bg-white/10 transition-opacity"
+                    <label class="min-h-11 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/70 flex items-center justify-center active:bg-white/10 transition-opacity"
                            [class.opacity-0]="!isCardExpanded()" [class.pointer-events-none]="!isCardExpanded()">
-                        📸 Evidencia
-                        <input type="file" accept="image/*" capture="environment" (change)="onPhotoCapture($event, d.id)" hidden>
+                        📸 Foto · {{ getPhotos(d.deliveryId).length }}/5
+                        <input type="file" accept="image/*" capture="environment" (change)="onPhotoCapture($event, d.deliveryId)" hidden>
                     </label>
 
-                    <button (click)="openSignaturePad(d.id)"
-                            class="py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/60 active:bg-white/10 transition-opacity"
+                    <button type="button" (click)="openSignaturePad(d.deliveryId)"
+                            class="min-h-11 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase text-white/70 active:bg-white/10 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
                             [class.opacity-0]="!isCardExpanded()" [class.pointer-events-none]="!isCardExpanded()">
-                        @if (signatures[d.id]) { ✓ {{ signatures[d.id].name || 'Firmado' }} } @else { ✍️ Firma }
+                        @if (signatures[d.deliveryId]) { ✓ {{ signatures[d.deliveryId].name || 'Firmado' }} } @else { ✍️ Firma }
                     </button>
                 </div>
 
                 <!-- DELIVER BUTTON -->
-                <button (click)="markDelivered(d.id)"
-                        [disabled]="((d.balanceDue ?? d.total) > 0 && !paymentMethods[d.id]) || isDelivering()"
+                <button type="button" (click)="markDelivered(d.deliveryId)"
+                        [disabled]="((d.balanceDue) > 0 && !paymentMethods[d.deliveryId]) || isDelivering() || isReportingFailure()"
                         class="w-full h-20 rounded-[2rem] font-black text-xl uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:grayscale disabled:opacity-40 disabled:cursor-not-allowed"
                         [class.bg-emerald-600]="d.kind !== 'Tanda'"
                         [class.shadow-emerald-600/20]="d.kind !== 'Tanda'"
                         [class.bg-fuchsia-600]="d.kind === 'Tanda'"
                         [class.shadow-fuchsia-600/20]="d.kind === 'Tanda'">
-                    {{ isDelivering() ? 'Entregando...' : (d.kind === 'Tanda' ? '✨ Confirmar Tanda' : ((d.balanceDue ?? d.total) > 0 && !paymentMethods[d.id] ? 'Selecciona pago' : '✓ Entregar')) }}
+                    {{ isDelivering() ? 'Registrando entrega…' : (d.kind === 'Tanda' ? '✨ Confirmar entrega' : ((d.balanceDue) > 0 && !paymentMethods[d.deliveryId] ? 'Selecciona pago' : '✓ Confirmar entrega')) }}
                 </button>
             </div>
         } @else {
             <!-- NO PENDING DELIVERIES -->
-            <div class="bg-black/60 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2.5rem] p-10 flex flex-col items-center shadow-2xl animate-slide-up pointer-events-auto">
-                <span class="text-5xl mb-4">🏆</span>
-                <h2 class="text-2xl font-black uppercase italic tracking-tighter mb-2">¡Ruta Completada!</h2>
-                <p class="text-white/40 text-sm mb-6">Todas las entregas han sido procesadas.</p>
+            <div class="max-h-[min(72dvh,calc(100dvh_-_env(safe-area-inset-top)_-_1rem))] overflow-y-auto overscroll-contain bg-black/75 backdrop-blur-3xl border-t border-x border-white/10 rounded-t-[2rem] p-5 pb-[calc(1rem_+_env(safe-area-inset-bottom))] shadow-2xl animate-slide-up pointer-events-auto">
+                <div class="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/25"></div>
+                <div class="flex items-start gap-3">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">🏁</span>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-xl font-black tracking-tight">Ruta terminada</h2>
+                        <p class="mt-1 text-sm text-white/60">Ya se procesaron todas las paradas.</p>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <div class="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-emerald-200/70">Entregadas</span>
+                        <strong class="text-lg text-emerald-200">{{ deliveredCount() }}</strong>
+                    </div>
+                    <div class="rounded-xl border border-rose-400/20 bg-rose-400/10 p-3">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-rose-200/70">No entregadas</span>
+                        <strong class="text-lg text-rose-200">{{ failedCount() }}</strong>
+                    </div>
+                </div>
+                @if (failedCount() > 0) {
+                    <section class="mt-3 rounded-xl border border-rose-400/20 bg-rose-950/30 p-3" aria-labelledby="driverFailedStopsTitle">
+                        <h3 id="driverFailedStopsTitle" class="text-xs font-black uppercase tracking-wide text-rose-200">Motivos registrados</h3>
+                        <div class="mt-2 space-y-2">
+                            @for (delivery of failedDeliveries(); track delivery.deliveryId) {
+                                <div class="border-t border-white/10 pt-2 text-xs leading-relaxed">
+                                    <p class="font-bold text-white">{{ delivery.clientName }}</p>
+                                    <p class="text-rose-200">{{ delivery.failureReason || 'Sin motivo registrado' }}</p>
+                                    @if (delivery.notes) {
+                                        <p class="mt-0.5 break-words text-white/55">{{ delivery.notes }}</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+                @if (r.status === 'Completed') {
+                    <p class="mt-3 rounded-xl border border-pink-300/20 bg-pink-300/10 p-3 text-xs leading-relaxed text-pink-100">La tienda revisará las paradas y confirmará tu corte de caja. Las no entregadas quedan fuera de los cobros.</p>
+                }
                 @if (r.status === 'Pending') {
-                    <button (click)="startRoute()" class="w-full py-4 bg-pink-600 rounded-2xl font-bold uppercase">Iniciar Ruta</button>
+                    <button type="button" (click)="startRoute()" class="mt-4 min-h-12 w-full rounded-2xl bg-pink-600 px-4 font-bold">Iniciar ruta</button>
                 } @else if (!gpsActive()) {
-                    <button (click)="startGps()" class="w-full py-4 bg-blue-600 rounded-2xl font-bold uppercase">Activar Radar GPS</button>
+                    @if (r.status === 'Active') {
+                        <button type="button" (click)="startGps()" class="mt-4 min-h-12 w-full rounded-2xl bg-blue-600 px-4 font-bold">Activar GPS</button>
+                    }
                 }
             </div>
         }
@@ -271,11 +314,11 @@
                         <h3 class="font-black text-xl uppercase italic tracking-tighter">🔃 Reordenar Ruta</h3>
                         <p class="text-[10px] text-pink-400 uppercase font-bold tracking-widest">Usa ↑↓ para mover paradas</p>
                     </div>
-                    <button (click)="closeReorderModal()" class="w-10 h-10 flex items-center justify-center bg-white/10 rounded-full">✕</button>
+                    <button type="button" aria-label="Cerrar reordenamiento" (click)="closeReorderModal()" class="min-h-11 min-w-11 flex items-center justify-center bg-white/10 rounded-full">✕</button>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                    @for (d of r.deliveries; track d.id; let i = $index) {
+                    @for (d of r.deliveries; track d.deliveryId; let i = $index) {
                         <div class="flex items-center gap-3"
                              [class.opacity-40]="d.status === 'Delivered' || d.status === 'NotDelivered'">
                             <!-- Posición -->
@@ -293,17 +336,17 @@
                                         <span class="text-[8px] px-1 py-0.5 bg-fuchsia-500/30 text-fuchsia-200 rounded">TANDA</span>
                                     }
                                 </h4>
-                                <p class="text-[10px] text-white/40 truncate">{{ d.address || d.clientAddress }}</p>
+                                <p class="text-[10px] text-white/40 truncate">{{ d.alternativeAddress || d.clientAddress || 'Sin dirección' }}</p>
                             </div>
                             <!-- Botones ↑/↓ -->
                             @if (d.status !== 'Delivered' && d.status !== 'NotDelivered') {
                                 <div class="flex flex-col gap-1 shrink-0">
-                                    <button (click)="moveDelivery(i, -1)" [disabled]="i === 0"
-                                            class="w-9 h-9 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-lg active:bg-white/20 transition-all disabled:opacity-20">
+                                    <button type="button" aria-label="Mover parada arriba" (click)="moveDelivery(i, -1)" [disabled]="i === 0"
+                                            class="min-h-11 min-w-11 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-lg active:bg-white/20 transition-all disabled:opacity-20">
                                         ↑
                                     </button>
-                                    <button (click)="moveDelivery(i, 1)" [disabled]="i === r.deliveries.length - 1"
-                                            class="w-9 h-9 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-lg active:bg-white/20 transition-all disabled:opacity-20">
+                                    <button type="button" aria-label="Mover parada abajo" (click)="moveDelivery(i, 1)" [disabled]="i === r.deliveries.length - 1"
+                                            class="min-h-11 min-w-11 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-lg active:bg-white/20 transition-all disabled:opacity-20">
                                         ↓
                                     </button>
                                 </div>
@@ -312,7 +355,7 @@
                     }
                 </div>
 
-                <div class="p-4 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10">
+                <div class="p-4 sm:p-6 pb-[calc(1rem_+_env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10">
                     <button (click)="saveReorder()"
                             class="w-full py-4 bg-pink-600 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-pink-600/20 active:scale-95 transition-transform">
                         Guardar Orden
@@ -330,7 +373,7 @@
                         <h3 class="font-black text-xl uppercase italic">{{ delivery.clientName }}</h3>
                         <span class="text-[10px] text-indigo-400 uppercase font-bold tracking-widest">Chat Directo</span>
                     </div>
-                    <button (click)="closeClientChat()" class="text-2xl">✕</button>
+                    <button type="button" aria-label="Cerrar chat" (click)="closeClientChat()" class="min-h-11 min-w-11 rounded-full bg-white/10 text-2xl">✕</button>
                 </div>
                 <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4" #clientChatScroll>
                     @for (msg of clientChatMessages(); track msg.id) {
@@ -347,11 +390,11 @@
                         </div>
                     }
                 </div>
-                <div class="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10 flex items-center gap-2">
+                <div class="p-4 pb-[calc(1rem_+_env(safe-area-inset-bottom))] bg-white/5 border-t border-white/10 flex items-center gap-2">
                     <input type="text" [(ngModel)]="newClientMessage" (keydown.enter)="sendClientChat()"
-                           class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                           class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-base focus:outline-none focus:border-indigo-500"
                            placeholder="Mensaje para clienta...">
-                    <button (click)="sendClientChat()" class="bg-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center">➤</button>
+                    <button type="button" aria-label="Enviar mensaje" (click)="sendClientChat()" class="bg-indigo-600 min-h-12 min-w-12 rounded-2xl flex items-center justify-center">➤</button>
                 </div>
             </div>
         </div>
@@ -359,7 +402,7 @@
 
     @if (showExpenseModal()) {
         <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end pt-[env(safe-area-inset-top)] animate-fade-in" (click)="closeExpenseModal()">
-            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-black/80 border-t border-white/20 rounded-t-[2rem] sm:rounded-t-[3rem] w-full p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] animate-slide-up" (click)="$event.stopPropagation()">
+            <div class="max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-black/80 border-t border-white/20 rounded-t-[2rem] sm:rounded-t-[3rem] w-full p-5 sm:p-8 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))] animate-slide-up" (click)="$event.stopPropagation()">
                 <h3 class="text-2xl font-black uppercase mb-6 tracking-tighter">⛽ Registrar Gasto</h3>
                 <div class="space-y-4">
                     <select [(ngModel)]="expenseForm.type" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-4 focus:outline-none">
@@ -380,37 +423,89 @@
     }
 
     @if (failModalId()) {
-        <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end pt-[env(safe-area-inset-top)] animate-fade-in" (click)="cancelFail()">
-            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-black/80 border-t border-white/20 rounded-t-[2rem] sm:rounded-t-[3rem] w-full p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] animate-slide-up" (click)="$event.stopPropagation()">
-                <h3 class="text-2xl font-black uppercase mb-6 tracking-tighter">😿 Reportar Error</h3>
-                <div class="grid grid-cols-2 gap-2 mb-6">
-                    @for (reason of failReasons; track reason) {
-                        <button class="py-3 px-2 border rounded-xl text-[10px] font-bold uppercase transition-all"
-                                [class.bg-red-500/20]="selectedReason() === reason"
-                                [class.border-red-500]="selectedReason() === reason"
-                                [class.text-red-400]="selectedReason() === reason"
-                                [class.bg-white/5]="selectedReason() !== reason"
-                                [class.border-white/10]="selectedReason() !== reason"
-                                [class.text-white/40]="selectedReason() !== reason"
-                                (click)="selectedReason.set(reason)">{{ reason }}</button>
-                    }
+        <div class="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl animate-fade-in sm:items-center sm:p-6" (click)="cancelFail()">
+            <section role="dialog" aria-modal="true" aria-labelledby="failureDialogTitle"
+                     class="max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_1.5rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-white/15 bg-[#111014] shadow-2xl"
+                     (click)="$event.stopPropagation()">
+                <header class="flex items-start gap-3 border-b border-white/10 p-4 sm:p-5">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-rose-300">Parada #{{ failureDelivery()?.sortOrder }}</p>
+                        <h3 id="failureDialogTitle" class="mt-1 text-xl font-black">Registrar no entrega</h3>
+                        <p class="mt-1 truncate text-sm text-white/60">{{ failureDelivery()?.clientName }}</p>
+                    </div>
+                    <button type="button" aria-label="Cerrar reporte de no entrega" [disabled]="isReportingFailure()"
+                            (click)="cancelFail()" class="min-h-11 min-w-11 shrink-0 rounded-full bg-white/10 text-xl disabled:opacity-40">×</button>
+                </header>
+
+                <div class="space-y-4 p-4 sm:p-5">
+                    <fieldset>
+                        <legend class="mb-2 text-sm font-bold text-white/80">¿Qué ocurrió? <span class="text-rose-300">*</span></legend>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            @for (reason of failReasons; track reason) {
+                                <button type="button" [attr.aria-pressed]="selectedReason() === reason"
+                                        class="min-h-11 rounded-xl border px-3 py-2 text-left text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+                                        [class.bg-rose-500/20]="selectedReason() === reason"
+                                        [class.border-rose-400]="selectedReason() === reason"
+                                        [class.text-rose-100]="selectedReason() === reason"
+                                        [class.bg-white/5]="selectedReason() !== reason"
+                                        [class.border-white/10]="selectedReason() !== reason"
+                                        [class.text-white/70]="selectedReason() !== reason"
+                                        [disabled]="isReportingFailure()"
+                                        (click)="selectedReason.set(reason)">{{ reason }}</button>
+                            }
+                        </div>
+                    </fieldset>
+
+                    <label class="block">
+                        <span class="mb-1 block text-sm font-bold text-white/80">Detalle adicional <span class="font-normal text-white/45">(opcional)</span></span>
+                        <textarea [(ngModel)]="customReason" name="failureDetails" rows="2" maxlength="500" placeholder="Agrega una referencia breve para la tienda"
+                                  class="w-full resize-y rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-base text-white placeholder:text-white/35 focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-300/30 disabled:opacity-50"
+                                  [disabled]="isReportingFailure()"></textarea>
+                    </label>
+
+                    <div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-sm font-bold text-white/80">Evidencia <span class="font-normal text-white/45">(opcional)</span></span>
+                            <label class="inline-flex min-h-11 cursor-pointer items-center rounded-xl border border-white/15 bg-white/5 px-3 text-xs font-bold text-white/80 focus-within:ring-2 focus-within:ring-rose-300">
+                                📸 Tomar foto
+                                <input type="file" accept="image/*" capture="environment" (change)="onPhotoCapture($event, failModalId())" [disabled]="isReportingFailure()" class="sr-only">
+                            </label>
+                        </div>
+                        @if (getPhotos(failModalId()).length > 0) {
+                            <div class="mt-2 grid grid-cols-3 gap-2">
+                                @for (photo of getPhotos(failModalId()); track $index; let i = $index) {
+                                    <div class="relative aspect-square overflow-hidden rounded-xl border border-white/15">
+                                        <img [src]="photo.preview" alt="Vista previa de evidencia de no entrega" class="h-full w-full object-cover">
+                                        <button type="button" [attr.aria-label]="'Quitar foto ' + (i + 1)" [disabled]="isReportingFailure()"
+                                                (click)="removePhoto(failModalId(), i)" class="absolute right-1 top-1 min-h-11 min-w-11 rounded-full bg-black/75 text-sm font-bold text-white disabled:opacity-40">×</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <p class="rounded-xl border border-rose-300/15 bg-rose-300/10 px-3 py-2 text-xs leading-relaxed text-rose-100/90">Esta parada quedará resuelta como no entregada y no sumará cobros. La tienda verá el motivo y después podrá preparar un reintento o confirmar el corte.</p>
                 </div>
-                <textarea [(ngModel)]="customReason" placeholder="Detalles adicionales..." class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-4 mb-6"></textarea>
-                <button (click)="confirmFail()"
-                        [disabled]="!selectedReason() && !customReason.trim()"
-                        class="w-full py-5 bg-red-600 rounded-3xl font-black uppercase tracking-widest">
-                    Confirmar Falla
-                </button>
-            </div>
+
+                <footer class="sticky bottom-0 flex gap-3 border-t border-white/10 bg-[#111014] p-4 pb-[calc(1rem_+_env(safe-area-inset-bottom))]">
+                    <button type="button" class="min-h-11 flex-1 rounded-xl bg-white/10 px-4 text-sm font-bold text-white/70 disabled:opacity-40"
+                            [disabled]="isReportingFailure()" (click)="cancelFail()">Cancelar</button>
+                    <button type="button" (click)="confirmFail()"
+                            [disabled]="(!selectedReason() && !customReason.trim()) || isReportingFailure()"
+                            class="min-h-11 flex-[2] rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-lg disabled:opacity-40">
+                        {{ isReportingFailure() ? 'Guardando…' : 'Registrar no entrega' }}
+                    </button>
+                </footer>
+            </section>
         </div>
     }
 
     @if (signatureModalId()) {
         <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] animate-fade-in" (click)="closeSignaturePad()">
-            <div class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto overscroll-contain bg-black/80 border border-white/20 rounded-[2.5rem] w-full max-w-md p-4 sm:p-6 animate-slide-up" (click)="$event.stopPropagation()">
+            <div class="max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_2rem)] overflow-y-auto overscroll-contain bg-black/80 border border-white/20 rounded-[2.5rem] w-full max-w-md p-4 sm:p-6 animate-slide-up" (click)="$event.stopPropagation()">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-black uppercase tracking-tighter">✍️ Firma de quien recibe</h3>
-                    <button (click)="closeSignaturePad()" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">✕</button>
+                    <button type="button" aria-label="Cerrar firma" (click)="closeSignaturePad()" class="min-h-11 min-w-11 rounded-full bg-white/10 flex items-center justify-center">✕</button>
                 </div>
                 <p class="text-xs text-white/60 mb-3">Pide a la clienta que firme con el dedo abajo. Si no quiere firmar, puedes saltarla.</p>
                 <input type="text" [(ngModel)]="signatureName" inputmode="text" placeholder="Nombre de quien firma (opcional)"

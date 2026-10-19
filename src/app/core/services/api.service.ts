@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
     DashboardDto, OrderSummaryDto, PagedResult, ReportDto, ClientDto, CreateClientRequest,
-    RouteDto, SupplierDto, InvestmentDto,
+    RouteDto, DriverRouteDto, SupplierDto, InvestmentDto,
     DriverExpenseDto, ManualOrderRequest, OrderStatsDto,
     AddPaymentRequest, CreateSupplierRequest, CreateInvestmentRequest,
     UpdateOrderDetailsRequest, CreateAdminExpenseRequest,
@@ -432,8 +432,8 @@ export class ApiService {
     }
 
     // ── Driver (Repartidor) ──
-    getDriverRoute(driverToken: string): Observable<any> {
-        return this.http.get(`${this.base}/driver/${driverToken}`);
+    getDriverRoute(driverToken: string): Observable<DriverRouteDto> {
+        return this.http.get<DriverRouteDto>(`${this.base}/driver/${driverToken}`);
     }
 
     startRoute(driverToken: string): Observable<any> {

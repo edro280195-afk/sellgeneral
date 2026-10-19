@@ -132,3 +132,13 @@
     animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
 }
+
+@media (prefers-reduced-motion: reduce) {
+    :host,
+    :host * {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

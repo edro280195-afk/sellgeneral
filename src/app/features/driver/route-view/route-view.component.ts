@@ -10,7 +10,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { PushNotificationService } from '../../../core/services/push-notification.service';
 import { GpsService } from '../../../core/services/gps.service';
-import { OrderStatus, ORDER_STATUS_LABELS } from '../../../core/models';
+import { DriverRouteDto, ORDER_STATUS_LABELS, RouteDeliveryDto } from '../../../core/models';
 import { effect } from '@angular/core';
 
 declare const google: any;
@@ -35,38 +35,49 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     private push = inject(PushNotificationService);
     public gps = inject(GpsService);
 
-    route = signal<any>(null);
+    route = signal<DriverRouteDto | null>(null);
     loading = signal(true);
     errorMessage = signal('');
     gpsActive = this.gps.active;
     expandedId = signal(0);
     toastMsg = signal('');
 
-    deliveredCount = computed(() => this.route()?.deliveries?.filter((d: any) => d.status === 'Delivered').length || 0);
+    deliveredCount = computed(() => this.route()?.deliveries.filter(delivery => delivery.status === 'Delivered').length ?? 0);
+    failedCount = computed(() => this.route()?.deliveries.filter(delivery => delivery.status === 'NotDelivered').length ?? 0);
+    failedDeliveries = computed(() => this.route()?.deliveries.filter(delivery => delivery.status === 'NotDelivered') ?? []);
+    resolvedCount = computed(() => this.route()?.deliveries.filter(delivery =>
+        delivery.status === 'Delivered' || delivery.status === 'NotDelivered').length ?? 0);
     progressPercent = computed(() => {
         const r = this.route();
-        if (!r || !r.deliveries?.length) return 0;
-        return (this.deliveredCount() / r.deliveries.length) * 100;
+        if (!r || !r.deliveries.length) return 0;
+        return (this.resolvedCount() / r.deliveries.length) * 100;
     });
     totalCobrado = computed(() => {
         const r = this.route();
         if (!r) return 0;
-        return r.deliveries?.filter((d: any) => d.status === 'Delivered').reduce((s: number, d: any) => s + (d.total || 0), 0) || 0;
+        return r.deliveries.reduce((routeTotal, delivery) => {
+            if (delivery.status !== 'Delivered') return routeTotal;
+            const collected = (delivery.payments ?? [])
+                .filter(payment => (payment.registeredBy ?? '').trim().toLowerCase() === 'driver')
+                .reduce((paymentTotal, payment) => paymentTotal + payment.amount, 0);
+            return routeTotal + collected;
+        }, 0);
     });
-    totalGastos = computed(() => this.route()?.expenses?.reduce((s: number, e: any) => s + e.amount, 0) || 0);
 
-    activeChatDelivery = signal<any>(null);
+    activeChatDelivery = signal<RouteDeliveryDto | null>(null);
     clientChatMessages = signal<any[]>([]);
     newClientMessage = '';
 
     isDelivering = signal(false);
+    isReportingFailure = signal(false);
 
     isCardExpanded = signal(true);
+    failureDelivery = computed(() => this.route()?.deliveries.find(delivery => delivery.deliveryId === this.failModalId()) ?? null);
 
     nextDelivery = computed(() => {
         const r = this.route();
-        if (!r || !r.deliveries) return null;
-        return r.deliveries.find((d: any) => d.status === 'Pending' || d.status === 'InTransit');
+        if (!r) return null;
+        return r.deliveries.find(delivery => delivery.status === 'Pending' || delivery.status === 'InTransit') ?? null;
     });
 
     showExpenseModal = signal(false);
@@ -127,7 +138,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         this.signalr.clientChatUpdate$.subscribe(msg => {
             if (this.clientMsgIds.has(msg.id)) return;
             this.clientMsgIds.add(msg.id);
-            if (this.activeChatDelivery()?.id === msg.deliveryId) {
+            if (this.activeChatDelivery()?.deliveryId === msg.deliveryId) {
                 this.clientChatMessages.update(msgs => [...msgs, msg]);
                 this.scrollTo('client');
             } else {
@@ -168,7 +179,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     saveReorder(): void {
         const r = this.route();
         if (!r) return;
-        const ids = r.deliveries.map((d: any) => d.id);
+        const ids = r.deliveries.map(delivery => delivery.deliveryId);
         this.api.driverReorderRouteDeliveries(this.token, ids).subscribe({
             next: () => { this.showToast('✅ Orden guardado'); this.closeReorderModal(); this.loadRoute(); },
             error: () => { this.showToast('Error al guardar 😿'); this.loadRoute(); }
@@ -183,8 +194,8 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         this.loading.set(true);
         this.errorMessage.set('');
         this.api.getDriverRoute(this.token).subscribe({
-            next: (r: any) => {
-                r.deliveries.sort((a: any, b: any) => a.sortOrder - b.sortOrder);
+            next: (r: DriverRouteDto) => {
+                r.deliveries.sort((a, b) => a.sortOrder - b.sortOrder);
                 this.route.set(r);
                 this.loading.set(false);
                 this.signalr.connect().then(() => this.signalr.joinRoute(this.token));
@@ -253,7 +264,8 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         const r = this.route();
         const pos = this.gps.lastPosition();
         if (!pos || !this.map || !r) return;
-        const pending = r.deliveries.filter((d: any) => d.status !== 'Delivered' && d.status !== 'NotDelivered' && d.latitude);
+        const pending = r.deliveries.filter(d =>
+            d.status !== 'Delivered' && d.status !== 'NotDelivered' && d.latitude != null && d.longitude != null);
         if (!pending.length) {
             this.routePolyline?.setMap(null);
             this.fullRoutePolyline?.setMap(null);
@@ -261,22 +273,24 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         }
 
         const origin = { lat: pos.lat, lng: pos.lng };
-        const dest = { lat: pending[0].latitude, lng: pending[0].longitude };
+        const nextStop = pending[0];
+        if (nextStop.latitude == null || nextStop.longitude == null) return;
+        const dest = { lat: nextStop.latitude, lng: nextStop.longitude };
 
         // Update Overlay UI
-        this.navNextAddress.set(pending[0].alternativeAddress || pending[0].address || pending[0].clientAddress || 'Sin dirección');
-        this.navNextClient.set(pending[0].clientName);
+        this.navNextAddress.set(nextStop.alternativeAddress || nextStop.clientAddress || 'Sin dirección');
+        this.navNextClient.set(nextStop.clientName);
 
         // SMART AUTO-CENTERING
         // We removed the aggressive fitBounds to ensure the driver stays centered in the view, 
         // as watchPosition already calls map.panTo(driverLocation) every second.
 
         const distMoved = this.getDistance(pos.lat, pos.lng, this.lastRouteCalcLat, this.lastRouteCalcLng);
-        if (!forceCalc && pending[0].id === this.lastRouteCalcDestId && distMoved < 50) return;
+        if (!forceCalc && nextStop.deliveryId === this.lastRouteCalcDestId && distMoved < 50) return;
 
         this.lastRouteCalcLat = pos.lat;
         this.lastRouteCalcLng = pos.lng;
-        this.lastRouteCalcDestId = pending[0].id;
+        this.lastRouteCalcDestId = nextStop.deliveryId;
 
         const metersToNext = this.getDistance(origin.lat, origin.lng, dest.lat, dest.lng);
         this.navDistance.set(this.formatMeters(metersToNext));
@@ -293,7 +307,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         if (pending.length > 1) {
             const fullPath = [
                 origin,
-                ...pending.slice(0, 21).map((d: any) => ({ lat: d.latitude, lng: d.longitude }))
+                ...pending.slice(0, 21).map(d => ({ lat: d.latitude!, lng: d.longitude! }))
             ];
             this.fullRoutePolyline?.setMap(null);
             this.fullRoutePolyline = new google.maps.Polyline({
@@ -309,7 +323,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     }
 
     // ═══ MAP ═══
-    private async initMap(route: any): Promise<void> {
+    private async initMap(route: DriverRouteDto): Promise<void> {
         if (!this.mapEl?.nativeElement || typeof google === 'undefined') return;
         // Create the map only once — subsequent loadRoute() calls must not recreate it
         if (!this.map) {
@@ -323,16 +337,15 @@ export class RouteViewComponent implements OnInit, OnDestroy {
 
     // Geocodes delivery addresses that are missing lat/lng using the Google Geocoder API.
     // Results are stored directly on the delivery objects (in-memory only).
-    private geocodeDeliveries(route: any): Promise<void> {
+    private geocodeDeliveries(route: DriverRouteDto): Promise<void> {
         if (typeof google === 'undefined') return Promise.resolve();
         const geocoder = new google.maps.Geocoder();
-        const needsGeocode = route.deliveries.filter(
-            (d: any) => !d.latitude && (d.address || d.clientAddress)
-        );
+        const needsGeocode = route.deliveries.filter(d =>
+            d.latitude == null && (d.alternativeAddress || d.clientAddress));
         if (!needsGeocode.length) return Promise.resolve();
 
-        const tasks = needsGeocode.map((d: any) => {
-            const raw = (d.address || d.clientAddress || '').trim();
+        const tasks = needsGeocode.map(d => {
+            const raw = (d.alternativeAddress || d.clientAddress || '').trim();
             if (!raw) return Promise.resolve();
             const full = raw.toLowerCase().includes('nuevo laredo')
                 ? `${raw}, Tamaulipas, México`
@@ -352,14 +365,14 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         return Promise.all(tasks).then(() => { });
     }
 
-    private plotRoute(route: any): void {
+    private plotRoute(route: DriverRouteDto): void {
         if (!this.map) return;
         this.markers.forEach((m: any) => m.setMap(null));
         this.markers = [];
         const bounds = new google.maps.LatLngBounds();
 
-        route.deliveries.forEach((d: any) => {
-            if (!d.latitude) return;
+        route.deliveries.forEach(d => {
+            if (d.latitude == null || d.longitude == null) return;
             const pos = { lat: d.latitude, lng: d.longitude };
             bounds.extend(pos);
             let fillColor = '#ec4899';
@@ -384,22 +397,22 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     markInTransit(id: number): void {
         this.api.markInTransit(this.token, id).subscribe(() => { this.showToast('🏃 En camino'); this.loadRoute(); });
     }
-    markDelivered(id: number): void {
-        if (this.isDelivering()) return;
+    markDelivered(deliveryId: number): void {
+        if (this.isDelivering() || this.isReportingFailure()) return;
         this.isDelivering.set(true);
-        const notes = this.deliveryNotes[id] || '';
-        const photoFiles = (this.photos[id] || []).map(p => p.file);
-        const method = this.paymentMethods[id];
-        const delivery = this.route()?.deliveries?.find((d: any) => d.id === id);
+        const notes = this.deliveryNotes[deliveryId] || '';
+        const photoFiles = (this.photos[deliveryId] || []).map(photo => photo.file);
+        const method = this.paymentMethods[deliveryId];
+        const delivery = this.route()?.deliveries.find(item => item.deliveryId === deliveryId);
         const due = delivery?.balanceDue ?? delivery?.total ?? 0;
         const payments = method && due > 0 ? [{ amount: due, method }] : undefined;
-        const sig = this.signatures[id];
+        const sig = this.signatures[deliveryId];
         const signature = sig ? { svg: sig.svg, signedByName: sig.name } : undefined;
-        this.api.markDelivered(this.token, id, notes, photoFiles, payments, signature).subscribe({
+        this.api.markDelivered(this.token, deliveryId, notes, photoFiles, payments, signature).subscribe({
             next: () => {
                 this.showToast(`¡${ORDER_STATUS_LABELS[2]}! ✨`);
-                this.photos[id] = []; this.deliveryNotes[id] = '';
-                delete this.signatures[id];
+                this.photos[deliveryId] = []; this.deliveryNotes[deliveryId] = '';
+                delete this.signatures[deliveryId];
                 this.isDelivering.set(false);
                 this.loadRoute();
             },
@@ -497,13 +510,41 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     }
 
     // ═══ FAIL ═══
-    showFailModalFn(id: number): void { this.failModalId.set(id); this.selectedReason.set(''); this.customReason = ''; }
-    cancelFail(): void { this.failModalId.set(0); }
+    showFailModalFn(deliveryId: number): void {
+        if (this.isReportingFailure()) return;
+        this.failModalId.set(deliveryId);
+        this.selectedReason.set('');
+        this.customReason = '';
+    }
+
+    cancelFail(): void {
+        if (this.isReportingFailure()) return;
+        this.failModalId.set(0);
+    }
+
     confirmFail(): void {
-        const reason = this.selectedReason() || this.customReason.trim();
-        if (!reason) return;
-        this.api.markFailed(this.token, this.failModalId(), reason, this.customReason, []).subscribe(() => {
-            this.showToast('📝 Registrado'); this.failModalId.set(0); this.loadRoute();
+        const deliveryId = this.failModalId();
+        const selectedReason = this.selectedReason();
+        const details = this.customReason.trim();
+        const reason = selectedReason || details;
+        if (!deliveryId || !reason || this.isReportingFailure()) return;
+
+        this.isReportingFailure.set(true);
+        const photoFiles = (this.photos[deliveryId] || []).map(photo => photo.file);
+        this.api.markFailed(this.token, deliveryId, reason, selectedReason ? details : '', photoFiles).subscribe({
+            next: () => {
+                this.photos[deliveryId] = [];
+                this.deliveryNotes[deliveryId] = '';
+                this.customReason = '';
+                this.isReportingFailure.set(false);
+                this.failModalId.set(0);
+                this.showToast('No entregada registrada. La siguiente parada sigue en ruta.');
+                this.loadRoute();
+            },
+            error: () => {
+                this.isReportingFailure.set(false);
+                this.showToast('No se pudo registrar la falla. Revisa tu conexión e inténtalo de nuevo.');
+            }
         });
     }
 
@@ -525,9 +566,9 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     }
 
     // ═══ CLIENT CHAT ═══
-    openClientChat(delivery: any, event: Event): void {
+    openClientChat(delivery: RouteDeliveryDto, event: Event): void {
         event.stopPropagation(); this.activeChatDelivery.set(delivery); this.newClientMessage = '';
-        this.api.getDriverClientChat(this.token, delivery.id).subscribe(msgs => {
+        this.api.getDriverClientChat(this.token, delivery.deliveryId).subscribe(msgs => {
             this.clientMsgIds.clear(); msgs.forEach((m: any) => this.clientMsgIds.add(m.id));
             this.clientChatMessages.set(msgs); this.scrollTo('client');
         });
@@ -536,7 +577,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     sendClientChat(): void {
         const delivery = this.activeChatDelivery(); const text = this.newClientMessage.trim();
         if (!text || !delivery) return; this.newClientMessage = '';
-        this.api.sendDriverClientMessage(this.token, delivery.id, text).subscribe(msg => {
+        this.api.sendDriverClientMessage(this.token, delivery.deliveryId, text).subscribe(msg => {
             if (!this.clientMsgIds.has(msg.id)) { this.clientMsgIds.add(msg.id); this.clientChatMessages.update(m => [...m, msg]); }
             this.scrollTo('client');
         });
@@ -549,8 +590,13 @@ export class RouteViewComponent implements OnInit, OnDestroy {
     getPhotos(id: number): { file: File; preview: string }[] { return this.photos[id] || []; }
     removePhoto(id: number, i: number): void { if (this.photos[id]) this.photos[id].splice(i, 1); }
 
-    onPhotoCapture(e: Event, id: number): void {
+    onPhotoCapture(e: Event, deliveryId: number): void {
         const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+        if ((this.photos[deliveryId]?.length ?? 0) >= 5) {
+            this.showToast('Puedes adjuntar hasta 5 fotos por parada.');
+            (e.target as HTMLInputElement).value = '';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (re) => {
             const img = new Image(); img.src = re.target?.result as string;
@@ -563,8 +609,8 @@ export class RouteViewComponent implements OnInit, OnDestroy {
                 canvas.toBlob(blob => {
                     if (!blob) return;
                     const cf = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg' });
-                    if (!this.photos[id]) this.photos[id] = [];
-                    this.photos[id].push({ file: cf, preview: canvas.toDataURL('image/jpeg', 0.8) });
+                    if (!this.photos[deliveryId]) this.photos[deliveryId] = [];
+                    this.photos[deliveryId].push({ file: cf, preview: canvas.toDataURL('image/jpeg', 0.8) });
                 }, 'image/jpeg', 0.8);
             };
         };
@@ -572,15 +618,15 @@ export class RouteViewComponent implements OnInit, OnDestroy {
         (e.target as HTMLInputElement).value = '';
     }
 
-    navigateTo(d: any): void {
+    navigateTo(d: RouteDeliveryDto): void {
         const url = d.latitude && d.longitude
             ? `https://www.google.com/maps/dir/?api=1&destination=${d.latitude},${d.longitude}`
-            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((d.address || d.clientAddress || '') + ', Nuevo Laredo, Tamaulipas, México')}`;
+            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((d.alternativeAddress || d.clientAddress || '') + ', Nuevo Laredo, Tamaulipas, México')}`;
         window.open(url, '_blank');
     }
 
-    openGoogleRoute(r: any): void {
-        const pending = r.deliveries.filter((d: any) => d.status !== 'Delivered' && d.status !== 'NotDelivered');
+    openGoogleRoute(r: DriverRouteDto): void {
+        const pending = r.deliveries.filter(d => d.status !== 'Delivered' && d.status !== 'NotDelivered');
         if (pending.length === 0) {
             this.showToast('No hay entregas pendientes');
             return;
@@ -592,7 +638,7 @@ export class RouteViewComponent implements OnInit, OnDestroy {
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${nextDelivery.latitude},${nextDelivery.longitude}&travelmode=driving`, '_blank');
         } else {
             // Fallback por texto si no hay coords precisas
-            const addr = nextDelivery.alternativeAddress || nextDelivery.address || nextDelivery.clientAddress;
+            const addr = nextDelivery.alternativeAddress || nextDelivery.clientAddress;
             if (addr) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}&travelmode=driving`, '_blank');
             else this.showToast('La siguiente entrega no tiene dirección válida');
         }

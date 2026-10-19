@@ -5,7 +5,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { ClientDto, CLIENT_TAG_LABELS } from '../../../core/models';
+import { ClientDto, CLIENT_TAG_LABELS, CreateClientRequest } from '../../../core/models';
 import { gsap } from 'gsap';
 
 @Component({
@@ -37,19 +37,25 @@ import { gsap } from 'gsap';
       </div>
 
       <div class="space-y-6 relative z-10 w-full min-w-0 max-w-7xl mx-auto">
-        <div class="flex flex-wrap items-center justify-between gap-4 animate-slide-down">
-          <div>
+        <div class="flex flex-col gap-3 animate-slide-down sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
             <h1 class="min-w-0 text-2xl sm:text-3xl font-black text-pink-900 font-display flex flex-wrap items-center gap-2 sm:gap-3">
               <span class="animate-wiggle inline-block drop-shadow-md">💎</span> 
               Directorio de Clientas
             </h1>
             <p class="text-sm text-pink-500 font-medium ml-1 mt-1">El corazón de {{ theme.name() || "Neni's App" }} 💕</p>
           </div>
-          <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-2">
-            <span class="text-2xl animate-pulse">🌸</span>
-            <div class="flex flex-col">
-              <span class="text-xl font-black text-pink-700 leading-none">{{ filteredClients().length }}</span>
-              <span class="text-[10px] uppercase font-bold text-pink-400 tracking-wider">Clientas</span>
+          <div class="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+            <button type="button" class="min-h-11 flex-1 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-500 px-4 text-sm font-bold text-white shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 sm:flex-none"
+                    (click)="openCreateClientModal()">
+              <span aria-hidden="true">＋</span> Agregar clienta
+            </button>
+            <div class="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-2">
+              <span class="text-2xl animate-pulse" aria-hidden="true">🌸</span>
+              <div class="flex flex-col">
+                <span class="text-xl font-black text-pink-700 leading-none">{{ filteredClients().length }}</span>
+                <span class="text-[10px] uppercase font-bold text-pink-400 tracking-wider">Clientas</span>
+              </div>
             </div>
           </div>
         </div>
@@ -191,6 +197,61 @@ import { gsap } from 'gsap';
         }
       </div>
     </div>
+
+    @if (showCreateClientModal()) {
+      <div class="fixed inset-0 z-[3000] flex items-end justify-center bg-black/50 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-6"
+           (click)="closeCreateClientModal()">
+        <section role="dialog" aria-modal="true" aria-labelledby="createClientTitle"
+                 class="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl bg-[#fdfbf7] shadow-2xl"
+                 (click)="$event.stopPropagation()">
+          <header class="flex items-start gap-3 rounded-t-3xl bg-gradient-to-r from-pink-600 to-rose-500 px-5 py-5 text-white">
+            <div class="min-w-0 flex-1">
+              <h2 id="createClientTitle" class="text-lg font-black">Agregar clienta</h2>
+              <p class="mt-1 text-sm leading-relaxed text-white/90">Guarda sus datos para tandas y seguimiento, sin crear un pedido.</p>
+            </div>
+            <button type="button" class="min-h-11 min-w-11 shrink-0 rounded-full bg-white/15 text-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    aria-label="Cerrar formulario" (click)="closeCreateClientModal()">×</button>
+          </header>
+
+          <form class="space-y-4 p-5" (ngSubmit)="submitNewClient()">
+            <label class="block">
+              <span class="mb-1 block text-sm font-bold text-pink-900">Nombre <span class="text-rose-600">*</span></span>
+              <input class="input-coquette min-h-11" type="text" name="newClientName" autocomplete="name" maxlength="200" required
+                     placeholder="Nombre completo" [(ngModel)]="newClientForm.name" />
+            </label>
+
+            <label class="block">
+              <span class="mb-1 block text-sm font-bold text-pink-900">Teléfono <span class="font-normal text-pink-400">(opcional)</span></span>
+              <input class="input-coquette min-h-11" type="tel" name="newClientPhone" inputmode="tel" autocomplete="tel" maxlength="20"
+                     placeholder="10 dígitos" [(ngModel)]="newClientForm.phone" />
+            </label>
+
+            <label class="block">
+              <span class="mb-1 block text-sm font-bold text-pink-900">Dirección <span class="font-normal text-pink-400">(opcional)</span></span>
+              <input class="input-coquette min-h-11" type="text" name="newClientAddress" autocomplete="street-address" maxlength="500"
+                     placeholder="Calle, número, colonia…" [(ngModel)]="newClientForm.address" />
+            </label>
+
+            <label class="block">
+              <span class="mb-1 block text-sm font-bold text-pink-900">Indicaciones de entrega <span class="font-normal text-pink-400">(opcional)</span></span>
+              <textarea class="input-coquette min-h-20 resize-y" name="newClientInstructions" rows="2" maxlength="1000"
+                        placeholder="Referencias para encontrarla" [(ngModel)]="newClientForm.deliveryInstructions"></textarea>
+            </label>
+
+            <p class="rounded-xl bg-pink-50 px-3 py-2 text-xs leading-relaxed text-pink-700">La ficha comienza con 0 pedidos y $0 en compras. No suma ventas ni pedidos; sí aumenta el total del directorio.</p>
+
+            <div class="flex gap-3 border-t border-pink-100 pt-4">
+              <button type="button" class="min-h-11 flex-1 rounded-xl bg-gray-100 px-4 text-sm font-bold text-gray-600 disabled:opacity-50"
+                      [disabled]="creatingClient()" (click)="closeCreateClientModal()">Cancelar</button>
+              <button type="submit" class="min-h-11 flex-[2] rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 px-4 text-sm font-bold text-white shadow-md disabled:opacity-50"
+                      [disabled]="creatingClient() || !newClientForm.name.trim()">
+                {{ creatingClient() ? 'Guardando…' : 'Guardar clienta' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    }
   `,
   styles: [`
     .client-filter-controls {
@@ -244,6 +305,9 @@ export class ClientsComponent implements OnInit {
   typeFilter = signal('');
   currentPage = signal(1);
   readonly clientPageSize = 15;
+  showCreateClientModal = signal(false);
+  creatingClient = signal(false);
+  newClientForm = this.createEmptyClientForm();
 
   // Computed signal for filtered clients
   filteredClients = computed(() => {
@@ -348,6 +412,60 @@ export class ClientsComponent implements OnInit {
 
   goToClientPage(page: number): void {
     this.currentPage.set(Math.max(1, Math.min(page, this.clientPageCount())));
+  }
+
+  openCreateClientModal(): void {
+    this.newClientForm = this.createEmptyClientForm();
+    this.showCreateClientModal.set(true);
+  }
+
+  closeCreateClientModal(): void {
+    if (this.creatingClient()) return;
+    this.showCreateClientModal.set(false);
+  }
+
+  submitNewClient(): void {
+    const name = this.newClientForm.name.trim();
+    if (!name || this.creatingClient()) return;
+
+    const request: CreateClientRequest = {
+      name,
+      phone: this.newClientForm.phone.trim() || undefined,
+      address: this.newClientForm.address.trim() || undefined,
+      deliveryInstructions: this.newClientForm.deliveryInstructions.trim() || undefined,
+      type: 'Nueva',
+      tag: 'None'
+    };
+
+    this.creatingClient.set(true);
+    this.api.createClient(request).subscribe({
+      next: client => {
+        const alreadyLoaded = this.clients().some(existing => existing.id === client.id);
+        this.showCreateClientModal.set(false);
+        this.creatingClient.set(false);
+
+        if (alreadyLoaded) {
+          this.toast.info('Esta clienta ya estaba registrada; abrí su perfil.');
+          this.router.navigate(['/admin/clients', client.id]);
+          return;
+        }
+
+        this.clients.update(clients => [...clients, client]);
+        this.search.set('');
+        this.tagFilter.set('');
+        this.typeFilter.set('');
+        this.currentPage.set(this.clientPageCount());
+        this.toast.success('Clienta agregada sin crear un pedido.');
+      },
+      error: () => {
+        this.creatingClient.set(false);
+        this.toast.error('No se pudo guardar la clienta. Intenta de nuevo.');
+      }
+    });
+  }
+
+  private createEmptyClientForm(): { name: string; phone: string; address: string; deliveryInstructions: string } {
+    return { name: '', phone: '', address: '', deliveryInstructions: '' };
   }
 
   getTagLabel(tag: string): string { return CLIENT_TAG_LABELS[tag] || tag; }

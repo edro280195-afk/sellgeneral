@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-    DashboardDto, OrderSummaryDto, PagedResult, ReportDto, ClientDto,
+    DashboardDto, OrderSummaryDto, PagedResult, ReportDto, ClientDto, CreateClientRequest,
     RouteDto, SupplierDto, InvestmentDto,
     DriverExpenseDto, ManualOrderRequest, OrderStatsDto,
     AddPaymentRequest, CreateSupplierRequest, CreateInvestmentRequest,
@@ -215,6 +215,10 @@ export class ApiService {
 
     getClient(id: number): Observable<ClientDto> {
         return this.http.get<ClientDto>(`${this.base}/clients/${id}`);
+    }
+
+    createClient(request: CreateClientRequest): Observable<ClientDto> {
+        return this.http.post<ClientDto>(`${this.base}/clients`, request);
     }
 
     updateClient(id: number, data: { name: string; phone?: string; address?: string; tag: string; type: string; deliveryInstructions?: string }): Observable<any> {

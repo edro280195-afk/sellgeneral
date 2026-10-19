@@ -620,6 +620,17 @@ interface GeocodedOrder extends OrderSummaryDto {
                 <div class="flex items-center justify-between gap-3"><span>Efectivo cobrado por chofer</span><strong class="text-emerald-700">{{ corteData().totalCash | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
                 <div class="flex items-center justify-between gap-3 text-xs text-gray-500"><span>Transferencias y otros métodos</span><strong>{{ corteData().totalTransfer | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
                 <div class="border-t border-dashed border-gray-300"></div>
+                @if (failedDeliveries(route).length > 0) {
+                  <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
+                    <p class="mb-2 text-xs font-black uppercase tracking-widest text-rose-700">No entregadas · {{ failedDeliveries(route).length }}</p>
+                    @for (delivery of failedDeliveries(route); track delivery.deliveryId) {
+                      <div class="py-1 text-xs leading-relaxed text-rose-900">
+                        <span class="font-bold">{{ delivery.clientName }}:</span> {{ delivery.failureReason || 'Sin motivo registrado' }}
+                      </div>
+                    }
+                    <p class="mt-2 border-t border-rose-200 pt-2 text-[11px] text-rose-700">Cuentan como paradas resueltas y no suman cobros al corte.</p>
+                  </div>
+                }
                 <div>
                   <p class="mb-2 text-xs font-black uppercase tracking-widest text-gray-500">Gastos registrados</p>
                   @if (route.expenses?.length) {
@@ -2632,6 +2643,10 @@ export class RoutesComponent implements OnInit, OnDestroy {
   canLiquidateRoute(route: RouteDto): boolean {
     return route.status !== 'Canceled' && !route.liquidatedAt && route.deliveries.length > 0 &&
       route.deliveries.every(delivery => delivery.status === 'Delivered' || delivery.status === 'NotDelivered');
+  }
+
+  failedDeliveries(route: RouteDto): RouteDeliveryDto[] {
+    return route.deliveries.filter(delivery => delivery.status === 'NotDelivered');
   }
 
   openCorteModal(route: RouteDto): void {

@@ -68,14 +68,14 @@ import { gsap } from 'gsap';
                 </div>
 
                 @if (loading()) {
-                    <div class="shimmer h-[500px] rounded-[3rem]"></div>
+                    <div class="shimmer h-64 rounded-[2rem] sm:h-[500px] sm:rounded-[3rem]"></div>
                 } @else {
-                    <div class="relative min-h-[500px]">
+                    <div class="relative min-w-0">
                         
                         <!-- STEP 1: IDENTITY & PRIZE -->
                         <div id="step-1" class="wizard-step" [class.hidden]="currentStep() !== 1">
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                                <div class="card-coquette p-8 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl">
+                            <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-8">
+                                <div class="card-coquette min-w-0 p-4 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl sm:p-8">
                                     <div class="space-y-1">
                                         <h2 class="text-3xl font-black text-pink-900 font-display">Prepara tu Sorteo ✨</h2>
                                         <p class="text-pink-500 font-medium text-sm italic">Define el nombre y el premio espectacular que entregarás</p>
@@ -95,7 +95,7 @@ import { gsap } from 'gsap';
                                                       placeholder="Cuéntales qué ganarán..."></textarea>
                                         </div>
 
-                                        <div class="grid grid-cols-2 gap-4">
+                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <div class="group">
                                                 <label class="label-coquette text-pink-800 font-black mb-2 block tracking-wide">Nº Ganadoras</label>
                                                 <input class="input-coquette py-3" type="number" min="1" max="50" [(ngModel)]="form.winnerCount" name="winnerCount" />
@@ -115,7 +115,7 @@ import { gsap } from 'gsap';
                                 </div>
 
                                 <div class="space-y-6">
-                                    <div class="card-coquette p-8 bg-gradient-to-br from-pink-50 to-purple-50 border-white shadow-xl relative overflow-hidden group">
+                                    <div class="card-coquette min-w-0 p-4 bg-gradient-to-br from-pink-50 to-purple-50 border-white shadow-xl relative overflow-hidden group sm:p-8">
                                         <div class="absolute -top-10 -right-10 text-9xl opacity-10 group-hover:rotate-12 transition-transform duration-700">🖼️</div>
                                         <h3 class="text-xl font-black text-pink-900 mb-6 flex items-center gap-2">
                                             <span>📸</span> Visuales del Sorteo
@@ -149,8 +149,8 @@ import { gsap } from 'gsap';
 
                         <!-- STEP 2: ELIGIBILITY & REAL-TIME PREVIEW -->
                         <div id="step-2" class="wizard-step" [class.hidden]="currentStep() !== 2">
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                                <div class="card-coquette p-8 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl">
+                            <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-8">
+                                <div class="card-coquette min-w-0 p-4 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl sm:p-8">
                                     <div class="space-y-1">
                                         <h2 class="text-3xl font-black text-pink-900 font-display">Reglas de Calificación 📏</h2>
                                         <p class="text-pink-500 font-medium text-sm italic">Define quiénes tienen la oportunidad de ganar</p>
@@ -161,7 +161,7 @@ import { gsap } from 'gsap';
                                             <label class="label-coquette text-pink-800 font-black mb-4 block tracking-wide flex items-center gap-2">
                                                 <span>📅</span> Rango de fechas de compra
                                             </label>
-                                            <div class="grid grid-cols-2 gap-4">
+                                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                 <div>
                                                     <label class="text-[10px] font-black text-pink-400 uppercase tracking-widest mb-1 block">Desde</label>
                                                     <input class="input-coquette py-2 text-sm" type="datetime-local" [(ngModel)]="form.dateRangeStart" name="dateRangeStart" (change)="evalParticipantsPreview()" />
@@ -173,7 +173,7 @@ import { gsap } from 'gsap';
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-2 gap-6">
+                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                                             <div class="group">
                                                 <label class="label-coquette text-pink-800 font-black mb-2 block tracking-wide">Monto Mínimo ($)</label>
                                                 <input class="input-coquette py-3" type="number" min="0" step="0.01" [(ngModel)]="form.minOrderTotal" name="minOrderTotal" (change)="evalParticipantsPreview()" />
@@ -207,7 +207,7 @@ import { gsap } from 'gsap';
                                 </div>
 
                                 <div class="space-y-6">
-                                    <div class="card-coquette p-8 bg-gradient-to-br from-purple-50 to-pink-50 border-white shadow-xl relative overflow-hidden group">
+                                    <div class="card-coquette min-w-0 p-4 bg-gradient-to-br from-purple-50 to-pink-50 border-white shadow-xl relative overflow-hidden group sm:p-8">
                                         <div class="absolute -top-10 -right-10 text-9xl opacity-10 group-hover:rotate-12 transition-transform duration-700">🔍</div>
                                         <h3 class="text-xl font-black text-pink-900 mb-6 flex items-center gap-2">
                                             <span>💫</span> Impacto en Tiempo Real
@@ -264,8 +264,8 @@ import { gsap } from 'gsap';
 
                         <!-- STEP 3: ANIMATION & FINAL REVIEW -->
                         <div id="step-3" class="wizard-step" [class.hidden]="currentStep() !== 3">
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                                <div class="card-coquette p-8 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl">
+                            <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-8">
+                                <div class="card-coquette min-w-0 p-4 space-y-6 bg-white/60 backdrop-blur-xl border-white shadow-2xl sm:p-8">
                                     <div class="space-y-1">
                                         <h2 class="text-3xl font-black text-pink-900 font-display">Gran Final 🎬</h2>
                                         <p class="text-pink-500 font-medium text-sm italic">Elige cómo se revelará la ganadora</p>
@@ -323,7 +323,7 @@ import { gsap } from 'gsap';
                                 </div>
 
                                 <div class="space-y-6">
-                                    <div class="card-coquette p-4 bg-black border-pink-900/50 shadow-2xl relative overflow-hidden group min-h-[400px] flex flex-col">
+                                    <div class="card-coquette p-4 bg-black border-pink-900/50 shadow-2xl relative overflow-hidden group min-h-[300px] sm:min-h-[400px] flex flex-col">
                                         <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
                                             <span class="text-[10px] font-black text-pink-500 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">LIVE PREVIEW</span>
                                             <div class="flex gap-1">
@@ -357,8 +357,8 @@ import { gsap } from 'gsap';
                             <hr class="border-white/40" />
                             
                             <!-- Participant Management -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div class="card-coquette p-8 bg-white/40 backdrop-blur-md border-white">
+                            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-8">
+                                <div class="card-coquette min-w-0 p-4 bg-white/40 backdrop-blur-md border-white sm:p-8">
                                     <div class="flex items-center justify-between mb-4">
                                         <h2 class="text-2xl font-black text-pink-900 font-display flex items-center gap-3">
                                             <span class="text-3xl">👥</span> Participantes
@@ -430,7 +430,7 @@ import { gsap } from 'gsap';
                                     }
                                 </div>
 
-                                <div class="card-coquette p-8 bg-gradient-to-br from-pink-600 to-rose-600 text-white border-transparent shadow-pink-200 shadow-2xl relative overflow-hidden">
+                                <div class="card-coquette min-w-0 p-4 bg-gradient-to-br from-pink-600 to-rose-600 text-white border-transparent shadow-pink-200 shadow-2xl relative overflow-hidden sm:p-8">
                                     <div class="absolute -top-20 -right-20 text-[15rem] opacity-10 pointer-events-none">🎰</div>
                                     <h2 class="text-2xl font-black font-display mb-8 flex items-center gap-3">
                                         <span class="text-3xl">🏁</span> Ejecutar Sorteo

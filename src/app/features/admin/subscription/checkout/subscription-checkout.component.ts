@@ -37,7 +37,7 @@ const INPUTS = {
     selector: 'app-subscription-checkout',
     imports: [DatePipe, DecimalPipe, FormsModule, RouterLink],
     template: `
-        <div class="checkout-page space-y-6 pb-12">
+        <div class="checkout-page min-w-0 space-y-6 pb-12">
             <header class="page-header">
                 <a routerLink="/admin/subscription" class="back-link">← Volver a "Mi Plan"</a>
                 <h1 class="font-headings text-3xl lg:text-4xl text-pink-900 mt-2">
@@ -208,7 +208,8 @@ const INPUTS = {
         </div>
     `,
     styles: [`
-        :host { display: block; }
+        :host { display: block; min-width: 0; }
+        .checkout-page { min-width: 0; }
 
         .back-link {
             color: #9d174d;
@@ -220,7 +221,8 @@ const INPUTS = {
 
         .checkout-grid {
             display: grid;
-            grid-template-columns: minmax(280px, 360px) 1fr;
+            min-width: 0;
+            grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
             gap: 1.5rem;
             align-items: start;
         }
@@ -321,6 +323,7 @@ const INPUTS = {
         .brick-row-2 > .brick-cell { flex: 1; }
         .brick-cell {
             width: 100%;
+            min-width: 0;
             min-height: 48px;
             padding: 0.5rem 0.6rem;
             border: 1.5px solid #f9a8d4;
@@ -413,6 +416,25 @@ const INPUTS = {
             border: 1px solid rgba(244, 114, 182, 0.4);
             text-decoration: none;
             font-weight: 700;
+        }
+        @media (max-width: 900px) {
+            .summary { position: static; top: auto; }
+        }
+        @media (max-width: 640px) {
+            .checkout-page { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+            .checkout-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+            .checkout-page h1 { font-size: 1.8rem; line-height: 1.2; overflow-wrap: anywhere; }
+            .summary, .pay { min-width: 0; padding: 1rem; }
+            .summary-row { flex-wrap: wrap; gap: 0.4rem; }
+            .summary-amount { font-size: 1.25rem; }
+            .brick-row, .brick-row-2 { min-width: 0; }
+            .brick-row-2 { flex-wrap: wrap; }
+            .brick-row-2 > .brick-cell { flex: 1 1 calc(50% - 0.3rem); }
+            .success-actions { align-items: stretch; flex-direction: column; }
+            .success-primary, .success-secondary { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        }
+        @media (max-width: 359px) {
+            .brick-row-2 > .brick-cell { flex-basis: 100%; }
         }
         @keyframes pop {
             from { transform: scale(0.5); opacity: 0; }

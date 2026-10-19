@@ -51,7 +51,7 @@ declare const google: any;
     imports: [CommonModule, FormsModule, GoogleMap, MapMarker, MapPolyline, AddressEditorV2Component],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     template: `
-    <div class="min-h-screen bg-[#fffaf8] p-4 sm:p-6">
+    <div class="min-w-0 bg-[#fffaf8] p-3 sm:p-6">
 
         <!-- HEADER + KPIS -->
         <div class="max-w-[1600px] mx-auto mb-4">

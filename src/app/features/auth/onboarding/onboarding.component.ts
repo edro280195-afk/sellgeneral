@@ -15,7 +15,7 @@ type WizardStep = 'datos' | 'listo';
     selector: 'app-onboarding',
     imports: [FormsModule],
     template: `
-        <div class="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-6 px-4">
+        <div class="onboarding-page bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
             <div class="max-w-5xl mx-auto">
                 <!-- Stepper -->
                 <div class="flex items-center justify-center gap-2 mb-6">
@@ -177,7 +177,13 @@ type WizardStep = 'datos' | 'listo';
         </div>
     `,
     styles: [`
-        :host { display: block; }
+        :host { display: block; min-width: 0; }
+        .onboarding-page {
+            box-sizing: border-box;
+            min-height: 100svh;
+            min-height: 100dvh;
+            padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+        }
 
         /* ═══════ PASO FINAL ═══════ */
         .done-wrap {
@@ -245,12 +251,9 @@ type WizardStep = 'datos' | 'listo';
         .done-title {
             font-family: var(--font-headings);
             font-size: clamp(1.9rem, 4vw, 2.7rem);
-            color: #831843;
+            color: #be185d;
             margin: 0 0 0.6rem;
-            background: linear-gradient(135deg, #be185d, #7c3aed);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            overflow-wrap: anywhere;
         }
 
         .done-store {
@@ -272,7 +275,8 @@ type WizardStep = 'datos' | 'listo';
             border: 1px solid rgba(244,114,182,0.25);
             border-radius: 1.1rem;
             padding: 0.85rem 1.15rem;
-            max-width: 460px;
+            width: min(100%, 460px);
+            box-sizing: border-box;
         }
         .done-trial-icon { font-size: 1.5rem; }
         .done-trial strong { color: #be185d; font-size: 0.95rem; }
@@ -300,6 +304,9 @@ type WizardStep = 'datos' | 'listo';
             box-shadow: 0 16px 34px -12px rgba(190,24,93,0.55);
             cursor: pointer;
             transition: transform 0.25s ease, box-shadow 0.25s ease;
+            min-height: 48px;
+            justify-content: center;
+            text-align: center;
         }
         .done-primary:hover {
             transform: translateY(-2px);
@@ -310,6 +317,17 @@ type WizardStep = 'datos' | 'listo';
             font-size: 0.8rem;
             opacity: 0.75;
             margin: 0;
+        }
+        @media (max-width: 640px) {
+            .done-wrap { gap: 1rem; }
+            .done-hero { padding: 1.75rem 1rem 1.25rem; border-radius: 1.4rem; }
+            .done-title { font-size: 1.85rem; line-height: 1.15; }
+            .done-store { font-size: 0.92rem; line-height: 1.5; }
+            .done-trial { align-items: flex-start; gap: 0.65rem; padding: 0.8rem; }
+            .done-trial strong { font-size: 0.88rem; }
+            .done-trial p { line-height: 1.45; }
+            .done-primary { width: min(100%, 420px); padding: 0.85rem 1rem; font-size: 0.95rem; }
+            .done-note { line-height: 1.5; }
         }
     `],
 })

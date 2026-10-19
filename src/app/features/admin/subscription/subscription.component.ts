@@ -216,11 +216,12 @@ const PLAN_THEMES: Record<string, PlanTheme> = {
                         </p>
                     </div>
 
-                    <div class="periodicity-toggle">
+                    <div class="periodicity-toggle" role="group" aria-label="Periodicidad de pago">
                         @for (opt of periodicities; track opt.key) {
                             <button
                                 type="button"
                                 class="period-btn"
+                                [attr.aria-pressed]="periodicity() === opt.key"
                                 [class.period-active]="periodicity() === opt.key"
                                 (click)="setPeriodicity(opt.key)">
                                 <span class="period-label">{{ opt.label }}</span>
@@ -435,7 +436,8 @@ const PLAN_THEMES: Record<string, PlanTheme> = {
         </div>
     `,
     styles: [`
-        :host { display: block; }
+        :host { display: block; min-width: 0; }
+        .sub-page { min-width: 0; }
 
         /* ═══════════ HÉROE ═══════════ */
         .sub-hero {
@@ -1080,6 +1082,33 @@ const PLAN_THEMES: Record<string, PlanTheme> = {
             margin: 0.4rem 0 0;
             color: #9d174d;
             font-size: 0.88rem;
+        }
+        @media (max-width: 640px) {
+            .sub-hero { padding: 1.2rem; }
+            .sub-hero-inner { align-items: flex-start; gap: 1rem; }
+            .sub-title { font-size: 1.65rem; line-height: 1.2; overflow-wrap: anywhere; }
+            .sub-sub { font-size: 0.84rem; }
+            .sub-plan-chip { max-width: 100%; }
+            .sub-status-grid { grid-template-columns: minmax(0, 1fr); }
+            .sub-tile { min-width: 0; padding: 0.9rem; }
+            .sub-tile > div { min-width: 0; }
+            .sub-status-error { align-items: flex-start; flex-wrap: wrap; padding: 0.9rem; }
+            .sub-status-error > div { flex: 1 1 calc(100% - 3rem); min-width: 0; overflow-wrap: anywhere; }
+            .sub-retry { width: 100%; min-height: 44px; margin-left: 0; }
+            .sub-plans-head { align-items: stretch; flex-direction: column; gap: 0.8rem; }
+            .sub-section-title { font-size: 1.45rem; }
+            .periodicity-toggle { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 1rem; }
+            .period-btn { min-width: 0; flex-direction: column; justify-content: center; gap: 0.15rem; padding: 0.5rem 0.2rem; border-radius: 0.75rem; font-size: 0.72rem; line-height: 1.2; text-align: center; white-space: normal; }
+            .period-label, .period-badge { min-width: 0; overflow-wrap: anywhere; }
+            .period-badge { padding: 0.1rem 0.25rem; font-size: 0.55rem; line-height: 1.2; white-space: normal; }
+            .plan-card { min-width: 0; padding: 1.25rem 1rem; }
+            .plan-tag { overflow-wrap: anywhere; }
+            .plan-amount { font-size: 2.25rem; }
+            .plan-flag { max-width: calc(100% - 1rem); }
+            .sub-manage-actions { flex-direction: column; }
+            .sub-manage-btn { min-height: 44px; flex-basis: auto; }
+            .sub-faq { padding: 1.1rem; }
+            .sub-faq p { line-height: 1.5; overflow-wrap: anywhere; }
         }
     `],
 })

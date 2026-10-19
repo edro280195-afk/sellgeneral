@@ -8,19 +8,19 @@ import { GoogleMap } from '@angular/google-maps';
   standalone: true,
   imports: [CommonModule, FormsModule, GoogleMap],
   template: `
-    <div class="fixed inset-0 z-[5000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in" (click)="onCancel()">
-      <div class="bg-white w-full max-w-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] h-[92vh] sm:h-[85vh] flex flex-col overflow-hidden animate-slide-up shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 z-[5000] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in address-picker-overlay" (click)="onCancel()">
+      <div class="bg-white w-full max-w-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col overflow-hidden animate-slide-up shadow-2xl address-picker-panel" (click)="$event.stopPropagation()">
         
         <!-- Header -->
-        <div class="px-6 pt-7 pb-4 shrink-0 relative">
+        <div class="address-picker-header px-6 pt-7 pb-4 shrink-0 relative">
           <div class="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 rounded-full sm:hidden"></div>
           
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-2xl font-black text-pink-900 leading-tight">Magic Address Picker</h2>
+              <h2 class="text-xl sm:text-2xl font-black text-pink-900 leading-tight">Elegir dirección de entrega</h2>
               <p class="text-xs text-pink-400 font-bold uppercase tracking-widest mt-0.5">Ubica el punto exacto ✨</p>
             </div>
-            <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all" (click)="onCancel()">✕</button>
+            <button class="w-11 h-11 min-w-[44px] min-h-[44px] shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all" aria-label="Cerrar selector de dirección" (click)="onCancel()">✕</button>
           </div>
 
           <!-- Search Bar -->
@@ -81,13 +81,13 @@ import { GoogleMap } from '@angular/google-maps';
 
           <!-- My Location Button -->
           <button class="absolute top-4 right-4 z-20 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-2xl border border-gray-100 active:scale-95 transition-all"
-                  (click)="useMyLocation()" title="Mi ubicación">
+                  (click)="useMyLocation()" title="Mi ubicación" aria-label="Usar mi ubicación">
             🎯
           </button>
         </div>
 
         <!-- Footer Actions -->
-        <div class="px-6 py-6 bg-white border-t border-gray-100 shrink-0 flex gap-4">
+        <div class="address-picker-actions px-6 py-6 bg-white border-t border-gray-100 shrink-0 flex gap-4">
           <button class="flex-1 py-4 rounded-2xl border-2 border-gray-100 text-gray-400 font-bold text-base hover:bg-gray-50 transition-all"
                   (click)="onCancel()">
             Cancelar
@@ -103,6 +103,27 @@ import { GoogleMap } from '@angular/google-maps';
     </div>
   `,
   styles: [`
+    .address-picker-overlay {
+      box-sizing: border-box;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overscroll-behavior: contain;
+    }
+    .address-picker-panel {
+      min-height: 0;
+      height: min(85dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+      max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+    .address-picker-header, .address-picker-actions { flex-shrink: 0; }
+    @media (max-width: 640px) {
+      .address-picker-panel {
+        height: min(92dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        border-radius: 1.5rem 1.5rem 0 0;
+      }
+      .address-picker-header { padding: 1.5rem 1rem 0.75rem; }
+      .address-picker-actions { gap: 0.5rem; padding: 0.75rem 1rem; }
+      .address-picker-actions button { min-height: 48px; padding: 0.75rem 0.5rem; font-size: 0.88rem; }
+    }
     .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
     .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }

@@ -96,21 +96,6 @@ import { gsap } from 'gsap';
             </div>
           </header>
 
-          <!-- ══ BANNER APP (compacto) ══ -->
-          <div class="tv-app-banner">
-            <div class="tv-app-banner__left">
-              <span class="tv-app-banner__icon">📲</span>
-              <div>
-                <p class="tv-app-banner__title">Neni's App Clientas</p>
-                <p class="tv-app-banner__sub">Notificaciones y pagos en 1 toque</p>
-              </div>
-            </div>
-            <div class="tv-app-banner__btns">
-              <a href="https://nenisapp.com/download" target="_blank" class="tv-app-btn tv-app-btn--solid">iOS</a>
-              <a href="https://nenisapp.com/download" target="_blank" class="tv-app-btn tv-app-btn--outline">Android</a>
-            </div>
-          </div>
-
           <!-- ══ TABS ══ -->
           <div class="tv-tabs sticky-tabs" id="nav-tabs">
             <button class="tv-tab" id="tab-summary"
@@ -696,39 +681,6 @@ import { gsap } from 'gsap';
       box-shadow: 0 0 8px rgba(245,158,11,0.7);
       transform: scale(1.4);
     }
-
-    /* ── App Banner ── */
-    .tv-app-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 1rem;
-      padding: 0.85rem 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .tv-app-banner__left { display: flex; align-items: center; gap: 0.75rem; }
-    .tv-app-banner__icon { font-size: 1.4rem; }
-    .tv-app-banner__title { font-size: 0.75rem; font-weight: 700; color: #e2d8ff; margin: 0; }
-    .tv-app-banner__sub { font-size: 0.6rem; color: #6d5fa0; margin: 0; }
-    .tv-app-banner__btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
-    .tv-app-btn {
-      font-size: 0.65rem; font-weight: 700;
-      padding: 0.35rem 0.7rem; border-radius: 0.5rem;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .tv-app-btn--solid {
-      background: #fff; color: #0a0812;
-    }
-    .tv-app-btn--outline {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.2);
-      color: #e2d8ff;
-    }
-    .tv-app-btn:hover { opacity: 0.85; }
 
     /* ── TABS ── */
     .tv-tabs {

@@ -38,20 +38,14 @@ export function buildOrderMessage(data: OrderMessageData): string {
     const pickupLimit = formatSpanishDate(pickupLimitIso);
     const lines = [
         `Hola ${name}, aquí te dejo tu total de compras ✅🛍️`,
-        data.publicLink,
+        `Consulta tu pedido y su estado aquí: ${data.publicLink}`,
         ''
     ];
 
     if (deliveryDate) lines.push(`Fecha de entrega es el ${deliveryDate}.`);
     if (pickupLimit) lines.push(`Fecha límite para pasar a recoger tu pedido: ${pickupLimit}.`);
 
-    lines.push(
-        '',
-        "📲 *Rastrea tu pedido y descarga Neni's App:*",
-        data.publicLink,
-        '',
-        'Cualquier duda quedamos al pendiente. ❤️✨'
-    );
+    lines.push('', 'Cualquier duda quedamos al pendiente. ❤️✨');
     return lines.join('\n');
 }
 
@@ -69,7 +63,7 @@ export function buildPaymentReminderMessage(
         `Hola ${name} 💕`,
         `Te recuerdo que tu pedido tiene un saldo pendiente de ${balance}.`,
         '',
-        "📲 *Rastrea tu envío y paga desde Neni's App:*",
+        'Consulta tu pedido y paga desde este enlace:',
         publicLink,
         '',
         '¿Cómo te gustaría pagarlo? Quedo al pendiente ✨🛍️'

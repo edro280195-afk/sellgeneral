@@ -8,7 +8,6 @@ import { TandaDto, TandaParticipantDto, TandaPaymentDto, ClientDto, CLIENT_TAG_L
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-animation.component';
-import { environment } from '../../../../environments/environment';
 import {
   copyMessageToClipboard,
   MessageShareChannel,
@@ -387,8 +386,8 @@ interface TandaPaymentForm {
               </div>
 
               <!-- Enlace de Clienta -->
-              @if (t.accessToken) {
-                <button type="button" (click)="openGroupShare(t.accessToken, t.name)" class="mt-6 min-h-11 w-full py-3 bg-pink-100 hover:bg-pink-200 text-pink-600 text-[10px] font-black rounded-2xl uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm border border-pink-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
+              @if (t.publicLink) {
+                <button type="button" (click)="openGroupShare(t.publicLink, t.name)" class="mt-6 min-h-11 w-full py-3 bg-pink-100 hover:bg-pink-200 text-pink-600 text-[10px] font-black rounded-2xl uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm border border-pink-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
                   🔗 Compartir enlace con clientas
                 </button>
               }
@@ -873,9 +872,8 @@ export class TandaDetailComponent implements OnInit {
     });
   }
 
-  openGroupShare(token: string | undefined, tandaName: string): void {
-    if (!token) return;
-    const publicLink = `${environment.publicAppUrl}/tanda-view/${token}`;
+  openGroupShare(publicLink: string | undefined, tandaName: string): void {
+    if (!publicLink) return;
     this.shareRequest.set({
       title: 'Enlace de la tanda',
       recipientName: 'las participantes',

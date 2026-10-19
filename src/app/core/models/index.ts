@@ -1021,6 +1021,7 @@ export interface TandaDto {
     status: string; // Draft, Active, Completed, Cancelled
     createdAt: string;
     accessToken?: string;
+    publicLink?: string;
     product?: TandaProductDto;
     participants?: TandaParticipantDto[];
 }

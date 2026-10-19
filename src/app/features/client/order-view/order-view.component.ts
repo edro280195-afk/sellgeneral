@@ -125,35 +125,9 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
             }
             
             <!-- RegiPuntos (Gamification) -->
-            <div class="mt-4 inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-100 to-pink-100 px-4 py-1.5 rounded-full border border-pink-200 shadow-sm animate-fade-in-up group cursor-pointer hover:scale-105 transition-transform" title="¡Gana más puntos compartiendo tu foto!">
+            <div class="mt-4 inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-100 to-pink-100 px-4 py-1.5 rounded-full border border-pink-200 shadow-sm animate-fade-in-up" title="Puntos acumulados por tus compras">
               <span class="text-lg animate-pulse-slow">💎</span>
               <span class="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-600 uppercase tracking-widest">{{ regiPuntos() }} RegiPuntos</span>
-            </div>
-          </div>
-
-          <!-- Banner Invitación Descarga App Neni Clientas (Rastreo Pedidos) -->
-          <div class="card-coquette bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-6 text-white shadow-2xl rounded-[2.5rem] relative overflow-hidden my-6 border-2 border-white/40">
-            <div class="absolute -right-6 -bottom-6 text-9xl opacity-15 pointer-events-none select-none">📱</div>
-            <div class="relative z-10 space-y-3">
-              <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-pink-100">
-                <span>✨ Neni's App Clientas</span>
-              </div>
-              <h3 class="text-xl font-black leading-tight font-display">
-                Conecta directamente con tu vendedora en Nenis App 📲
-              </h3>
-              <p class="text-xs text-pink-100 font-medium leading-relaxed">
-                Descarga Nenis App para seguir la mercancía de tu tienda favorita, ver la ubicación GPS de tu entrega al salir a ruta, recibir notificaciones instantáneas y ganar RegiPuntos.
-              </p>
-              <div class="flex flex-wrap gap-2 pt-1">
-                <a href="https://nenisapp.com/download" target="_blank" 
-                   class="flex items-center gap-2 bg-white text-pink-900 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg hover:scale-105 transition-all">
-                  <span>🍎 App Store</span>
-                </a>
-                <a href="https://nenisapp.com/download" target="_blank" 
-                   class="flex items-center gap-2 bg-white/20 border border-white/40 text-white font-black text-xs px-4 py-2.5 rounded-2xl backdrop-blur-md hover:bg-white/30 transition-all">
-                  <span>🤖 Google Play</span>
-                </a>
-              </div>
             </div>
           </div>
 
@@ -650,15 +624,6 @@ const API_BASE = environment.apiUrl.replace(/\/api\/?$/, '');
                 }
               </div>
 
-              <!-- Social Invite -->
-              <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-8 text-white text-center shadow-xl relative overflow-hidden group">
-                <div class="absolute -right-10 -bottom-10 text-9xl opacity-10 group-hover:scale-125 transition-transform duration-1000">📸</div>
-                <h3 class="text-xl font-black font-display mb-2 drop-shadow-md">¡Presume tu estilo! 📸</h3>
-                <p class="text-[10px] font-bold opacity-80 mb-6 tracking-wide">Comparte tu estilo en tus redes al recibir tu pedido y gana <strong>RegiPuntos extra</strong> ✨</p>
-                <div class="flex justify-center gap-4 relative z-10">
-                  <a href="https://www.instagram.com/" target="_blank" class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-xl hover:scale-110 transition-transform">IG</a>
-                </div>
-              </div>
             </div>
           }
 

@@ -61,7 +61,7 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
           </div>
           
           <div class="flex gap-2">
-            <button (click)="exportToExcel()" class="btn-coquette bg-gradient-to-r from-green-400 to-emerald-500 text-white h-[42px] px-6 hover:scale-105 active:scale-95 shadow-md flex items-center gap-2 group border-0">
+            <button (click)="exportToExcel()" class="btn-coquette bg-gradient-to-r from-pink-500 to-rose-500 text-white h-[42px] px-6 hover:scale-105 active:scale-95 shadow-md flex items-center gap-2 group border-0">
               <span class="group-hover:rotate-12 transition-transform block italic font-black text-xs">📥 EXCEL</span>
             </button>
             

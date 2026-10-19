@@ -61,7 +61,7 @@ import { buildOrderMessage } from '../../../../core/utils/order-message.util';
       <!-- Progress bar -->
       @if (stats().total > 0) {
         <div class="h-2.5 w-full bg-pink-100 rounded-full overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-emerald-400 to-green-500 transition-all duration-500"
+          <div class="h-full bg-gradient-to-r from-pink-400 to-rose-500 transition-all duration-500"
                [style.width.%]="(stats().sent / stats().total) * 100"></div>
         </div>
       }

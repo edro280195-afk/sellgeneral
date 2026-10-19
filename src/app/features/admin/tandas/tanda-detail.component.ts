@@ -4,17 +4,25 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TandaService } from '../../../core/services/tanda.service';
 import { ApiService } from '../../../core/services/api.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { TandaDto, TandaParticipantDto, ClientDto, CLIENT_TAG_LABELS } from '../../../core/models';
+import { TandaDto, TandaParticipantDto, TandaPaymentDto, ClientDto, CLIENT_TAG_LABELS } from '../../../core/models';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-animation.component';
+
+interface TandaPaymentForm {
+  amountPaid: number;
+  penaltyPaid: number;
+  paymentDate: string;
+  isVerified: boolean;
+  notes: string;
+}
 
 @Component({
   selector: 'app-tanda-detail',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, DragDropModule, RaffleAnimationComponent],
   template: `
-    <div class="space-y-6 max-w-7xl mx-auto animate-fade-in pb-20">
+    <div class="space-y-6 max-w-7xl mx-auto pb-20">
       <!-- Breadcrumbs & Navigation -->
       <div class="flex items-center justify-between mb-2">
         <nav class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-pink-400">
@@ -38,7 +46,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
             </div>
         </div>
       } @else if (tanda(); as t) {
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
           
           <!-- Main Content: Weekly Management -->
           <div class="lg:col-span-2 space-y-6">
@@ -151,13 +159,13 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                           <div role="group" [attr.aria-label]="'Abonos semanales de ' + p.customerName" class="grid grid-cols-4 sm:grid-cols-6 gap-2">
                             @for (w of weeksArray(); track w) {
                               <button type="button"
-                                      (click)="hasPaid(p, w) ? onRemovePayment(p, w) : openPaymentModal(p, w)"
-                                      [attr.aria-label]="hasPaid(p, w) ? 'Quitar pago de la semana ' + w + ' de ' + p.customerName : 'Registrar pago de la semana ' + w + ' de ' + p.customerName"
+                                      (click)="openPaymentModal(p, w)"
+                                      [attr.aria-label]="hasPayment(p, w) ? (hasPaid(p, w) ? 'Ver o editar pago de la semana ' + w + ' de ' + p.customerName : 'Revisar pago de la semana ' + w + ' de ' + p.customerName) : 'Registrar pago de la semana ' + w + ' de ' + p.customerName"
                                       [attr.aria-pressed]="hasPaid(p, w)"
                                       [ngClass]="hasPaid(p, w) ? 'border-pink-300 bg-pink-100 text-pink-800' : 'border-pink-100 bg-white text-pink-500 hover:border-pink-300 hover:bg-pink-50'"
                                       class="min-h-12 rounded-xl border px-1 py-1.5 flex flex-col items-center justify-center leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
                                 <span class="text-[10px] font-black">Sem {{ w }}</span>
-                                <span class="text-[9px] font-semibold">{{ getParticipantWeeklyAmount(p) | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                                <span class="text-[9px] font-semibold">{{ (hasPaid(p, w) ? getWeekPaidAmount(p, w) : getParticipantWeeklyAmount(p)) | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
                               </button>
                             }
                           </div>
@@ -239,12 +247,12 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                         @for (w of weeksArray(); track w) {
                           <td class="text-center p-2">
                             @if (hasPaid(p, w)) {
-                              <button type="button" (click)="onRemovePayment(p, w)" [attr.aria-label]="'Quitar pago de la semana ' + w + ' de ' + p.customerName" class="min-h-11 min-w-11 text-lg drop-shadow-sm animate-bounce-in inline-flex items-center justify-center hover:scale-125 transition-transform">💖</button>
+                              <button type="button" (click)="openPaymentModal(p, w)" [attr.aria-label]="hasPayment(p, w) ? (hasPaid(p, w) ? 'Ver o editar pago de la semana ' + w + ' de ' + p.customerName : 'Revisar pago de la semana ' + w + ' de ' + p.customerName) : 'Registrar pago de la semana ' + w + ' de ' + p.customerName" class="min-h-11 min-w-11 rounded-lg px-2 text-xs font-black text-pink-700 hover:bg-pink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">💖 {{ getWeekPaidAmount(p, w) | currency:'MXN':'symbol-narrow':'1.0-0' }}</button>
                             } @else {
                               <button type="button" (click)="openPaymentModal(p, w)"
-                                      [attr.aria-label]="'Registrar pago de la semana ' + w + ' de ' + p.customerName"
+                                      [attr.aria-label]="hasPayment(p, w) ? 'Revisar pago de la semana ' + w + ' de ' + p.customerName : 'Registrar pago de la semana ' + w + ' de ' + p.customerName"
                                       class="w-full py-1.5 rounded-lg border border-pink-50 text-[11px] font-black text-pink-300 hover:border-pink-300 hover:text-pink-600 hover:bg-white transition-all">
-                                {{ getParticipantWeeklyAmount(p) }}
+                                {{ hasPayment(p, w) ? 'Revisar' : getParticipantWeeklyAmount(p) }}
                               </button>
                             }
                           </td>
@@ -473,8 +481,8 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
               <button class="btn-coquette btn-outline-pink w-full justify-center text-[10px] py-3 font-black shadow-sm" (click)="onProcessPenalties()">
                 ⚠️ Procesar Retrasos
               </button>
-              <button class="bg-rose-50 border border-rose-100 text-rose-300 hover:text-rose-600 hover:bg-rose-100/50 rounded-3xl w-full py-3 text-[10px] font-black transition-all">
-                🚫 Cancelar Tanda
+              <button type="button" (click)="toggleTandaStatus()" [disabled]="isUpdatingTanda()" class="min-h-11 bg-rose-50 border border-rose-100 text-rose-500 hover:text-rose-700 hover:bg-rose-100/70 rounded-3xl w-full py-3 text-[10px] font-black transition-all disabled:opacity-60">
+                {{ isUpdatingTanda() ? 'Guardando estado…' : (t.status === 'Cancelled' ? '✨ Reactivar Tanda' : '🚫 Cancelar Tanda') }}
               </button>
             </div>
           </div>
@@ -483,32 +491,60 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
       
       <!-- PAYMENT MODAL -->
       @if (showPaymentModal()) {
-        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div class="absolute inset-0 bg-pink-900/30 backdrop-blur-md" (click)="showPaymentModal.set(false)"></div>
-          <div class="card-coquette bg-white p-8 w-full max-sm relative z-10 animate-scale-in">
-             <h3 class="text-xl font-black text-pink-900 mb-6 flex items-center gap-2">
-                <span class="text-2xl animate-heartbeat">💖</span> Registrar Abono
-             </h3>
+        <div class="fixed inset-0 z-[100] flex items-end justify-center p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4 animate-fade-in" role="presentation">
+          <div class="absolute inset-0 bg-pink-900/30 backdrop-blur-md" (click)="closePaymentModal()"></div>
+          <section class="card-coquette relative z-10 max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto overscroll-contain !bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:p-7 animate-scale-in" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+             <div class="mb-5 flex items-start justify-between gap-3">
+               <div>
+                 <p class="text-[10px] font-black uppercase tracking-widest text-pink-400">{{ editingPaymentId() ? 'Movimiento registrado' : 'Nuevo movimiento' }}</p>
+                 <h3 id="payment-modal-title" class="mt-1 text-xl font-black text-pink-900">{{ editingPaymentId() ? 'Editar abono' : 'Registrar abono' }}</h3>
+               </div>
+               <button type="button" (click)="closePaymentModal()" aria-label="Cerrar detalles del abono" class="min-h-11 min-w-11 rounded-full bg-pink-50 text-xl font-black text-pink-700">×</button>
+             </div>
              
-             <div class="bg-gradient-to-br from-pink-50 to-rose-50 rounded-3xl p-6 border border-pink-100 text-center mb-8">
-                <p class="text-[10px] font-black text-pink-400 uppercase tracking-widest mb-1"> Participante </p>
-                <p class="text-lg font-black text-pink-900 mb-4">{{ activePayment()?.participant?.customerName }}</p>
+             <div class="mb-5 rounded-2xl border border-pink-100 bg-gradient-to-br from-pink-50 to-rose-50 p-4 text-center">
+                <p class="text-[10px] font-black uppercase tracking-widest text-pink-400">{{ activePayment()?.participant?.customerName }} · Semana {{ activePayment()?.week }}</p>
                 
-                <div class="flex items-end justify-center gap-1">
-                  <p class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-500 font-display">
-                    {{ getParticipantWeeklyAmount(activePayment()!.participant) | currency:'MXN':'symbol-narrow':'1.0-0' }}
-                  </p>
-                  <span class="text-pink-400 text-[10px] font-medium uppercase mb-2">/ Sem {{ activePayment()?.week }}</span>
-                </div>
+                <p class="mt-1 text-sm font-bold text-pink-800">Cuota {{ getParticipantWeeklyAmount(activePayment()!.participant) | currency:'MXN':'symbol-narrow':'1.0-0' }} · Registrado {{ getWeekPaidAmount(activePayment()!.participant, activePayment()!.week) | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
              </div>
 
-             <div class="flex gap-4">
-                <button (click)="showPaymentModal.set(false)" class="btn-coquette btn-ghost flex-1 justify-center">Regresar</button>
-                <button (click)="confirmPayment()" [disabled]="isSavingPay()" class="btn-coquette btn-pink flex-1 justify-center shadow-lg">
-                   @if (isSavingPay()) { <span class="animate-spin italic">⌛</span> } @else { Confirmar 💖 }
-                </button>
+             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+               <div>
+                 <label for="payment-amount" class="mb-1 block text-xs font-bold text-pink-800">Monto abonado</label>
+                 <input id="payment-amount" type="number" min="0.01" step="0.01" inputmode="decimal" [(ngModel)]="paymentForm().amountPaid" class="input-coquette min-h-11 w-full text-base" />
+               </div>
+               <div>
+                 <label for="payment-penalty" class="mb-1 block text-xs font-bold text-pink-800">Penalización pagada</label>
+                 <input id="payment-penalty" type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="paymentForm().penaltyPaid" class="input-coquette min-h-11 w-full text-base" />
+               </div>
+               <div>
+                 <label for="payment-date" class="mb-1 block text-xs font-bold text-pink-800">Fecha y hora</label>
+                 <input id="payment-date" type="datetime-local" [(ngModel)]="paymentForm().paymentDate" class="input-coquette min-h-11 w-full text-base" />
+               </div>
+               <div class="flex items-end">
+                 <label class="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl border border-pink-100 bg-pink-50/70 px-3 text-xs font-bold text-pink-800">
+                   <input type="checkbox" [(ngModel)]="paymentForm().isVerified" class="h-5 w-5 accent-pink-600" />
+                   Pago verificado
+                 </label>
+               </div>
+               <div class="sm:col-span-2">
+                 <label for="payment-notes" class="mb-1 block text-xs font-bold text-pink-800">Notas o referencia</label>
+                 <textarea id="payment-notes" rows="2" maxlength="500" [(ngModel)]="paymentForm().notes" class="input-coquette min-h-[72px] w-full text-base" placeholder="Transferencia, efectivo, referencia…"></textarea>
+               </div>
              </div>
-          </div>
+
+             <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+               @if (editingPaymentId()) {
+                 <button type="button" (click)="onRemovePayment(activePayment()!.participant, activePayment()!.week)" [disabled]="isSavingPay()" class="min-h-11 rounded-xl border border-rose-200 px-4 text-sm font-bold text-rose-700 hover:bg-rose-50">Eliminar abono</button>
+               }
+               <div class="flex flex-col-reverse gap-2 sm:ml-auto sm:flex-row">
+                 <button type="button" (click)="closePaymentModal()" class="btn-coquette btn-ghost min-h-11 flex-1 justify-center">Cancelar</button>
+                 <button type="button" (click)="confirmPayment()" [disabled]="isSavingPay()" class="btn-coquette btn-pink min-h-11 flex-1 justify-center shadow-lg">
+                   @if (isSavingPay()) { <span aria-hidden="true" class="animate-spin italic">⌛</span> Guardando… } @else { {{ editingPaymentId() ? 'Guardar cambios' : 'Registrar abono' }} 💖 }
+                 </button>
+               </div>
+             </div>
+          </section>
         </div>
       }
 
@@ -859,7 +895,9 @@ export class TandaDetailComponent implements OnInit {
   // Pago
   showPaymentModal = signal(false);
   isSavingPay = signal(false);
+  editingPaymentId = signal<string | null>(null);
   activePayment = signal<{ participant: TandaParticipantDto, week: number } | null>(null);
+  paymentForm = signal<TandaPaymentForm>(this.createEmptyPaymentForm());
 
   // Edición
   showEditModal = signal(false);
@@ -936,7 +974,17 @@ export class TandaDetailComponent implements OnInit {
   }
 
   hasPaid(participant: TandaParticipantDto, week: number): boolean {
-    return participant.payments?.some(p => p.weekNumber === week) || false;
+    return this.getWeekPaidAmount(participant, week) >= this.getParticipantWeeklyAmount(participant);
+  }
+
+  hasPayment(participant: TandaParticipantDto, week: number): boolean {
+    return participant.payments?.some(payment => payment.weekNumber === week) || false;
+  }
+
+  getWeekPaidAmount(participant: TandaParticipantDto, week: number): number {
+    return (participant.payments ?? [])
+      .filter(payment => payment.weekNumber === week && payment.isVerified)
+      .reduce((total, payment) => total + payment.amountPaid, 0);
   }
 
   getPaidWeeksCount(participant: TandaParticipantDto): number {
@@ -1104,25 +1152,77 @@ export class TandaDetailComponent implements OnInit {
 
   openPaymentModal(participant: TandaParticipantDto, week: number) {
     this.activePayment.set({ participant, week });
+    const payment = this.getPaymentForWeek(participant, week);
+    this.editingPaymentId.set(payment?.id ?? null);
+    this.paymentForm.set(payment
+      ? {
+          amountPaid: payment.amountPaid,
+          penaltyPaid: payment.penaltyPaid,
+          paymentDate: this.toDateTimeLocal(payment.paymentDate),
+          isVerified: payment.isVerified,
+          notes: payment.notes ?? ''
+        }
+      : {
+          ...this.createEmptyPaymentForm(),
+          amountPaid: this.getParticipantWeeklyAmount(participant)
+        });
     this.showPaymentModal.set(true);
     this.isSavingPay.set(false);
+  }
+
+  closePaymentModal() {
+    if (this.isSavingPay()) return;
+    this.showPaymentModal.set(false);
+    this.editingPaymentId.set(null);
+    this.activePayment.set(null);
   }
 
   confirmPayment() {
     const pay = this.activePayment();
     const t = this.tanda();
     if (pay && t && !this.isSavingPay()) {
+      const form = this.paymentForm();
+      const paymentDate = new Date(form.paymentDate);
+      if (!Number.isFinite(form.amountPaid) || form.amountPaid <= 0) {
+        this.toastService.error('El monto abonado debe ser mayor a cero');
+        return;
+      }
+      if (!Number.isFinite(form.penaltyPaid) || form.penaltyPaid < 0) {
+        this.toastService.error('La penalización no puede ser negativa');
+        return;
+      }
+      if (!form.paymentDate || Number.isNaN(paymentDate.getTime())) {
+        this.toastService.error('Selecciona una fecha y hora válidas');
+        return;
+      }
+
       this.isSavingPay.set(true);
-      this.tandaService.registerPayment({
-        participantId: pay.participant.id,
-        weekNumber: pay.week,
-        amountPaid: this.getParticipantWeeklyAmount(pay.participant)
-      }).subscribe({
+      const editingPaymentId = this.editingPaymentId();
+      const request = editingPaymentId
+        ? this.tandaService.updatePayment(editingPaymentId, {
+            weekNumber: pay.week,
+            amountPaid: form.amountPaid,
+            penaltyPaid: form.penaltyPaid,
+            paymentDate: paymentDate.toISOString(),
+            isVerified: form.isVerified,
+            notes: form.notes.trim() || undefined
+          })
+        : this.tandaService.registerPayment({
+            participantId: pay.participant.id,
+            weekNumber: pay.week,
+            amountPaid: form.amountPaid,
+            penaltyPaid: form.penaltyPaid,
+            paymentDate: paymentDate.toISOString(),
+            isVerified: form.isVerified,
+            notes: form.notes.trim() || undefined
+          });
+
+      request.subscribe({
         next: () => {
-          this.toastService.success('Abono registrado correctamente 💅');
-          this.showPaymentModal.set(false);
-          this.loadTanda(t.id);
+          this.toastService.success(editingPaymentId ? 'Abono actualizado correctamente' : 'Abono registrado correctamente 💅');
           this.isSavingPay.set(false);
+          this.closePaymentModal();
+          this.loadTanda(t.id);
         },
         error: (err) => {
           this.isSavingPay.set(false);
@@ -1130,6 +1230,28 @@ export class TandaDetailComponent implements OnInit {
         }
       });
     }
+  }
+
+  private getPaymentForWeek(participant: TandaParticipantDto, week: number): TandaPaymentDto | undefined {
+    return participant.payments?.find(payment => payment.weekNumber === week);
+  }
+
+  private createEmptyPaymentForm(): TandaPaymentForm {
+    return {
+      amountPaid: 0,
+      penaltyPaid: 0,
+      paymentDate: this.toDateTimeLocal(new Date()),
+      isVerified: true,
+      notes: ''
+    };
+  }
+
+  private toDateTimeLocal(value: string | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+    return localDate.toISOString().slice(0, 16);
   }
 
   openEditModal() {
@@ -1165,9 +1287,45 @@ export class TandaDetailComponent implements OnInit {
     }
   }
 
-  onUpdateTurn(p: TandaParticipantDto, event: any) {
-    const newTurn = parseInt(event.target.value);
-    if (isNaN(newTurn) || newTurn === p.assignedTurn) {
+  toggleTandaStatus() {
+    const t = this.tanda();
+    if (!t || this.isUpdatingTanda()) return;
+
+    const nextStatus = t.status === 'Cancelled' ? 'Active' : 'Cancelled';
+    const action = nextStatus === 'Cancelled' ? 'cancelada' : 'reactivada';
+    const confirmationMessage = nextStatus === 'Cancelled'
+      ? `¿Quieres cancelar la tanda "${t.name}"? Podrás reactivarla después.`
+      : `¿Quieres reactivar la tanda "${t.name}"?`;
+
+    if (!confirm(confirmationMessage)) return;
+
+    this.isUpdatingTanda.set(true);
+    this.tandaService.updateTanda(t.id, {
+      name: t.name,
+      totalWeeks: t.totalWeeks,
+      weeklyAmount: t.weeklyAmount,
+      penaltyAmount: t.penaltyAmount,
+      startDate: t.startDate.split('T')[0],
+      status: nextStatus
+    }).subscribe({
+      next: () => {
+        this.isUpdatingTanda.set(false);
+        this.toastService.success(`Tanda ${action} correctamente`);
+        this.loadTanda(t.id);
+      },
+      error: err => {
+        this.isUpdatingTanda.set(false);
+        this.toastService.error(err.error?.message || 'No se pudo cambiar el estado de la tanda');
+      }
+    });
+  }
+
+  onUpdateTurn(p: TandaParticipantDto, event: Event) {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+
+    const newTurn = Number.parseInt(input.value, 10);
+    if (Number.isNaN(newTurn) || newTurn === p.assignedTurn) {
       this.editingTurnId.set(null);
       return;
     }
@@ -1288,16 +1446,22 @@ export class TandaDetailComponent implements OnInit {
 
   onRemovePayment(participant: TandaParticipantDto, week: number) {
     const payment = participant.payments?.find(pay => pay.weekNumber === week);
-    if (!payment) return;
+    if (!payment || this.isSavingPay()) return;
 
     if (confirm(`¿Quieres quitar el pago de la semana ${week} para ${participant.customerName}? Se borrará del historial.`)) {
+      this.isSavingPay.set(true);
       this.tandaService.deletePayment(payment.id).subscribe({
         next: () => {
           this.toastService.success('Pago eliminado ✨');
           const t = this.tanda();
+          this.isSavingPay.set(false);
+          this.closePaymentModal();
           if (t) this.loadTanda(t.id);
         },
-        error: (err) => this.toastService.error(err.error?.message || 'Error al eliminar pago')
+        error: (err) => {
+          this.isSavingPay.set(false);
+          this.toastService.error(err.error?.message || 'Error al eliminar pago');
+        }
       });
     }
   }

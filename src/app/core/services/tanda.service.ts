@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { 
   TandaDto, CreateTandaDto, AddParticipantDto, 
   RegisterPaymentDto, TandaParticipantDto, TandaPaymentDto,
-  TandaProductDto
+  TandaProductDto, UpdateTandaDto, UpdateTandaPaymentDto
 } from '../models';
 
 @Injectable({
@@ -53,6 +53,10 @@ export class TandaService {
     return this.http.post<TandaPaymentDto>(`${this.base}/payments`, dto);
   }
 
+  updatePayment(paymentId: string, dto: UpdateTandaPaymentDto): Observable<TandaPaymentDto> {
+    return this.http.put<TandaPaymentDto>(`${this.base}/payments/${paymentId}`, dto);
+  }
+
   deletePayment(paymentId: string): Observable<any> {
     return this.http.delete(`${this.base}/payments/${paymentId}`);
   }
@@ -66,7 +70,7 @@ export class TandaService {
     return this.http.post<{ message: string }>(`${this.base}/${tandaId}/process-penalties`, {});
   }
 
-  updateTanda(id: string, dto: any): Observable<TandaDto> {
+  updateTanda(id: string, dto: UpdateTandaDto): Observable<TandaDto> {
     return this.http.put<TandaDto>(`${this.base}/${id}`, dto);
   }
 

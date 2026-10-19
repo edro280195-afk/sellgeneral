@@ -59,25 +59,27 @@ interface TandaForm {
         </div>
 
         <!-- Filters & Search (Integrated) -->
-        <div class="card-coquette p-5 animate-slide-up delay-100" style="opacity:0; animation-fill-mode: forwards;">
-          <div class="flex flex-wrap gap-4 items-end">
+        <div class="card-coquette p-3 sm:p-5 animate-slide-up delay-100" style="opacity:0; animation-fill-mode: forwards;">
+          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4">
             <div class="w-full min-w-0 flex-1 sm:min-w-[300px] relative">
               <label class="label-coquette">🔍 Buscar Tanda o Producto</label>
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400">🔍</span>
                 <input class="input-coquette pl-10" 
                        placeholder="Nombre de tanda o producto..." 
-                       [(ngModel)]="searchQuery" />
+                       [ngModel]="searchQuery()"
+                       (ngModelChange)="searchQuery.set($event)" />
               </div>
             </div>
 
-            <div class="w-48">
+            <div class="w-full sm:w-48">
               <label class="label-coquette">📋 Estado</label>
-              <select class="input-coquette py-2">
+              <select class="input-coquette py-2" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
                 <option value="">Todas</option>
                 <option value="Active">🟢 Activas</option>
                 <option value="Draft">📝 Borradores</option>
                 <option value="Completed">💖 Completadas</option>
+                <option value="Cancelled">🚫 Canceladas</option>
               </select>
             </div>
           </div>
@@ -93,8 +95,8 @@ interface TandaForm {
         } @else {
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 pb-8">
             @for (tanda of filteredTandas(); track tanda.id) {
-              <div [routerLink]="['/admin/tandas', tanda.id]" 
-                   class="tanda-card-anim group relative rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500 cursor-pointer">
+              <a [routerLink]="['/admin/tandas', tanda.id]"
+                   class="tanda-card-anim group relative block rounded-[1.75rem] p-[1px] bg-gradient-to-br from-pink-200/60 via-white to-rose-200/60 hover:from-pink-300/80 hover:to-rose-300/80 transition-all duration-500">
                 
                 <div class="relative bg-white/90 backdrop-blur-xl rounded-[1.7rem] p-6 flex flex-col h-full shadow-[0_8px_32px_rgba(244,114,182,0.08)] group-hover:shadow-[0_20px_50px_rgba(244,114,182,0.18)] transition-shadow duration-500 overflow-hidden">
                   
@@ -103,8 +105,13 @@ interface TandaForm {
                     <div class="flex flex-col gap-1.5">
                       <span class="text-[10px] font-black text-pink-400 tracking-[0.2em] uppercase">Tanda #{{ tanda.id.slice(0,4) }}</span>
                     </div>
-                    <span class="badge shadow-sm" [class]="tanda.status === 'Active' ? 'badge-confirmed' : 'badge-pending'">
-                      {{ tanda.status === 'Active' ? '🟢 Activa' : '⏳ Borrador' }}
+                    <span class="badge shadow-sm" [ngClass]="{
+                      'badge-confirmed': tanda.status === 'Active',
+                      'badge-pending': tanda.status === 'Draft',
+                      'bg-purple-100 text-purple-800': tanda.status === 'Completed',
+                      'bg-rose-100 text-rose-800': tanda.status === 'Cancelled'
+                    }">
+                      {{ getTandaStatusLabel(tanda.status) }}
                     </span>
                   </div>
 
@@ -136,20 +143,27 @@ interface TandaForm {
                     </div>
                   </div>
 
-                  <button class="btn-coquette btn-pink w-full py-2.5 justify-center text-xs font-black">
+                  <span class="btn-coquette btn-pink w-full py-2.5 justify-center text-xs font-black">
                      Gestionar Tanda ➜
-                  </button>
+                  </span>
                 </div>
 
                 <!-- Card Shine Effect -->
                 <div class="absolute inset-0 -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none"></div>
-              </div>
+              </a>
             } @empty {
               <div class="card-coquette p-16 text-center col-span-full animate-bounce-in">
-                <div class="text-6xl mb-4">🦋</div>
-                <h3 class="text-2xl font-black text-pink-900 mb-2">Aún no hay tandas</h3>
-                <p class="text-pink-500 font-medium mb-6">Comienza tu viaje de ahorro creando la primera tanda.</p>
-                <button (click)="openCreateModal()" class="btn-coquette btn-pink mx-auto">Crear Primera Tanda ✨</button>
+                @if (tandas().length === 0) {
+                  <div class="text-6xl mb-4">🦋</div>
+                  <h3 class="text-2xl font-black text-pink-900 mb-2">Aún no hay tandas</h3>
+                  <p class="text-pink-500 font-medium mb-6">Comienza tu viaje de ahorro creando la primera tanda.</p>
+                  <button type="button" (click)="openCreateModal()" class="btn-coquette btn-pink mx-auto">Crear Primera Tanda ✨</button>
+                } @else {
+                  <div class="text-5xl mb-4">🔎</div>
+                  <h3 class="text-xl font-black text-pink-900 mb-2">No encontré tandas con esos filtros</h3>
+                  <p class="text-pink-500 font-medium mb-5">Prueba otro nombre o muestra todos los estados.</p>
+                  <button type="button" (click)="clearTandaFilters()" class="btn-coquette btn-pink mx-auto">Limpiar filtros</button>
+                }
               </div>
             }
           </div>
@@ -371,7 +385,8 @@ export class TandasComponent implements OnInit {
   isSaving = signal(false);
   
   // Filtros / Búsqueda
-  searchQuery = '';
+  searchQuery = signal('');
+  statusFilter = signal('');
   
   // Gestión de Productos en Modal
   productSearch = '';
@@ -393,13 +408,34 @@ export class TandasComponent implements OnInit {
   };
 
   filteredTandas = computed(() => {
-    const q = this.searchQuery.toLowerCase().trim();
-    if (!q) return this.tandas();
-    return this.tandas().filter(t => 
-      t.name.toLowerCase().includes(q) || 
-      t.product?.name.toLowerCase().includes(q)
-    );
+    const query = this.normalizeSearch(this.searchQuery());
+    const status = this.statusFilter();
+    return this.tandas().filter(tanda => {
+      const matchesSearch = !query
+        || this.normalizeSearch(tanda.name).includes(query)
+        || this.normalizeSearch(tanda.product?.name ?? '').includes(query);
+      const matchesStatus = !status || tanda.status === status;
+      return matchesSearch && matchesStatus;
+    });
   });
+
+  getTandaStatusLabel(status: string): string {
+    switch (status) {
+      case 'Active': return '🟢 Activa';
+      case 'Completed': return '💖 Completada';
+      case 'Cancelled': return '🚫 Cancelada';
+      default: return '⏳ Borrador';
+    }
+  }
+
+  clearTandaFilters(): void {
+    this.searchQuery.set('');
+    this.statusFilter.set('');
+  }
+
+  private normalizeSearch(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
 
   filteredPlaceClients = () => {
     const query = this.placeSearch.toLowerCase().trim();

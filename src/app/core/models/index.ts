@@ -1058,6 +1058,15 @@ export interface CreateTandaDto {
     participants: CreateTandaParticipantDto[];
 }
 
+export interface UpdateTandaDto {
+    name: string;
+    totalWeeks: number;
+    weeklyAmount: number;
+    penaltyAmount: number;
+    startDate: string;
+    status?: string;
+}
+
 export interface CreateTandaParticipantDto {
     customerId?: number;
     customerName?: string;
@@ -1081,6 +1090,17 @@ export interface RegisterPaymentDto {
     weekNumber: number;
     amountPaid: number;
     penaltyPaid?: number;
+    paymentDate?: string;
+    isVerified?: boolean;
+    notes?: string;
+}
+
+export interface UpdateTandaPaymentDto {
+    weekNumber: number;
+    amountPaid: number;
+    penaltyPaid: number;
+    paymentDate: string;
+    isVerified: boolean;
     notes?: string;
 }
 

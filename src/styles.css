@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -13,9 +13,9 @@
   --color-pink-800: #9d174d;
   --color-pink-900: #831843;
 
-  --font-headings: 'Poppins', sans-serif;
-  --font-body: 'Poppins', sans-serif;
-  --font-accent: 'Great Vibes', cursive;
+  --font-headings: 'Quicksand', sans-serif;
+  --font-body: 'Quicksand', sans-serif;
+  --font-accent: 'Quicksand', sans-serif;
 
   --shadow-coquette: 0 18px 50px -20px rgba(91, 15, 64, 0.24);
   --shadow-glow: 0 0 26px rgba(255, 0, 114, 0.28);
@@ -35,46 +35,50 @@ html {
 body {
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 8% 5%, rgba(255, 0, 114, .08), transparent 24rem),
-    radial-gradient(circle at 92% 16%, rgba(157, 102, 255, .08), transparent 24rem),
-    linear-gradient(135deg, #fff8fb 0%, #fffdfd 48%, #faf7ff 100%);
-  background-attachment: fixed;
-  color: #3f1734;
+    radial-gradient(circle at 8% 20%, rgba(255, 255, 255, 0.75) 0 4px, transparent 5px),
+    radial-gradient(circle at 82% 72%, rgba(255, 255, 255, 0.7) 0 3px, transparent 4px),
+    #fff0f7;
+  background-size: 120px 120px, 155px 155px, auto;
+  color: #66324f;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
-  /* Coquette Heart Cursor 💖 */
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="%23f472b6" stroke="%23be185d" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>') 10 10, auto;
+  cursor: auto;
 }
 
-/* Interactive elements keep heart but with pointer fallback */
+/* Controls use the platform pointer so their hit area stays predictable. */
 a,
 button,
 [role="button"],
 select,
 .pointer-cursor-coquette {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="%23ec4899" stroke="%239d174d" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>') 11 11, pointer !important;
+  cursor: pointer;
 }
 
 button:active,
 a:active,
 [role="button"]:active,
 .card-coquette:active {
-  transform: scale(0.95);
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: scale(0.98);
+  transition: transform 0.15s ease-out;
 }
 
 .btn-coquette,
 .card-coquette {
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  transition: transform 180ms ease-out, box-shadow 180ms ease;
 }
 
 .btn-coquette:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px);
 }
 
 .card-coquette:hover {
-  transform: translateY(-4px) scale(1.01);
+  transform: translateY(-2px);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(198, 46, 112, 0.28);
+  outline-offset: 2px;
 }
 
 h1,
@@ -97,22 +101,6 @@ h6 {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: var(--shadow-coquette);
-}
-
-.floating-sidebar {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  bottom: 1rem;
-  width: 260px;
-  z-index: 50;
-  background: rgba(131, 24, 67, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 50px rgba(131, 24, 67, 0.3);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* ── Scrollbar ── */
@@ -491,7 +479,7 @@ h6 {
     0 4px 6px -1px rgba(236, 72, 153, 0.06),
     0 10px 15px -3px rgba(236, 72, 153, 0.04),
     0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 180ms ease-out, box-shadow 180ms ease, border-color 180ms ease;
 
   &:hover {
     box-shadow:
@@ -514,7 +502,7 @@ h6 {
   border-radius: 9999px;
   border: none;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease-out;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -1149,4 +1137,15 @@ select.input-coquette {
 
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

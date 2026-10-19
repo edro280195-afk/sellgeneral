@@ -45,6 +45,9 @@ export class BusinessBootstrapService {
     readonly loaded = this._loaded.asReadonly();
     readonly loading = this._loading.asReadonly();
     readonly error = this._error.asReadonly();
+    readonly accessCheckSettled = computed(
+        () => this._loaded() || (!this._loading() && this._error() !== null),
+    );
 
     readonly features = computed(() => this._me()?.features ?? []);
     readonly isLocked = computed(() => this._state()?.isLocked ?? false);

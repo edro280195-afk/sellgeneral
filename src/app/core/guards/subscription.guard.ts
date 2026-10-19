@@ -1,22 +1,27 @@
 import { inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { CanActivateFn, Router } from '@angular/router';
+import { filter, map, take } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { BusinessBootstrapService } from '../services/business-bootstrap.service';
 
-const SUBSCRIPTION_ALLOWED_ROUTES = ['/admin/subscription'];
+const SUBSCRIPTION_ALLOWED_ROUTES = new Set([
+    '/admin/subscription',
+    '/admin/subscription/checkout',
+]);
 
 /**
- * Guard de suscripcion. Se aplica a las rutas internas de /admin/* (excepto
- * la pagina "Mi Plan"). Si la suscripcion del negocio esta bloqueada y el
- * usuario es Owner/Admin, redirige a /admin/subscription donde esta el muro
- * con el CTA de pago. Los Driver/Scaner no se ven afectados.
+ * Solo permite las páginas de plan y checkout cuando la suscripción está
+ * bloqueada. Espera la consulta inicial para evitar que una pantalla interna
+ * aparezca antes de conocer el estado de la cuenta.
  */
 export const subscriptionGuard: CanActivateFn = (route, state) => {
     const auth = inject(AuthService);
     const bootstrap = inject(BusinessBootstrapService);
     const router = inject(Router);
 
-    if (SUBSCRIPTION_ALLOWED_ROUTES.some(r => state.url.startsWith(r))) {
+    const requestedPath = state.url.split(/[?#]/, 1)[0].replace(/\/+$/, '');
+    if (SUBSCRIPTION_ALLOWED_ROUTES.has(requestedPath)) {
         return true;
     }
 
@@ -26,13 +31,12 @@ export const subscriptionGuard: CanActivateFn = (route, state) => {
     }
 
     bootstrap.load();
-    if (!bootstrap.loaded() && bootstrap.loading()) {
-        return true;
-    }
 
-    if (bootstrap.isLocked()) {
-        return router.parseUrl('/admin/subscription');
-    }
-
-    return true;
+    return toObservable(bootstrap.accessCheckSettled).pipe(
+        filter(settled => settled),
+        take(1),
+        map(() => bootstrap.isLocked() || bootstrap.error() !== null
+            ? router.parseUrl('/admin/subscription')
+            : true),
+    );
 };

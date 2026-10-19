@@ -39,26 +39,26 @@ import { gsap } from 'gsap';
                 </div>
 
                 <!-- Quick Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up">
-                    <div class="card-coquette bg-white/40 backdrop-blur-md p-6 border-white/60 flex items-center gap-5 group hover:bg-pink-50/50 transition-colors">
-                        <div class="w-14 h-14 rounded-2xl bg-pink-100 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🎰</div>
+                <div class="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 animate-slide-up">
+                    <div class="card-coquette bg-white/40 backdrop-blur-md p-2 sm:p-4 md:p-6 border-white/60 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 md:gap-5 group hover:bg-pink-50/50 transition-colors">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-pink-100 flex items-center justify-center text-lg sm:text-xl md:text-3xl shrink-0 group-hover:scale-110 transition-transform">🎰</div>
                         <div>
-                            <p class="text-xs font-bold text-pink-400 uppercase tracking-widest">Activos</p>
-                            <p class="text-2xl font-black text-pink-900">{{ activeCount() }} Sorteos</p>
+                            <p class="text-lg sm:text-xl md:text-2xl font-black leading-tight text-pink-900">{{ activeCount() }}</p>
+                            <p class="text-[9px] sm:text-xs font-bold text-pink-500 uppercase leading-tight">Sorteos activos</p>
                         </div>
                     </div>
-                    <div class="card-coquette bg-white/40 backdrop-blur-md p-6 border-white/60 flex items-center gap-5 group hover:bg-purple-50/50 transition-colors">
-                        <div class="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">👥</div>
+                    <div class="card-coquette bg-white/40 backdrop-blur-md p-2 sm:p-4 md:p-6 border-white/60 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 md:gap-5 group hover:bg-purple-50/50 transition-colors">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-purple-100 flex items-center justify-center text-lg sm:text-xl md:text-3xl shrink-0 group-hover:scale-110 transition-transform">👥</div>
                         <div>
-                            <p class="text-xs font-bold text-purple-400 uppercase tracking-widest">Participantes</p>
-                            <p class="text-2xl font-black text-pink-900">{{ totalParticipants() }} Totales</p>
+                            <p class="text-lg sm:text-xl md:text-2xl font-black leading-tight text-pink-900">{{ totalParticipants() }}</p>
+                            <p class="text-[9px] sm:text-xs font-bold text-purple-500 uppercase leading-tight">Participantes</p>
                         </div>
                     </div>
-                    <div class="card-coquette bg-white/40 backdrop-blur-md p-6 border-white/60 flex items-center gap-5 group hover:bg-rose-50/50 transition-colors">
-                        <div class="w-14 h-14 rounded-2xl bg-rose-100 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🏆</div>
+                    <div class="card-coquette bg-white/40 backdrop-blur-md p-2 sm:p-4 md:p-6 border-white/60 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 md:gap-5 group hover:bg-rose-50/50 transition-colors">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-xl sm:rounded-2xl bg-rose-100 flex items-center justify-center text-lg sm:text-xl md:text-3xl shrink-0 group-hover:scale-110 transition-transform">🏆</div>
                         <div>
-                            <p class="text-xs font-bold text-rose-400 uppercase tracking-widest">Completados</p>
-                            <p class="text-2xl font-black text-pink-900">{{ completedCount() }} Exitosos</p>
+                            <p class="text-lg sm:text-xl md:text-2xl font-black leading-tight text-pink-900">{{ completedCount() }}</p>
+                            <p class="text-[9px] sm:text-xs font-bold text-rose-500 uppercase leading-tight">Sorteos completados</p>
                         </div>
                     </div>
                 </div>

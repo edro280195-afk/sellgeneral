@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ViewChild } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TandaService } from '../../../core/services/tanda.service';
@@ -23,7 +23,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
           <span class="text-pink-900 font-black flex items-center gap-2">
             {{ tanda()?.name || 'Cargando...' }}
             @if (tanda() && !loading()) {
-              <button (click)="openEditModal()" class="text-pink-300 hover:text-pink-500 transition-colors text-sm">✎</button>
+              <button type="button" (click)="openEditModal()" aria-label="Editar tanda" class="min-h-11 min-w-11 text-pink-300 hover:text-pink-500 transition-colors text-sm">✎</button>
             }
           </span>
         </nav>
@@ -47,15 +47,15 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
             <div class="card-coquette overflow-hidden relative border-pink-200">
               <div class="absolute inset-0 bg-gradient-to-r from-pink-50 via-white to-rose-50 -z-10"></div>
               
-              <div class="p-8 relative flex flex-wrap items-center justify-between gap-6 overflow-hidden">
+              <div class="p-4 sm:p-8 relative flex flex-wrap items-center justify-between gap-4 sm:gap-6 overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent skew-x-12 animate-shimmer pointer-events-none"></div>
 
-                <div class="flex items-center gap-6">
-                  <div class="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-200 flex items-center justify-center text-3xl text-white transform hover:rotate-6 transition-transform">
+                <div class="flex items-center gap-4 sm:gap-6">
+                  <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-pink-400 to-rose-500 shadow-lg shadow-pink-200 flex items-center justify-center text-xl sm:text-3xl text-white transform hover:rotate-6 transition-transform">
                     📦
                   </div>
                   <div>
-                    <h3 class="text-2xl font-black text-pink-900 font-display">Entrega de Tanda</h3>
+                    <h3 class="text-xl sm:text-2xl font-black text-pink-900 font-display">Entrega de Tanda</h3>
                     @if (sundayParticipant(); as sp) {
                       @if (sp.isDelivered) {
                         <p class="text-emerald-500 font-bold flex items-center gap-2 mt-1 animate-fade-in">
@@ -79,12 +79,12 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                 @if (sundayParticipant(); as sp) {
                   @if (!sp.isDelivered) {
                     <div class="flex flex-col sm:flex-row gap-2 items-stretch">
-                      <button (click)="addToSundayRoute(sp)"
+                      <button type="button" (click)="addToSundayRoute(sp)"
                               [disabled]="addingToRoute()"
-                              class="btn-coquette btn-pink px-6 py-4 shadow-xl disabled:opacity-60 disabled:cursor-not-allowed">
+                              class="btn-coquette btn-pink min-h-11 px-4 py-3 sm:px-6 sm:py-4 shadow-xl disabled:opacity-60 disabled:cursor-not-allowed">
                         {{ addingToRoute() ? 'Agregando...' : '📍 Agregar a ruta del domingo' }}
                       </button>
-                      <button (click)="onConfirmSundayDelivery(sp)" class="btn-coquette btn-rose px-8 py-4 shadow-xl">Confirmar Entrega ✨</button>
+                      <button type="button" (click)="onConfirmSundayDelivery(sp)" class="btn-coquette btn-rose min-h-11 px-5 py-3 sm:px-8 sm:py-4 shadow-xl">Confirmar Entrega ✨</button>
                     </div>
                   } @else {
                     <div class="bg-emerald-50 text-emerald-600 px-6 py-3 rounded-2xl font-black text-xs border border-emerald-100 uppercase tracking-widest">
@@ -96,7 +96,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
             </div>
 
             <!-- Weekly Payments Table -->
-            <div class="card-coquette p-6 border-pink-100/50">
+            <div class="card-coquette p-4 sm:p-6 border-pink-100/50">
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                 <div>
                    <h4 class="text-xs font-black text-pink-600 uppercase tracking-widest flex items-center gap-2">
@@ -106,21 +106,95 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                 </div>
                 
                 <!-- Premium View Switcher -->
-                <div class="bg-pink-50 p-1 rounded-2xl flex gap-1 border border-pink-100/50 shadow-inner">
-                   <button (click)="viewMode.set('table')" 
-                           [class]="viewMode() === 'table' ? 'bg-white text-pink-600 shadow-md scale-105' : 'text-pink-300 hover:text-pink-500'"
-                           class="px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
-                     <span>📋</span> Abonos
+                <div role="group" aria-label="Vistas del control de tanda" class="bg-pink-50 p-1 rounded-2xl flex gap-1 border border-pink-100/50 shadow-inner">
+                   <button type="button" (click)="viewMode.set('payments')"
+                           [attr.aria-pressed]="activeViewMode() === 'payments'"
+                           [ngClass]="activeViewMode() === 'payments' ? 'bg-white text-pink-700 shadow-sm' : 'text-pink-500 hover:text-pink-700'"
+                           class="min-h-11 px-3 sm:px-4 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
+                     <span aria-hidden="true">💳</span> Abonos
                    </button>
-                   <button (click)="viewMode.set('visual')" 
-                           [class]="viewMode() === 'visual' ? 'bg-white text-pink-600 shadow-md scale-105' : 'text-pink-300 hover:text-pink-500'"
-                           class="px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
-                     <span>🌟</span> Ruta Pro
+                   <button type="button" (click)="viewMode.set('table')"
+                           [attr.aria-pressed]="activeViewMode() === 'table'"
+                           [ngClass]="activeViewMode() === 'table' ? 'bg-white text-pink-700 shadow-sm' : 'text-pink-500 hover:text-pink-700'"
+                           class="hidden lg:flex min-h-11 px-3 sm:px-4 rounded-xl text-[10px] font-black uppercase transition-all items-center gap-2">
+                     <span aria-hidden="true">📋</span> Tabla
+                   </button>
+                   <button type="button" (click)="viewMode.set('visual')"
+                           [attr.aria-pressed]="activeViewMode() === 'visual'"
+                           [ngClass]="activeViewMode() === 'visual' ? 'bg-white text-pink-700 shadow-sm' : 'text-pink-500 hover:text-pink-700'"
+                           class="min-h-11 px-3 sm:px-4 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2">
+                     <span aria-hidden="true">🌟</span> Ruta Pro
                    </button>
                 </div>
               </div>
 
-              @if (viewMode() === 'table') {
+              @if (activeViewMode() === 'payments') {
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-fade-in">
+                  @for (p of participants(); track p.id) {
+                    <article class="rounded-2xl border border-pink-100 bg-white p-3 sm:p-4 shadow-sm">
+                      <button type="button" (click)="toggleParticipantPayments(p.id)"
+                              [attr.aria-expanded]="expandedParticipantId() === p.id"
+                              [attr.aria-controls]="'payments-' + p.id"
+                              class="w-full min-h-14 flex items-center justify-between gap-3 text-left">
+                        <div class="flex items-center gap-3 min-w-0">
+                          <span class="min-h-10 min-w-10 rounded-xl bg-pink-100 text-pink-700 font-black flex items-center justify-center">#{{ p.assignedTurn }}</span>
+                          <div class="min-w-0">
+                            <span class="block truncate text-sm font-black text-pink-900">{{ p.customerName }}</span>
+                            <span class="block truncate text-xs text-pink-400">{{ getPaidWeeksCount(p) }} de {{ weeksArray().length }} abonos · Entrega {{ getDeliveryDate(t.startDate, p.assignedTurn) | date:'dd MMM' : '' : 'es-MX' }}</span>
+                          </div>
+                        </div>
+                        <span aria-hidden="true" class="text-pink-500 transition-transform" [class.rotate-180]="expandedParticipantId() === p.id">⌄</span>
+                      </button>
+
+                      @if (expandedParticipantId() === p.id) {
+                        <div [id]="'payments-' + p.id" class="pt-3">
+                          <div role="group" [attr.aria-label]="'Abonos semanales de ' + p.customerName" class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                            @for (w of weeksArray(); track w) {
+                              <button type="button"
+                                      (click)="hasPaid(p, w) ? onRemovePayment(p, w) : openPaymentModal(p, w)"
+                                      [attr.aria-label]="hasPaid(p, w) ? 'Quitar pago de la semana ' + w + ' de ' + p.customerName : 'Registrar pago de la semana ' + w + ' de ' + p.customerName"
+                                      [attr.aria-pressed]="hasPaid(p, w)"
+                                      [ngClass]="hasPaid(p, w) ? 'border-pink-300 bg-pink-100 text-pink-800' : 'border-pink-100 bg-white text-pink-500 hover:border-pink-300 hover:bg-pink-50'"
+                                      class="min-h-12 rounded-xl border px-1 py-1.5 flex flex-col items-center justify-center leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
+                                <span class="text-[10px] font-black">Sem {{ w }}</span>
+                                <span class="text-[9px] font-semibold">{{ getParticipantWeeklyAmount(p) | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                              </button>
+                            }
+                          </div>
+
+                          <div class="mt-3 flex items-center justify-between gap-2 border-t border-pink-50 pt-3">
+                            @if (p.isDelivered) {
+                              <span class="text-xs font-bold text-emerald-600">✅ Entregada</span>
+                            } @else {
+                              <button type="button" (click)="onConfirmSundayDelivery(p)"
+                                      class="min-h-11 rounded-xl bg-pink-50 px-3 text-xs font-bold text-pink-700 hover:bg-pink-100">
+                                📦 Confirmar entrega
+                              </button>
+                            }
+                            <div class="flex items-center gap-1">
+                              <button type="button" (click)="sendWhatsAppReminder(p)"
+                                      [attr.aria-label]="'Enviar recordatorio por WhatsApp a ' + p.customerName"
+                                      class="min-h-11 rounded-xl px-3 text-xs font-bold text-pink-600 hover:bg-pink-50">
+                                💬 WhatsApp
+                              </button>
+                              <button type="button" (click)="selectedParticipantActions.set(p)"
+                                      [attr.aria-label]="'Acciones para ' + p.customerName"
+                                      class="min-h-11 min-w-11 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center hover:bg-pink-100">
+                                <span aria-hidden="true">⚙️</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </article>
+                  } @empty {
+                    <div class="col-span-full rounded-2xl border border-dashed border-pink-200 bg-pink-50/60 px-5 py-8 text-center">
+                      <p class="font-bold text-pink-700">Aún no hay participantes</p>
+                      <p class="mt-1 text-sm text-pink-500">Inscribe a la primera clienta para comenzar a registrar sus abonos.</p>
+                    </div>
+                  }
+                </div>
+              } @else if (activeViewMode() === 'table') {
                 <div class="overflow-x-auto rounded-2xl border border-pink-50 shadow-inner scrollbar-hide animate-fade-in">
                   <table class="table-coquette w-full">
                     <thead>
@@ -149,24 +223,26 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                                      #turnInput
                                      (focus)="turnInput.select()">
                             } @else {
-                              <span (click)="editingTurnId.set(p.id)" 
-                                    class="w-6 h-6 rounded bg-pink-800 text-white text-[10px] font-black flex items-center justify-center shrink-0 cursor-pointer hover:bg-pink-600 transition-colors"
-                                    title="Clic para cambiar turno">{{ p.assignedTurn }}</span>
+                              <button type="button" (click)="editingTurnId.set(p.id)"
+                                      [attr.aria-label]="'Cambiar turno de ' + p.customerName"
+                                      class="min-h-10 min-w-10 rounded bg-pink-800 text-white text-[10px] font-black flex items-center justify-center shrink-0 hover:bg-pink-600 transition-colors">{{ p.assignedTurn }}</button>
                             }
                             <span class="text-sm font-black text-pink-900 truncate flex-1" [title]="p.customerName">{{ p.customerName }}</span>
                             <!-- Botón de ajustes móvil -->
-                            <button (click)="selectedParticipantActions.set(p)" 
+                            <button type="button" (click)="selectedParticipantActions.set(p)"
+                                    [attr.aria-label]="'Acciones para ' + p.customerName"
                                     class="w-8 h-8 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all shrink-0">
-                                ⚙️
+                                <span aria-hidden="true">⚙️</span>
                             </button>
                           </div>
                         </td>
                         @for (w of weeksArray(); track w) {
                           <td class="text-center p-2">
                             @if (hasPaid(p, w)) {
-                              <button (click)="onRemovePayment(p, w)" class="text-lg drop-shadow-sm animate-bounce-in inline-block hover:scale-125 transition-transform" title="Quitar pago">💖</button>
+                              <button type="button" (click)="onRemovePayment(p, w)" [attr.aria-label]="'Quitar pago de la semana ' + w + ' de ' + p.customerName" class="min-h-11 min-w-11 text-lg drop-shadow-sm animate-bounce-in inline-flex items-center justify-center hover:scale-125 transition-transform">💖</button>
                             } @else {
-                              <button (click)="openPaymentModal(p, w)" 
+                              <button type="button" (click)="openPaymentModal(p, w)"
+                                      [attr.aria-label]="'Registrar pago de la semana ' + w + ' de ' + p.customerName"
                                       class="w-full py-1.5 rounded-lg border border-pink-50 text-[11px] font-black text-pink-300 hover:border-pink-300 hover:text-pink-600 hover:bg-white transition-all">
                                 {{ getParticipantWeeklyAmount(p) }}
                               </button>
@@ -181,15 +257,15 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
                           </td>
                         }
                         <td class="text-center">
-                          <input type="checkbox" [checked]="p.isDelivered" (click)="onConfirmSundayDelivery(p)" class="w-4 h-4 rounded border-pink-200 text-pink-500 focus:ring-pink-300 cursor-pointer">
+                          <input type="checkbox" [checked]="p.isDelivered" (click)="onConfirmSundayDelivery(p)" [attr.aria-label]="'Confirmar entrega de ' + p.customerName" class="min-h-11 min-w-11 rounded border-pink-200 text-pink-500 focus:ring-pink-300 cursor-pointer">
                         </td>
                         <td class="text-center">
                           <div class="flex items-center justify-center gap-1">
-                            <button (click)="sendWhatsAppReminder(p)" class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs hover:bg-emerald-100 transition-all" title="Enviar recordatorio por WhatsApp">
-                               💬
+                            <button type="button" (click)="sendWhatsAppReminder(p)" [attr.aria-label]="'Enviar recordatorio por WhatsApp a ' + p.customerName" class="min-h-11 min-w-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs hover:bg-emerald-100 transition-all">
+                               <span aria-hidden="true">💬</span>
                             </button>
-                            <button (click)="selectedParticipantActions.set(p)" class="w-8 h-8 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all">
-                               ⚙️
+                            <button type="button" (click)="selectedParticipantActions.set(p)" [attr.aria-label]="'Acciones para ' + p.customerName" class="min-h-11 min-w-11 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all">
+                               <span aria-hidden="true">⚙️</span>
                             </button>
                           </div>
                         </td>
@@ -671,6 +747,7 @@ import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-ani
   styles: []
 })
 export class TandaDetailComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   private route = inject(ActivatedRoute);
   private tandaService = inject(TandaService);
   private apiService = inject(ApiService);
@@ -678,10 +755,13 @@ export class TandaDetailComponent implements OnInit {
 
   tanda = signal<TandaDto | null>(null);
   participants = signal<TandaParticipantDto[]>([]);
+  expandedParticipantId = signal<string | null>(null);
   weeksArray = signal<number[]>([]);
   sundayParticipant = signal<TandaParticipantDto | null>(null);
   loading = signal(true);
-  viewMode = signal<'table' | 'visual'>('table');
+  viewMode = signal<'table' | 'payments' | 'visual'>('table');
+  isCompactViewport = signal(false);
+  activeViewMode = computed(() => this.isCompactViewport() && this.viewMode() === 'table' ? 'payments' : this.viewMode());
 
   currentWeek = computed(() => {
     const t = this.tanda();
@@ -766,6 +846,16 @@ export class TandaDetailComponent implements OnInit {
 
   @ViewChild(RaffleAnimationComponent) raffleComponent?: RaffleAnimationComponent;
 
+  constructor() {
+    afterNextRender(() => {
+      const mediaQuery = window.matchMedia('(max-width: 1023px)');
+      const updateViewportMode = () => this.isCompactViewport.set(mediaQuery.matches);
+      updateViewportMode();
+      mediaQuery.addEventListener('change', updateViewportMode);
+      this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', updateViewportMode));
+    });
+  }
+
   // Pago
   showPaymentModal = signal(false);
   isSavingPay = signal(false);
@@ -824,7 +914,11 @@ export class TandaDetailComponent implements OnInit {
       next: (data) => {
         this.tanda.set(data);
         if (data.participants) {
-          this.participants.set([...data.participants].sort((a, b) => a.assignedTurn - b.assignedTurn));
+          const orderedParticipants = [...data.participants].sort((a, b) => a.assignedTurn - b.assignedTurn);
+          this.participants.set(orderedParticipants);
+          this.expandedParticipantId.set(orderedParticipants[0]?.id ?? null);
+        } else {
+          this.expandedParticipantId.set(null);
         }
         this.weeksArray.set(Array.from({ length: data.totalWeeks }, (_, i) => i + 1));
         this.loading.set(false);
@@ -843,6 +937,14 @@ export class TandaDetailComponent implements OnInit {
 
   hasPaid(participant: TandaParticipantDto, week: number): boolean {
     return participant.payments?.some(p => p.weekNumber === week) || false;
+  }
+
+  getPaidWeeksCount(participant: TandaParticipantDto): number {
+    return this.weeksArray().filter(week => this.hasPaid(participant, week)).length;
+  }
+
+  toggleParticipantPayments(participantId: string): void {
+    this.expandedParticipantId.update(currentId => currentId === participantId ? null : participantId);
   }
 
   getParticipantWeeklyAmount(p: TandaParticipantDto): number {

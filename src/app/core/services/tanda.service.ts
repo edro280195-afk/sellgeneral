@@ -5,7 +5,8 @@ import { environment } from '../../../environments/environment';
 import { 
   TandaDto, CreateTandaDto, AddParticipantDto, 
   RegisterPaymentDto, TandaParticipantDto, TandaPaymentDto,
-  TandaProductDto, UpdateTandaDto, UpdateTandaPaymentDto
+  TandaProductDto, UpdateTandaDto, UpdateTandaPaymentDto,
+  TandaWhatsAppReminderDto
 } from '../models';
 
 @Injectable({
@@ -94,9 +95,9 @@ export class TandaService {
     return this.http.post(`${this.base}/${tandaId}/reorder`, { participantIds });
   }
 
-  getWhatsAppReminder(participantId: string, weekNumber?: number): Observable<any> {
+  getWhatsAppReminder(participantId: string, weekNumber?: number): Observable<TandaWhatsAppReminderDto> {
     const params: Record<string, string> = weekNumber ? { weekNumber: weekNumber.toString() } : {};
-    return this.http.get<any>(`${this.base}/participants/${participantId}/whatsapp-reminder`, { params });
+    return this.http.get<TandaWhatsAppReminderDto>(`${this.base}/participants/${participantId}/whatsapp-reminder`, { params });
   }
 
 

@@ -466,7 +466,7 @@
 
         <div class="card-coquette p-6">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-pink-900 text-lg">Enlaces para compartir por WhatsApp 💌</h3>
+                <h3 class="font-black text-pink-900 text-lg">Enlaces para compartir 💌</h3>
                 <button
                     class="btn-coquette bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200 py-1.5 px-4 text-sm"
                     (click)="copyAllLinks()">📋 Copiar Resumen</button>
@@ -494,12 +494,17 @@
                         </span>
                     </div>
 
-                    <div class="flex gap-2 pr-4">
+                    <div class="flex min-w-0 gap-2 pr-4">
                         <input type="text" [value]="order.link" readonly #linkInput
-                            class="flex-1 bg-pink-50 border border-pink-100 rounded-lg px-2 py-1.5 text-xs text-pink-500 focus:outline-none">
+                            class="min-w-0 flex-1 bg-pink-50 border border-pink-100 rounded-lg px-2 py-1.5 text-xs text-pink-500 focus:outline-none">
+                    </div>
+                    <div class="mt-2 grid grid-cols-2 gap-2 pr-4">
                         <button
-                            class="bg-pink-100 text-pink-600 hover:bg-pink-500 hover:text-white rounded-lg px-2 text-sm transition-colors"
-                            (click)="copyLink(linkInput)" title="Copiar enlace">📋</button>
+                            type="button" class="min-h-11 rounded-xl border border-pink-100 bg-pink-50 px-2 text-xs font-bold text-pink-700 transition-colors hover:bg-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+                            (click)="copyLink(linkInput)" title="Copiar enlace">📋 Copiar enlace</button>
+                        <button
+                            type="button" class="min-h-11 rounded-xl bg-pink-500 px-2 text-xs font-black text-white transition-colors hover:bg-pink-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+                            (click)="shareOrder(order)">💌 Compartir</button>
                     </div>
                 </div>
                 }
@@ -514,5 +519,13 @@
         <span class="text-2xl">😿</span>
         {{ error() }}
     </div>
+    }
+    @if (shareRequest(); as request) {
+    <app-message-share-dialog
+        [title]="request.title"
+        [recipientName]="request.recipientName"
+        [message]="request.message"
+        (channelSelected)="shareOrderMessage($event)"
+        (closed)="closeShareDialog()" />
     }
 </div>

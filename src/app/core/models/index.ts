@@ -1039,6 +1039,19 @@ export interface TandaParticipantDto {
     payments?: TandaPaymentDto[];
 }
 
+export interface TandaWhatsAppReminderDto {
+    participantId: string;
+    customerName: string;
+    phone: string;
+    weekNumber: number;
+    weeklyAmount: number;
+    turnNumber: number;
+    hasPaidWeek: boolean;
+    isWinnerThisWeek: boolean;
+    messageText: string;
+    whatsAppUrl: string;
+}
+
 export interface TandaPaymentDto {
     id: string;
     participantId: string;

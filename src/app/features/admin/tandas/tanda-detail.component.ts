@@ -8,6 +8,15 @@ import { TandaDto, TandaParticipantDto, TandaPaymentDto, ClientDto, CLIENT_TAG_L
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RaffleAnimationComponent } from '../raffles/raffle-animation/raffle-animation.component';
+import { environment } from '../../../../environments/environment';
+import {
+  copyMessageToClipboard,
+  MessageShareChannel,
+  MessageShareRequest,
+  openWhatsAppShare,
+  shareMessageToMessenger
+} from '../../../core/utils/message-sharing.util';
+import { MessageShareDialogComponent } from '../../../shared/components/message-share-dialog/message-share-dialog.component';
 
 interface TandaPaymentForm {
   amountPaid: number;
@@ -20,7 +29,7 @@ interface TandaPaymentForm {
 @Component({
   selector: 'app-tanda-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DragDropModule, RaffleAnimationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, DragDropModule, RaffleAnimationComponent, MessageShareDialogComponent],
   template: `
     <div class="space-y-6 max-w-7xl mx-auto pb-20">
       <!-- Breadcrumbs & Navigation -->
@@ -180,10 +189,10 @@ interface TandaPaymentForm {
                               </button>
                             }
                             <div class="flex items-center gap-1">
-                              <button type="button" (click)="sendWhatsAppReminder(p)"
-                                      [attr.aria-label]="'Enviar recordatorio por WhatsApp a ' + p.customerName"
+                              <button type="button" (click)="openParticipantReminder(p)"
+                                      [attr.aria-label]="'Elegir cómo enviar recordatorio a ' + p.customerName"
                                       class="min-h-11 rounded-xl px-3 text-xs font-bold text-pink-600 hover:bg-pink-50">
-                                💬 WhatsApp
+                                💬 Avisar
                               </button>
                               <button type="button" (click)="selectedParticipantActions.set(p)"
                                       [attr.aria-label]="'Acciones para ' + p.customerName"
@@ -269,7 +278,7 @@ interface TandaPaymentForm {
                         </td>
                         <td class="text-center">
                           <div class="flex items-center justify-center gap-1">
-                            <button type="button" (click)="sendWhatsAppReminder(p)" [attr.aria-label]="'Enviar recordatorio por WhatsApp a ' + p.customerName" class="min-h-11 min-w-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs hover:bg-emerald-100 transition-all">
+                            <button type="button" (click)="openParticipantReminder(p)" [attr.aria-label]="'Elegir cómo enviar recordatorio a ' + p.customerName" title="Avisar por WhatsApp o Messenger" class="min-h-11 min-w-11 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-xs hover:bg-pink-100 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
                                <span aria-hidden="true">💬</span>
                             </button>
                             <button type="button" (click)="selectedParticipantActions.set(p)" [attr.aria-label]="'Acciones para ' + p.customerName" class="min-h-11 min-w-11 rounded-full bg-pink-50 text-pink-400 flex items-center justify-center text-xs hover:bg-pink-100 hover:text-pink-600 transition-all">
@@ -379,8 +388,8 @@ interface TandaPaymentForm {
 
               <!-- Enlace de Clienta -->
               @if (t.accessToken) {
-                <button (click)="onCopyLink(t.accessToken)" class="mt-6 w-full py-3 bg-pink-100 hover:bg-pink-200 text-pink-600 text-[10px] font-black rounded-2xl uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm border border-pink-200">
-                  🔗 Copiar Enlace Clientas
+                <button type="button" (click)="openGroupShare(t.accessToken, t.name)" class="mt-6 min-h-11 w-full py-3 bg-pink-100 hover:bg-pink-200 text-pink-600 text-[10px] font-black rounded-2xl uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm border border-pink-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500">
+                  🔗 Compartir enlace con clientas
                 </button>
               }
             </div>
@@ -779,6 +788,14 @@ interface TandaPaymentForm {
         </div>
       </div>
     }
+    @if (shareRequest(); as request) {
+      <app-message-share-dialog
+        [title]="request.title"
+        [recipientName]="request.recipientName"
+        [message]="request.message"
+        (channelSelected)="shareTandaMessage($event)"
+        (closed)="shareRequest.set(null)" />
+    }
   `,
   styles: []
 })
@@ -795,6 +812,7 @@ export class TandaDetailComponent implements OnInit {
   weeksArray = signal<number[]>([]);
   sundayParticipant = signal<TandaParticipantDto | null>(null);
   loading = signal(true);
+  shareRequest = signal<MessageShareRequest | null>(null);
   viewMode = signal<'table' | 'payments' | 'visual'>('table');
   isCompactViewport = signal(false);
   activeViewMode = computed(() => this.isCompactViewport() && this.viewMode() === 'table' ? 'payments' : this.viewMode());
@@ -841,18 +859,54 @@ export class TandaDetailComponent implements OnInit {
     return date;
   }
 
-  sendWhatsAppReminder(p: TandaParticipantDto) {
+  openParticipantReminder(p: TandaParticipantDto): void {
     this.tandaService.getWhatsAppReminder(p.id).subscribe({
       next: (res) => {
-        if (res.whatsAppUrl) {
-          window.open(res.whatsAppUrl, '_blank');
-        } else if (res.messageText) {
-          navigator.clipboard.writeText(res.messageText);
-          this.toastService.show('Mensaje copiado al portapapeles ✨', 'success');
-        }
+        this.shareRequest.set({
+          title: res.hasPaidWeek ? 'Abono registrado' : 'Recordatorio de tanda',
+          recipientName: res.customerName || p.customerName || 'la participante',
+          phone: res.phone,
+          message: res.messageText
+        });
       },
-      error: () => this.toastService.show('No pudimos generar el recordatorio por WhatsApp', 'error')
+      error: () => this.toastService.show('No pudimos generar el recordatorio de la tanda', 'error')
     });
+  }
+
+  openGroupShare(token: string | undefined, tandaName: string): void {
+    if (!token) return;
+    const publicLink = `${environment.publicAppUrl}/tanda-view/${token}`;
+    this.shareRequest.set({
+      title: 'Enlace de la tanda',
+      recipientName: 'las participantes',
+      message: `Hola 💕 Te comparto el enlace de *${tandaName}* para consultar la información del grupo:\n${publicLink}`
+    });
+  }
+
+  async shareTandaMessage(channel: MessageShareChannel): Promise<void> {
+    const request = this.shareRequest();
+    if (!request) return;
+    this.shareRequest.set(null);
+
+    try {
+      if (channel === 'whatsapp') {
+        openWhatsAppShare(request.phone, request.message);
+        this.toastService.show('WhatsApp quedó listo con el mensaje; revísalo y envíalo.', 'success');
+        return;
+      }
+
+      if (channel === 'messenger') {
+        const result = await shareMessageToMessenger(request.title, request.message);
+        if (result === 'shared') this.toastService.show('El mensaje se compartió desde las opciones del teléfono.', 'success');
+        if (result === 'copied') this.toastService.show('Mensaje copiado; pégalo en Messenger.', 'success');
+        return;
+      }
+
+      await copyMessageToClipboard(request.message);
+      this.toastService.show('Mensaje copiado al portapapeles ✨', 'success');
+    } catch {
+      this.toastService.show('No pudimos preparar el mensaje para compartir', 'error');
+    }
   }
 
   // Inscripción
@@ -1140,14 +1194,6 @@ export class TandaDetailComponent implements OnInit {
         error: (err) => this.toastService.error(err.error?.message || 'Error al procesar penalizaciones')
       });
     }
-  }
-
-  onCopyLink(token: string | undefined) {
-    if (!token) return;
-    const url = `${window.location.origin}/tanda-view/${token}`;
-    navigator.clipboard.writeText(url).then(() => {
-      this.toastService.success('¡Enlace copiado al portapapeles! 🎀');
-    });
   }
 
   openPaymentModal(participant: TandaParticipantDto, week: number) {

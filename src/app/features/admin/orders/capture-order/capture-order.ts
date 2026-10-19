@@ -5,7 +5,16 @@ import { ApiService } from '../../../../core/services/api.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ClientDto, ManualOrderRequest, OrderType, ExcelUploadResultDto, OrderSummaryDto, PagedResult, ORDER_STATUS_CSS, CommonProductDto } from '../../../../core/models';
 import { normalizeOptionalAddress } from '../../../../core/utils/address.util';
+import { buildOrderMessage } from '../../../../core/utils/order-message.util';
+import {
+  copyMessageToClipboard,
+  MessageShareChannel,
+  MessageShareRequest,
+  openWhatsAppShare,
+  shareMessageToMessenger
+} from '../../../../core/utils/message-sharing.util';
 import { ClientResolverComponent, ClientResolveResult } from './client-resolver/client-resolver.component';
+import { MessageShareDialogComponent } from '../../../../shared/components/message-share-dialog/message-share-dialog.component';
 
 interface TurboQueueItem {
   id: string;
@@ -26,7 +35,7 @@ function normalizeForMatch(text: string): string {
 @Component({
   selector: 'app-capture-order',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, ClientResolverComponent],
+  imports: [CommonModule, FormsModule, CurrencyPipe, ClientResolverComponent, MessageShareDialogComponent],
   templateUrl: './capture-order.html',
   styleUrl: './capture-order.css'
 })
@@ -40,6 +49,8 @@ export class CaptureOrderComponent implements OnInit {
   // ═════════════════ SHARING RESULTS ═════════════════
   result = signal<ExcelUploadResultDto | null>(null);
   error = signal<string>('');
+  shareRequest = signal<MessageShareRequest | null>(null);
+  private pendingShareOrderId: number | null = null;
 
   // ═════════════════ EXCEL MODE ═════════════════
   dragging = signal(false);
@@ -699,14 +710,63 @@ export class CaptureOrderComponent implements OnInit {
   // ═════════════════ RESULTS METHODS ═════════════════
   copyAllLinks() {
     if (!this.result()) return;
-    const text = this.result()!.orders.map((o: any) => `¡Hola bonita! Aquí está el ticket de tu pedido (total: $${o.total.toFixed(2)}): \n${o.link}`).join('\n\n');
-    navigator.clipboard.writeText(text);
-    this.toast.success('¡Todos los enlaces copiados! 📋');
+    const text = this.result()!.orders.map(order => `¡Hola bonita! Aquí está el ticket de tu pedido (total: $${order.total.toFixed(2)}): \n${order.link}`).join('\n\n');
+    copyMessageToClipboard(text).then(
+      () => this.toast.success('¡Todos los enlaces copiados! 📋'),
+      () => this.toast.error('No pudimos copiar los enlaces.')
+    );
   }
 
   copyLink(input: HTMLInputElement) {
     input.select();
     document.execCommand('copy');
     this.toast.success('Enlace copiado al portapapeles ✨');
+  }
+
+  shareOrder(order: ExcelUploadResultDto['orders'][number]): void {
+    this.pendingShareOrderId = order.id;
+    this.shareRequest.set({
+      title: 'Compartir pedido',
+      recipientName: order.clientName,
+      message: buildOrderMessage({ clientName: order.clientName, publicLink: order.link })
+    });
+  }
+
+  closeShareDialog(): void {
+    this.pendingShareOrderId = null;
+    this.shareRequest.set(null);
+  }
+
+  async shareOrderMessage(channel: MessageShareChannel): Promise<void> {
+    const request = this.shareRequest();
+    const orderId = this.pendingShareOrderId;
+    if (!request || orderId === null) return;
+    this.closeShareDialog();
+
+    let prepared = false;
+    try {
+      if (channel === 'whatsapp') {
+        openWhatsAppShare(undefined, request.message);
+        prepared = true;
+        this.toast.info('WhatsApp quedó listo con el enlace; elige a quién enviarlo.');
+      } else if (channel === 'messenger') {
+        const result = await shareMessageToMessenger(request.title, request.message);
+        prepared = result !== 'cancelled';
+        if (result === 'shared') this.toast.success('El mensaje se compartió desde las opciones del teléfono.');
+        if (result === 'copied') this.toast.success('Mensaje copiado; pégalo en Messenger.');
+      } else {
+        await copyMessageToClipboard(request.message);
+        prepared = true;
+        this.toast.success(`Mensaje de ${request.recipientName} copiado 💬`);
+      }
+    } catch {
+      this.toast.error('No pudimos preparar el pedido para compartir.');
+    }
+
+    if (prepared) {
+      this.api.markOrderNotified(orderId, true).subscribe({
+        error: () => this.toast.error('El enlace se compartió, pero no se pudo marcar como enviado.')
+      });
+    }
   }
 }

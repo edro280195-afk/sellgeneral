@@ -17,11 +17,20 @@ import { NenisLabelPrinterService } from '../../../core/services/nenis-label-pri
 import { SignalRService } from '../../../core/services/signalr.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { GoogleAutocompleteDirective } from '../../../shared/directives/google-autocomplete.directive';
+import { buildPaymentReminderMessage } from '../../../core/utils/order-message.util';
+import {
+  copyMessageToClipboard,
+  MessageShareChannel,
+  MessageShareRequest,
+  openWhatsAppShare,
+  shareMessageToMessenger
+} from '../../../core/utils/message-sharing.util';
+import { MessageShareDialogComponent } from '../../../shared/components/message-share-dialog/message-share-dialog.component';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, BirthdayCouponComponent, LabelEditorComponent, GoogleAutocompleteDirective],
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, BirthdayCouponComponent, LabelEditorComponent, GoogleAutocompleteDirective, MessageShareDialogComponent],
   template: `
     <div class="space-y-4 sm:space-y-6">
       <!-- Header -->
@@ -760,7 +769,9 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
             <div class="flex gap-1.5">
               <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-purple-50 text-purple-500 hover:bg-purple-100 hover:text-purple-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-purple-100/50" aria-label="Copiar enlace público" (click)="copyLink()">🔗</button>
               <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-blue-100/50" aria-label="Enviar aviso de pedido en camino" (click)="sendWaOnRoute()">🚗</button>
-              <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-rose-100/50" aria-label="Enviar solicitud de cobro" (click)="sendWaPaymentRequest()">💸</button>
+              <button type="button" class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-rose-100/50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Elegir cómo enviar solicitud de cobro" title="Avisar saldo por WhatsApp o Messenger"
+                      [disabled]="selectedOrder()!.balanceDue <= 0" (click)="sendPaymentReminder()">💸</button>
               <button class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-700 hover:scale-110 active:scale-95 flex items-center justify-center transition-all shadow-sm border border-amber-100/50" aria-label="Aplicar regalo de cumpleaños" (click)="applyBirthdayGift()">🎁</button>
             </div>
           </div>
@@ -819,6 +830,14 @@ import { GoogleAutocompleteDirective } from '../../../shared/directives/google-a
           </div>
         </div>
       }
+      @if (shareRequest(); as request) {
+        <app-message-share-dialog
+          [title]="request.title"
+          [recipientName]="request.recipientName"
+          [message]="request.message"
+          (channelSelected)="shareSelectedOrderMessage($event)"
+          (closed)="shareRequest.set(null)" />
+      }
     </div>
   `,
   styles: [`
@@ -859,6 +878,7 @@ export class OrdersComponent implements OnInit {
   orderTypeFilter = '';
   typeFilter = '';
   selectedOrder = signal<OrderSummaryDto | null>(null);
+  shareRequest = signal<MessageShareRequest | null>(null);
 
   paymentAmount = 0;
   paymentMethod = 'Efectivo';
@@ -1414,11 +1434,42 @@ export class OrdersComponent implements OnInit {
     window.open(`https://wa.me/52${o.clientPhone.replace(/\D/g, '')}?text=${msg}`, '_blank');
   }
 
-  sendWaPaymentRequest(): void {
+  sendPaymentReminder(): void {
     const o = this.selectedOrder();
-    if (!o || !o.clientPhone) return this.toast.error('Sin teléfono');
-    const msg = encodeURIComponent(`¡Hola linda! ✨ Tienes un saldo pendiente de $${o.balanceDue.toFixed(2)}. 💳💖`);
-    window.open(`https://wa.me/52${o.clientPhone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+    if (!o || o.balanceDue <= 0) return;
+    const link = o.link.replace('/o/', '/pedido/');
+    this.shareRequest.set({
+      title: 'Recordatorio de pago',
+      recipientName: o.clientName,
+      phone: o.clientPhone,
+      message: buildPaymentReminderMessage(o.clientName, o.balanceDue, link)
+    });
+  }
+
+  async shareSelectedOrderMessage(channel: MessageShareChannel): Promise<void> {
+    const request = this.shareRequest();
+    if (!request) return;
+    this.shareRequest.set(null);
+
+    try {
+      if (channel === 'whatsapp') {
+        openWhatsAppShare(request.phone, request.message);
+        this.toast.info('WhatsApp quedó listo con el recordatorio; revísalo y envíalo.');
+        return;
+      }
+
+      if (channel === 'messenger') {
+        const result = await shareMessageToMessenger(request.title, request.message);
+        if (result === 'shared') this.toast.success('El mensaje se compartió desde las opciones del teléfono.');
+        if (result === 'copied') this.toast.success('Mensaje copiado; pégalo en Messenger.');
+        return;
+      }
+
+      await copyMessageToClipboard(request.message);
+      this.toast.success(`Mensaje para ${request.recipientName} copiado.`);
+    } catch {
+      this.toast.error('No pudimos preparar el mensaje. Intenta copiarlo de nuevo.');
+    }
   }
 
   uploadExcel(event: Event): void {

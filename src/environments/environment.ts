@@ -1,5 +1,6 @@
 export const environment = {
     production: false,
+    publicAppUrl: 'https://app.nenisapp.com',
     apiUrl: 'https://api.nenisapp.com/api',
     hubUrl: 'https://api.nenisapp.com/hubs/delivery',
     googleMapsApiKey: 'AIzaSyD0h3ou4iWXQtthgXE-LMewALcWpYdzzJk',

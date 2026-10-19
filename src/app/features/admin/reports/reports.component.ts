@@ -9,11 +9,19 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 import { EChartsOption } from 'echarts';
 import { gsap } from 'gsap';
 import { buildPaymentReminderMessage } from '../../../core/utils/order-message.util';
+import {
+  copyMessageToClipboard,
+  MessageShareChannel,
+  MessageShareRequest,
+  openWhatsAppShare,
+  shareMessageToMessenger
+} from '../../../core/utils/message-sharing.util';
+import { MessageShareDialogComponent } from '../../../shared/components/message-share-dialog/message-share-dialog.component';
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe, DatePipe, NgxEchartsDirective],
+  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe, DatePipe, NgxEchartsDirective, MessageShareDialogComponent],
   template: `
     <div class="space-y-6 pb-20">
       <!-- Header -->
@@ -515,8 +523,9 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
                           </td>
                           <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-1.5">
-                              <button class="w-9 h-9 rounded-xl bg-pink-50 hover:bg-pink-100 active:scale-95 flex items-center justify-center transition-all border border-pink-100"
-                                      title="Copiar recordatorio de cobro" (click)="remindPayment(o)">💌</button>
+                              <button type="button" class="min-h-11 min-w-11 rounded-xl bg-pink-50 hover:bg-pink-100 active:scale-95 flex items-center justify-center transition-all border border-pink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+                                      [attr.aria-label]="'Elegir cómo enviar recordatorio de pago a ' + o.clientName"
+                                      title="Enviar recordatorio por WhatsApp o Messenger" (click)="remindPayment(o)">💬</button>
                               <button class="w-9 h-9 rounded-xl bg-purple-50 text-purple-500 hover:bg-purple-100 active:scale-95 flex items-center justify-center transition-all border border-purple-100/50"
                                       title="Copiar enlace del pedido" (click)="copyUnpaidLink(o)">🔗</button>
                             </div>
@@ -671,6 +680,14 @@ import { buildPaymentReminderMessage } from '../../../core/utils/order-message.u
           </div>
         </div>
       }
+      @if (shareRequest(); as request) {
+        <app-message-share-dialog
+          [title]="request.title"
+          [recipientName]="request.recipientName"
+          [message]="request.message"
+          (channelSelected)="sharePaymentReminder($event)"
+          (closed)="shareRequest.set(null)" />
+      }
     </div>
   `,
   styles: `
@@ -767,6 +784,7 @@ export class ReportsComponent implements OnInit {
   searchUnpaid = signal('');
   unpaidStatusFilter = signal<'todos' | 'entregados' | 'proceso'>('todos');
   unpaidSort = signal<'urgentes' | 'saldoDesc' | 'antiguos'>('urgentes');
+  shareRequest = signal<MessageShareRequest | null>(null);
 
   unpaidStatusOptions = [
     { id: 'todos' as const, label: 'Todos' },
@@ -864,9 +882,41 @@ export class ReportsComponent implements OnInit {
   }
 
   remindPayment(o: OrderSummaryDto): void {
+    if ((o.balanceDue ?? 0) <= 0) return;
     const link = o.link.replace('/o/', '/pedido/');
     const msg = buildPaymentReminderMessage(o.clientName, o.balanceDue ?? 0, link);
-    navigator.clipboard.writeText(msg).then(() => this.toast.success(`Recordatorio de ${o.clientName} copiado 💬`));
+    this.shareRequest.set({
+      title: 'Recordatorio de pago',
+      recipientName: o.clientName,
+      phone: o.clientPhone,
+      message: msg
+    });
+  }
+
+  async sharePaymentReminder(channel: MessageShareChannel): Promise<void> {
+    const request = this.shareRequest();
+    if (!request) return;
+    this.shareRequest.set(null);
+
+    try {
+      if (channel === 'whatsapp') {
+        openWhatsAppShare(request.phone, request.message);
+        this.toast.info('WhatsApp quedó listo con el recordatorio; revísalo y envíalo.');
+        return;
+      }
+
+      if (channel === 'messenger') {
+        const result = await shareMessageToMessenger(request.title, request.message);
+        if (result === 'shared') this.toast.success('El mensaje se compartió desde las opciones del teléfono.');
+        if (result === 'copied') this.toast.success('Mensaje copiado; pégalo en Messenger.');
+        return;
+      }
+
+      await copyMessageToClipboard(request.message);
+      this.toast.success(`Recordatorio de ${request.recipientName} copiado 💬`);
+    } catch {
+      this.toast.error('No pudimos preparar el mensaje. Intenta copiarlo de nuevo.');
+    }
   }
 
   copyUnpaidLink(o: OrderSummaryDto): void {
